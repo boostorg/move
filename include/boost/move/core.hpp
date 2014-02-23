@@ -312,8 +312,8 @@
    //!This macro is used to achieve portable syntax in move
    //!constructors and assignments for template classes marked as
    //!BOOST_COPYABLE_AND_MOVABLE or BOOST_MOVABLE_BUT_NOT_COPYABLE.
-   //!As macros have problems with comma-separatd template arguments,
-   //!the template argument must be preceded with BOOST_RV_REF_START
+   //!As macros have problems with comma-separated template arguments,
+   //!the template argument must be preceded with BOOST_RV_REF_BEG
    //!and ended with BOOST_RV_REF_END
    #define BOOST_RV_REF_BEG\
          \
@@ -322,8 +322,8 @@
    //!This macro is used to achieve portable syntax in move
    //!constructors and assignments for template classes marked as
    //!BOOST_COPYABLE_AND_MOVABLE or BOOST_MOVABLE_BUT_NOT_COPYABLE.
-   //!As macros have problems with comma-separatd template arguments,
-   //!the template argument must be preceded with BOOST_RV_REF_START
+   //!As macros have problems with comma-separated template arguments,
+   //!the template argument must be preceded with BOOST_RV_REF_BEG
    //!and ended with BOOST_RV_REF_END
    #define BOOST_RV_REF_END\
       && \

@@ -759,6 +759,7 @@ Many thanks to all boosters that have tested, reviewed and improved the library.
 
 *  Added [macroref BOOST_MOVE_RET BOOST_MOVE_RET].
 *  Fixed bug [@https://svn.boost.org/trac/boost/ticket/9482 #9482: ['"MSVC macros not undefined in boost/move/detail/config_end.hpp"]].
+             [@https://svn.boost.org/trac/boost/ticket/9045 #9045: ['"Wrong macro name on docs"]].
 
 [endsect]
 

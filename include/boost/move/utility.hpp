@@ -18,6 +18,7 @@
 #include <boost/move/core.hpp>
 #include <boost/move/detail/meta_utils.hpp>
 #include <boost/move/traits.hpp>
+#include <boost/type_traits/add_const.hpp>
 
 #if defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
@@ -89,7 +90,7 @@
 
    template <class T>
    inline typename ::boost::move_detail::enable_if_c
-      < enable_move_utility_emulation<T>::value && !has_move_emulation_enabled<T>::value, T&>::type
+      < enable_move_utility_emulation<T>::value && !has_move_emulation_enabled<T>::value, typename add_const<T>::type & >::type
          move_if_noexcept(T& x) BOOST_NOEXCEPT
    {
       return x;
@@ -116,7 +117,7 @@
    template <class T>
    inline typename ::boost::move_detail::enable_if_c
       < enable_move_utility_emulation<T>::value && has_move_emulation_enabled<T>::value
-            && !::boost::move_detail::has_nothrow_move_or_uncopyable<T>::value, T&>::type
+            && !::boost::move_detail::has_nothrow_move_or_uncopyable<T>::value, typename add_const<T>::type & >::type
          move_if_noexcept(T& x) BOOST_NOEXCEPT
    {
       return x;
@@ -125,7 +126,7 @@
    template <class T>
    inline typename ::boost::move_detail::enable_if_c
       < enable_move_utility_emulation<T>::value && has_move_emulation_enabled<T>::value
-            && !::boost::move_detail::has_nothrow_move_or_uncopyable<T>::value, T&>::type
+            && !::boost::move_detail::has_nothrow_move_or_uncopyable<T>::value, typename add_const<T>::type & >::type
          move_if_noexcept(rv<T>& x) BOOST_NOEXCEPT
    {
       return x;
@@ -245,7 +246,8 @@
          //! in compilers with rvalue references. For other compilers converts T & into
          //! <i>::boost::rv<T> &</i> so that move emulation is activated. Reference
          //! would be converted to rvalue reference only if input type is nothrow move
-         //! constructible or if it has no copy constructor.
+         //! constructible or if it has no copy constructor. In all other cases const
+         //! reference would be returned
          template <class T>
          rvalue_reference move_if_noexcept(input_reference) noexcept;
 
@@ -262,7 +264,9 @@
 
          template <class T>
          inline typename ::boost::move_detail::enable_if_c
-           < !::boost::move_detail::has_nothrow_move_or_uncopyable<T>::value, typename remove_reference<T>::type&>::type
+           < !::boost::move_detail::has_nothrow_move_or_uncopyable<T>::value,
+              typename add_const<typename remove_reference<T>::type>::type&
+           >::type
               move_if_noexcept(T& x) BOOST_NOEXCEPT
          {
            return x;
@@ -279,7 +283,7 @@
 
          template <class T>
          inline typename ::boost::move_detail::enable_if_c
-           < !::boost::move_detail::has_nothrow_move_or_uncopyable<T>::value, T&>::type
+           < !::boost::move_detail::has_nothrow_move_or_uncopyable<T>::value, typename add_const<T>::type & >::type
               move_if_noexcept(T& x) BOOST_NOEXCEPT
          {
            return x;

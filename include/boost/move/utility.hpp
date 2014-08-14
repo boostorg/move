@@ -17,6 +17,7 @@
 #include <boost/move/detail/config_begin.hpp>
 #include <boost/move/core.hpp>
 #include <boost/move/detail/meta_utils.hpp>
+#include <boost/static_assert.hpp>
 
 #if defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
@@ -96,8 +97,6 @@
 
    #else //!BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE
 
-      #include <boost/type_traits/remove_reference.hpp>
-
       namespace boost {
 
       //! This trait's internal boolean `value` is false in compilers with rvalue references
@@ -129,14 +128,14 @@
 
          //Old move approach, lvalues could bind to rvalue references
          template <class T>
-         inline typename remove_reference<T>::type && move(T&& t) BOOST_NOEXCEPT
+         inline typename ::boost::move_detail::remove_reference<T>::type && move(T&& t) BOOST_NOEXCEPT
          {  return t;   }
 
       #else //BOOST_MOVE_OLD_RVALUE_REF_BINDING_RULES
 
          template <class T>
-         inline typename remove_reference<T>::type && move(T&& t) BOOST_NOEXCEPT
-         { return static_cast<typename remove_reference<T>::type &&>(t); }
+         inline typename ::boost::move_detail::remove_reference<T>::type && move(T&& t) BOOST_NOEXCEPT
+         { return static_cast<typename ::boost::move_detail::remove_reference<T>::type &&>(t); }
 
       #endif   //BOOST_MOVE_OLD_RVALUE_REF_BINDING_RULES
 
@@ -170,16 +169,17 @@
 
       #else //Old move
 
-         //Implementation #5 from N2951, thanks to Howard Hinnant
+         template <class T>
+         inline T&& forward(typename ::boost::move_detail::remove_reference<T>::type& t) BOOST_NOEXCEPT
+         {  return static_cast<T&&>(t);   }
 
-         template <class T, class U>
-         inline T&& forward(U&& t
-             , typename ::boost::move_detail::enable_if_c<
-               move_detail::is_lvalue_reference<T>::value ? move_detail::is_lvalue_reference<U>::value : true>::type * = 0/*
-             , typename ::boost::move_detail::enable_if_c<
-               move_detail::is_convertible
-                  <typename remove_reference<U>::type*, typename remove_reference<T>::type*>::value>::type * = 0*/) BOOST_NOEXCEPT
-         { return static_cast<T&&>(t);   }
+         template <class T>
+         inline T&& forward(typename ::boost::move_detail::remove_reference<T>::type&& t) BOOST_NOEXCEPT
+         {
+            //"boost::forward<T> error: 'T' is a lvalue reference, can't forward as rvalue.";
+            BOOST_STATIC_ASSERT(!boost::move_detail::is_lvalue_reference<T>::value);
+            return static_cast<T&&>(t);
+         }
 
       #endif   //BOOST_MOVE_DOXYGEN_INVOKED
 

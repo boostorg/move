@@ -120,6 +120,29 @@ struct is_lvalue_reference<T&>
    : public integral_constant<bool, true>
 {};
 
+//remove_reference
+template<class T>
+struct remove_reference
+{
+   typedef T type;
+};
+
+template<class T>
+struct remove_reference<T&>
+{
+   typedef T type;
+};
+
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+
+template<class T>
+struct remove_reference<T&&>
+{
+   typedef T type;
+};
+
+#endif
+
 template<class T>
 struct is_class_or_union
 {

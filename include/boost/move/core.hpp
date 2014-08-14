@@ -45,7 +45,11 @@
    #include <boost/move/detail/meta_utils.hpp>
 
    //Move emulation rv breaks standard aliasing rules so add workarounds for some compilers
-   #if defined(__GNUC__) && (__GNUC__ >= 4)
+   #if defined(__GNUC__) && (__GNUC__ >= 4) && \
+      (\
+         defined(BOOST_GCC) ||   \
+         (defined(BOOST_INTEL) && (BOOST_INTEL_CXX_VERSION >= 1300)) \
+      )
       #define BOOST_MOVE_ATTRIBUTE_MAY_ALIAS __attribute__((__may_alias__))
    #else
       #define BOOST_MOVE_ATTRIBUTE_MAY_ALIAS

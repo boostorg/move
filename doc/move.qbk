@@ -638,7 +638,7 @@ will get the non-const copy constructor overload, which will surely surprise use
    }
 
 This limitation forces the user to define a const version of the copy assignment,
-in all classes holding copyable and movable classes which might annoying in some cases.
+in all classes holding copyable and movable classes which might be annoying in some cases.
 
 An alternative is to implement a single `operator =()` for copyable and movable  classes
 [@http://cpp-next.com/archive/2009/08/want-speed-pass-by-value/ using "pass by value" semantics]:
@@ -755,6 +755,12 @@ Many thanks to all boosters that have tested, reviewed and improved the library.
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_57_00 Boost 1.57 Release]
+
+*  Fixed bug [@https://svn.boost.org/trac/boost/ticket/9785 Trac #9785: ['"Compiler warning with intel icc in boost/move/core.hpp"]],
+
+[endsect]
+ 
 [section:release_notes_boost_1_56_00 Boost 1.56 Release]
 
 *  Added [macroref BOOST_MOVE_RET BOOST_MOVE_RET].

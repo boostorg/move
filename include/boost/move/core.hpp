@@ -9,7 +9,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-//! \file core.hpp
+//! \file
 //! This header implements macros to define movable classes and
 //! move-aware functions
 
@@ -20,7 +20,7 @@
 
 //boost_move_no_copy_constructor_or_assign typedef
 //used to detect noncopyable types for other Boost libraries.
-#ifdef BOOST_NO_CXX11_DELETED_FUNCTIONS
+#if defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)
    #define BOOST_MOVE_IMPL_NO_COPY_CTOR_OR_ASSIGN(TYPE) \
       private:\
       TYPE(TYPE &);\

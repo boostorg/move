@@ -57,10 +57,13 @@ struct has_nothrow_move
 namespace move_detail {
 
 template <class T>
-struct has_nothrow_move_or_uncopyable
+struct is_nothrow_move_constructible_or_uncopyable
     : public ::boost::move_detail::integral_constant
       < bool
-      , has_nothrow_move<T>::value ||
+        //The standard requires is_nothrow_move_constructible for move_if_noexcept
+        //but a user (usually in C++03) might specialize has_nothrow_move which includes it
+      , boost::is_nothrow_move_constructible<T>::value ||
+        has_nothrow_move<T>::value ||
         !boost::is_copy_constructible<T>::value
       >
 {};

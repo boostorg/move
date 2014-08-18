@@ -18,6 +18,7 @@
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/type_traits/is_nothrow_move_constructible.hpp>
 #include <boost/type_traits/is_nothrow_move_assignable.hpp>
+#include <boost/type_traits/is_copy_constructible.hpp>
 #include <boost/move/detail/meta_utils.hpp>
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
@@ -54,6 +55,18 @@ struct has_nothrow_move
 {};
 
 namespace move_detail {
+
+template <class T>
+struct is_nothrow_move_constructible_or_uncopyable
+    : public ::boost::move_detail::integral_constant
+      < bool
+        //The standard requires is_nothrow_move_constructible for move_if_noexcept
+        //but a user (usually in C++03) might specialize has_nothrow_move which includes it
+      , boost::is_nothrow_move_constructible<T>::value ||
+        has_nothrow_move<T>::value ||
+        !boost::is_copy_constructible<T>::value
+      >
+{};
 
 // Code from Jeffrey Lee Hellrung, many thanks
 

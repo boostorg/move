@@ -133,6 +133,7 @@ struct remove_reference<T&>
    typedef T type;
 };
 
+
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 
 template<class T>
@@ -142,6 +143,30 @@ struct remove_reference<T&&>
 };
 
 #endif
+
+//add_const
+template<class T>
+struct add_const
+{
+   typedef const T type;
+};
+
+template<class T>
+struct add_const<T&>
+{
+   typedef T& type;
+};
+
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+
+template<class T>
+struct add_const<T&&>
+{
+   typedef T&& type;
+};
+
+#endif
+
 
 template<class T>
 struct is_class_or_union

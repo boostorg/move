@@ -18,6 +18,10 @@
 #include <boost/static_assert.hpp>
 #include <boost/assert.hpp>
 
+#if !defined(BOOST_NO_CXX11_NULLPTR)
+#include <cstddef>   //For std::nullptr_t
+#endif
+
 //!\file
 //! Describes the smart pointer unique_ptr, a drop-in replacement for std::unique_ptr,
 //! usable also from C++03 compilers.

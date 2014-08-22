@@ -20,4 +20,5 @@
    #endif
    #pragma warning (push)
    #pragma warning (disable : 4996) // "function": was declared deprecated
+   #pragma warning (disable : 4675) // "function":  resolved overload was found by argument-dependent lookup
 #endif

@@ -380,8 +380,8 @@
    #if !defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
       //!This macro is used to achieve portable move return semantics.
-      //!The Standard allows implicit move returns when the object to be returned 
-      //!is designated by an lvalue and:
+      //!The C++11 Standard allows implicit move returns when the object to be returned 
+      //!is designated by a lvalue and:
       //!   - The criteria for elision of a copy operation are met OR
       //!   - The criteria would be met save for the fact that the source object is a function parameter
       //!

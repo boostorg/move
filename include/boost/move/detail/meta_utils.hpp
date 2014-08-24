@@ -15,6 +15,7 @@
 #define BOOST_MOVE_DETAIL_META_UTILS_HPP
 
 #include <boost/move/detail/config_begin.hpp>
+#include <cstddef>   //for std::size_t
 
 //Small meta-typetraits to support move
 

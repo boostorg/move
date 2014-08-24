@@ -15,6 +15,7 @@
 #include <boost/move/detail/workaround.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/move/unique_ptr.hpp>
+#include <cstddef>   //for std::size_t
 #include <boost/move/detail/meta_utils.hpp>
 
 #if defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
@@ -52,7 +53,7 @@ struct unique_ptr_if<T[]>
    typedef ::boost::movelib::unique_ptr<T[]> t_is_array_of_unknown_bound;
 };
 
-template<class T, size_t N>
+template<class T, std::size_t N>
 struct unique_ptr_if<T[N]>
 {
    typedef void t_is_array_of_known_bound;
@@ -120,7 +121,7 @@ inline
    #else
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_unknown_bound
    #endif
-   make_unique(size_t n)
+   make_unique(std::size_t n)
 {
     typedef typename ::boost::move_detail::remove_extent<T>::type U;
     return unique_ptr<T>(new U[n]());

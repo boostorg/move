@@ -153,13 +153,13 @@ some good introduction and tutorials on rvalue references in these papers:
 *  [@http://www.artima.com/cppsource/rvalue.html ['A Brief Introduction to Rvalue References]]
 *  [@http://blogs.msdn.com/vcblog/archive/2009/02/03/rvalue-references-c-0x-features-in-vc10-part-2.aspx ['Rvalue References: C++0x Features in VC10, Part 2]]
 
-When the source of the copy is known to be an `rvalue` (e.g.: a temporary object), one can avoid the
+When the source of the copy is known to be a `rvalue` (e.g.: a temporary object), one can avoid the
 potentially expensive `clone()` operation by pilfering source's pointer (no one will notice!). The move
 constructor above does exactly that, leaving the rvalue in a default constructed state. The move assignment
 operator simply does the same freeing old resources.
 
-Now when code tries to copy an rvalue `clone_ptr`, or if that code explicitly gives permission to
-consider the source of the copy an rvalue (using `boost::move`), the operation will execute much faster. 
+Now when code tries to copy a rvalue `clone_ptr`, or if that code explicitly gives permission to
+consider the source of the copy a rvalue (using `boost::move`), the operation will execute much faster. 
 
 [move_clone_ptr]
 
@@ -236,7 +236,7 @@ increased. Movable but non-copyable types can be returned by value from factory 
    data_file = create_file(/* ... */);  // No copies!
 
 In the above example, the underlying file handle is passed from object to object, as long
-as the source `file_descriptor` is an rvalue. At all times, there is still only one underlying file
+as the source `file_descriptor` is a rvalue. At all times, there is still only one underlying file
 handle, and only one `file_descriptor` owns it at a time.
 
 To write a movable but not copyable type in portable syntax, you need to follow these simple steps:
@@ -427,7 +427,7 @@ both C++03 and C++11 compilers.
 [classref boost::move_iterator move_iterator] is an iterator adaptor with the
 same behavior as the underlying iterator
 except that its dereference operator implicitly converts the value returned by the
-underlying iterator's dereference operator to an rvalue reference: `boost::move(*underlying_iterator)`
+underlying iterator's dereference operator to a rvalue reference: `boost::move(*underlying_iterator)`
 It is a read-once iterator, but can have up to random access traversal characteristics.
 
 `move_iterator` is very useful because some generic algorithms and container insertion functions
@@ -455,7 +455,7 @@ provided with this library. With regular iterator classes,
    while (first != last) *result++ = *first++;
 
 causes a range [first,last) to be copied into a range starting with result. The same code with
-result being an move insert iterator will move insert corresponding elements into the container.
+result being a move insert iterator will move insert corresponding elements into the container.
 This device allows all of the copying algorithms in the library to work in the move insert mode
 instead of the regular overwrite mode. This library offers 3 move insert iterators and their
 helper functions:

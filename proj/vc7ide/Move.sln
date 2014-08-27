@@ -184,6 +184,7 @@ Global
 		..\..\..\..\boost\move\unique_ptr.hpp = ..\..\..\..\boost\move\unique_ptr.hpp
 		..\..\..\..\boost\move\utility.hpp = ..\..\..\..\boost\move\utility.hpp
 		..\..\..\..\boost\move\utility_core.hpp = ..\..\..\..\boost\move\utility_core.hpp
+		..\..\..\..\boost\move\detail\workaround.hpp = ..\..\..\..\boost\move\detail\workaround.hpp
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

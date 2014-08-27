@@ -20,6 +20,10 @@
 //Macros for documentation purposes. For code, expands to the argument
 #define BOOST_MOVE_IMPDEF(TYPE) TYPE
 #define BOOST_MOVE_SEEDOC(TYPE) TYPE
+#define BOOST_MOVE_DOC0PTR(TYPE) TYPE
+#define BOOST_MOVE_DOC1ST(TYPE1, TYPE2) TYPE2
+#define BOOST_MOVE_I ,
+#define BOOST_MOVE_DOCIGN(T1) T1
 
 #include <boost/intrusive/detail/config_end.hpp>
 

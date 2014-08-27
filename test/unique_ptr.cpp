@@ -10,8 +10,6 @@
 // See http://www.boost.org/libs/move for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/move/detail/config_begin.hpp>
-
 #include <boost/move/utility_core.hpp>
 #include <boost/move/unique_ptr.hpp>
 #include <boost/static_assert.hpp>
@@ -511,16 +509,21 @@ void test()
 }  //unique_ptr_asgn_move01
 
 ////////////////////////////////
-//   unique_ptr_asgn_null
+//   unique_ptr_zero
 ////////////////////////////////
-namespace unique_ptr_asgn_null {
+namespace unique_ptr_zero {
 
-// test assignment from null
+// test initialization/assignment from zero
 
 void test()
 {
    //Single unique_ptr
    reset_counters();
+   {
+   bml::unique_ptr<A> s2(0);
+   BOOST_TEST(A::count == 0);
+   }
+   BOOST_TEST(A::count == 0);
    {
    bml::unique_ptr<A> s2(new A);
    BOOST_TEST(A::count == 1);
@@ -532,6 +535,11 @@ void test()
 
    //Array unique_ptr
    {
+   bml::unique_ptr<A[]> s2(0);
+   BOOST_TEST(A::count == 0);
+   }
+   BOOST_TEST(A::count == 0);
+   {
    bml::unique_ptr<A[]> s2(new A[2]);
    BOOST_TEST(A::count == 2);
    s2 = 0;
@@ -541,8 +549,7 @@ void test()
    BOOST_TEST(A::count == 0);
 }
 
-
-}  //namespace unique_ptr_asgn_null {
+}  //namespace unique_ptr_zero {
 
 
 ////////////////////////////////
@@ -1476,7 +1483,7 @@ void test()
 {
    //Single unique_ptr
    reset_counters();
-   {
+   {  //reset()
    bml::unique_ptr<A> p(new A);
    BOOST_TEST(A::count == 1);
    A* i = p.get();
@@ -1486,7 +1493,7 @@ void test()
    BOOST_TEST(p.get() == 0);
    }
    BOOST_TEST(A::count == 0);
-   {
+   {  //reset(p)
    bml::unique_ptr<A> p(new A);
    BOOST_TEST(A::count == 1);
    A* i = p.get();
@@ -1495,9 +1502,19 @@ void test()
    BOOST_TEST(A::count == 1);
    }
    BOOST_TEST(A::count == 0);
+   {  //reset(0)
+   bml::unique_ptr<A> p(new A);
+   BOOST_TEST(A::count == 1);
+   A* i = p.get();
+   (void)i;
+   p.reset(0);
+   BOOST_TEST(A::count == 0);
+   BOOST_TEST(p.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
    //Array unique_ptr
    reset_counters();
-   {
+   {  //reset()
    bml::unique_ptr<A[]> p(new A[2]);
    BOOST_TEST(A::count == 2);
    A* i = p.get();
@@ -1507,13 +1524,23 @@ void test()
    BOOST_TEST(p.get() == 0);
    }
    BOOST_TEST(A::count == 0);
-   {
+   {  //reset(p)
    bml::unique_ptr<A[]> p(new A[2]);
    BOOST_TEST(A::count == 2);
    A* i = p.get();
    (void)i;
    p.reset(new A[3]);
    BOOST_TEST(A::count == 3);
+   }
+   BOOST_TEST(A::count == 0);
+   {  //reset(0)
+   bml::unique_ptr<A[]> p(new A[2]);
+   BOOST_TEST(A::count == 2);
+   A* i = p.get();
+   (void)i;
+   p.reset(0);
+   BOOST_TEST(A::count == 0);
+   BOOST_TEST(p.get() == 0);
    }
    BOOST_TEST(A::count == 0);
 }
@@ -1821,6 +1848,92 @@ void test()
 }  //namespace unique_ptr_observers_op_index{
 
 ////////////////////////////////
+//       unique_ptr_nullptr
+////////////////////////////////
+
+namespace unique_ptr_nullptr{
+
+void test()
+{
+   #if !defined(BOOST_NO_CXX11_NULLPTR)
+   //Single unique_ptr
+   reset_counters();
+   {
+      bml::unique_ptr<A> p(new A);
+      BOOST_TEST(A::count == 1);
+      A* i = p.get();
+      (void)i;
+      p.reset(nullptr);
+      BOOST_TEST(A::count == 0);
+      BOOST_TEST(p.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
+   {
+      bml::unique_ptr<A> p(new A);
+      BOOST_TEST(A::count == 1);
+      A* i = p.get();
+      (void)i;
+      p = nullptr;
+      BOOST_TEST(A::count == 0);
+      BOOST_TEST(p.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
+
+   {
+      bml::unique_ptr<A> pi(nullptr);
+      BOOST_TEST(pi.get() == nullptr);
+      BOOST_TEST(pi.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
+   {
+      bml::unique_ptr<A> pi(nullptr, bml::unique_ptr<A>::deleter_type());
+      BOOST_TEST(pi.get() == nullptr);
+      BOOST_TEST(pi.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
+
+   //Array unique_ptr
+   reset_counters();
+   {
+      bml::unique_ptr<A[]> p(new A[2]);
+      BOOST_TEST(A::count == 2);
+      A* i = p.get();
+      (void)i;
+      p.reset(nullptr);
+      BOOST_TEST(A::count == 0);
+      BOOST_TEST(p.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
+   {
+      bml::unique_ptr<A[]> p(new A[2]);
+      BOOST_TEST(A::count == 2);
+      A* i = p.get();
+      (void)i;
+      p = nullptr;
+      BOOST_TEST(A::count == 0);
+      BOOST_TEST(p.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
+   {
+      bml::unique_ptr<A[]> pi(nullptr);
+      BOOST_TEST(pi.get() == nullptr);
+      BOOST_TEST(pi.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
+   {
+      bml::unique_ptr<A[]> pi(nullptr, bml::unique_ptr<A[]>::deleter_type());
+      BOOST_TEST(pi.get() == nullptr);
+      BOOST_TEST(pi.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
+
+   //Array element
+   #endif
+}
+
+}  //namespace unique_ptr_nullptr{
+
+////////////////////////////////
 //             main
 ////////////////////////////////
 int main()
@@ -1833,7 +1946,6 @@ int main()
    unique_ptr_asgn_move_convert02::test();
    unique_ptr_asgn_move_convert03::test();
    unique_ptr_asgn_move01::test();
-   unique_ptr_asgn_null::test();
 
    //Constructor
    unique_ptr_ctor_default01::test();
@@ -1873,8 +1985,13 @@ int main()
    unique_ptr_observers_op_arrow::test();
    unique_ptr_observers_op_index::test();
 
+   //nullptr
+   unique_ptr_zero::test();
+   unique_ptr_nullptr::test();
+
    //Test results
    return boost::report_errors();
+
 }
 
 //Define the incomplete I type and out of line functions
@@ -1902,6 +2019,3 @@ J<T, D>::~J() {}
 
 void reset_counters()
 {  A::count = 0; B::count = 0; I::count = 0; }
-
-
-#include <boost/move/detail/config_end.hpp>

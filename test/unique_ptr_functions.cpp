@@ -9,7 +9,6 @@
 // See http://www.boost.org/libs/move for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/move/detail/config_begin.hpp>
 #include <boost/move/make_unique.hpp>
 #include <boost/core/lightweight_test.hpp>
 
@@ -135,29 +134,134 @@ void test()
 
       //Equal
       BOOST_TEST(rpl == rpl && rpl.get() == rpl.get());
-      BOOST_TEST(!(rpl == rpg) && !(rpl.get() != rpg.get()));
+      BOOST_TEST(!(rpl == rpg) && !(rpl.get() == rpg.get()));
       //Unequal
       BOOST_TEST(rpl != rpg && rpl.get() != rpg.get());
       BOOST_TEST(!(rpl != rpl) && !(rpl.get() != rpl.get()));
       //Less
       BOOST_TEST(rpl < rpg && rpl.get() < rpg.get());
-      BOOST_TEST(!(rpl < rpg) && !(rpl.get() < rpg.get()));
+      BOOST_TEST(!(rpg < rpl) && !(rpg.get() < rpl.get()));
       //Greater
       BOOST_TEST(rpg > rpl && rpg.get() > rpl.get());
-      BOOST_TEST(!(rpg > rpg) && !(rpg.get() > rpl.get()));
+      BOOST_TEST(!(rpg > rpg) && !(rpg.get() > rpg.get()));
       //Less or equal
       BOOST_TEST(rpl <= rpg && rpl.get() <= rpg.get());
       BOOST_TEST(rpl <= rpl && rpl.get() <= rpl.get());
-      BOOST_TEST(!(rpg <= rpl) && !(rpg.get() < rpl.get()));
+      BOOST_TEST(!(rpg <= rpl) && !(rpg.get() <= rpl.get()));
       //Greater or equal
       BOOST_TEST(rpg >= rpl && rpg.get() >= rpl.get());
       BOOST_TEST(rpg >= rpg && rpg.get() >= rpg.get());
-      BOOST_TEST(!(rpl >= rpg) && !(rpl.get() < rpg.get()));
+      BOOST_TEST(!(rpl >= rpg) && !(rpl.get() >= rpg.get()));
    }
    BOOST_TEST(A::count == 0);
 }
 
 }  //namespace unique_compare{
+
+
+////////////////////////////////
+//       unique_compare_zero
+////////////////////////////////
+namespace unique_compare_zero{
+
+void test()
+{
+   //Single element deleter
+   reset_counters();
+   {
+      bml::unique_ptr<A> pa(bml::make_unique<A>());
+      bml::unique_ptr<A> pb;
+      BOOST_TEST(A::count == 1);
+
+      //Equal
+      BOOST_TEST(!(pa == 0));
+      BOOST_TEST(!(0  == pa));
+      BOOST_TEST((pb == 0));
+      BOOST_TEST((0  == pb));
+      //Unequal
+      BOOST_TEST((pa != 0));
+      BOOST_TEST((0  != pa));
+      BOOST_TEST(!(pb != 0));
+      BOOST_TEST(!(0  != pb));
+      //Less
+      BOOST_TEST((pa < 0) == (pa.get() < 0));
+      BOOST_TEST((0 < pa) == (0 < pa.get()));
+      BOOST_TEST((pb < 0) == (pb.get() < 0));
+      BOOST_TEST((0 < pb) == (0 < pb.get()));
+      //Greater
+      BOOST_TEST((pa > 0) == (pa.get() > 0));
+      BOOST_TEST((0 > pa) == (0 > pa.get()));
+      BOOST_TEST((pb > 0) == (pb.get() > 0));
+      BOOST_TEST((0 > pb) == (0 > pb.get()));
+      //Less or equal
+      BOOST_TEST((pa <= 0) == (pa.get() <= 0));
+      BOOST_TEST((0 <= pa) == (0 <= pa.get()));
+      BOOST_TEST((pb <= 0) == (pb.get() <= 0));
+      BOOST_TEST((0 <= pb) == (0 <= pb.get()));
+      //Greater or equal
+      BOOST_TEST((pa >= 0) == (pa.get() >= 0));
+      BOOST_TEST((0 >= pa) == (0 >= pa.get()));
+      BOOST_TEST((pb >= 0) == (pb.get() >= 0));
+      BOOST_TEST((0 >= pb) == (0 >= pb.get()));
+   }
+   BOOST_TEST(A::count == 0);
+}
+
+}  //namespace unique_compare_zero{
+
+////////////////////////////////
+//       unique_compare_nullptr
+////////////////////////////////
+
+namespace unique_compare_nullptr{
+
+void test()
+{
+   #if !defined(BOOST_NO_CXX11_NULLPTR)
+   //Single element deleter
+   reset_counters();
+   {
+      bml::unique_ptr<A> pa(bml::make_unique<A>());
+      bml::unique_ptr<A> pb;
+      BOOST_TEST(A::count == 1);
+
+      //Equal
+      BOOST_TEST(!(pa == nullptr));
+      BOOST_TEST(!(nullptr  == pa));
+      BOOST_TEST((pb == nullptr));
+      BOOST_TEST((nullptr  == pb));
+      //Unequal
+      BOOST_TEST((pa != nullptr));
+      BOOST_TEST((nullptr  != pa));
+      BOOST_TEST(!(pb != nullptr));
+      BOOST_TEST(!(nullptr  != pb));
+      //Less
+      BOOST_TEST((pa < nullptr) == (pa.get() < nullptr));
+      BOOST_TEST((nullptr < pa) == (nullptr < pa.get()));
+      BOOST_TEST((pb < nullptr) == (pb.get() < nullptr));
+      BOOST_TEST((nullptr < pb) == (nullptr < pb.get()));
+      //Greater
+      BOOST_TEST((pa > nullptr) == (pa.get() > nullptr));
+      BOOST_TEST((nullptr > pa) == (nullptr > pa.get()));
+      BOOST_TEST((pb > nullptr) == (pb.get() > nullptr));
+      BOOST_TEST((nullptr > pb) == (nullptr > pb.get()));
+      //Less or equal
+      BOOST_TEST((pa <= nullptr) == (pa.get() <= nullptr));
+      BOOST_TEST((nullptr <= pa) == (nullptr <= pa.get()));
+      BOOST_TEST((pb <= nullptr) == (pb.get() <= nullptr));
+      BOOST_TEST((nullptr <= pb) == (nullptr <= pb.get()));
+      //Greater or equal
+      BOOST_TEST((pa >= nullptr) == (pa.get() >= nullptr));
+      BOOST_TEST((nullptr >= pa) == (nullptr >= pa.get()));
+      BOOST_TEST((pb >= nullptr) == (pb.get() >= nullptr));
+      BOOST_TEST((nullptr >= pb) == (nullptr >= pb.get()));
+   }
+   BOOST_TEST(A::count == 0);
+   #endif   //#if !defined(BOOST_NO_CXX11_NULLPTR)
+}
+
+}  //namespace unique_compare_nullptr{
+
 
 ////////////////////////////////
 //             main
@@ -166,9 +270,10 @@ int main()
 {
    make_unique_single::test();
    make_unique_array::test();
+   unique_compare::test();
+   unique_compare_zero::test();
+   unique_compare_nullptr::test();
 
    //Test results
    return boost::report_errors();
 }
-
-#include <boost/move/detail/config_end.hpp>

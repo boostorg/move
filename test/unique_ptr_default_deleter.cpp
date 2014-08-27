@@ -10,8 +10,6 @@
 // See http://www.boost.org/libs/move for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/move/detail/config_begin.hpp>
-
 #include <boost/move/unique_ptr.hpp>
 #include <boost/core/lightweight_test.hpp>
 
@@ -130,5 +128,3 @@ int main()
    //Test results
    return boost::report_errors();
 }
-
-#include <boost/move/detail/config_end.hpp>

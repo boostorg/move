@@ -889,26 +889,26 @@ inline bool operator!=(BOOST_MOVE_DOC0PTR(bmd::nullptr_type), const unique_ptr<T
 //! <b>Returns</b>: Returns <tt>x.get() < pointer()</tt>.
 template <class T, class D>
 inline bool operator<(const unique_ptr<T, D> &x, BOOST_MOVE_DOC0PTR(bmd::nullptr_type))
-{  return x.get() < unique_ptr<T, D>::pointer();  }
+{  return x.get() < typename unique_ptr<T, D>::pointer();  }
 
 //! <b>Requires</b>: <tt>operator </tt> shall induce a strict weak ordering on unique_ptr<T, D>::pointer values.
 //!
 //! <b>Returns</b>: Returns <tt>pointer() < x.get()</tt>.
 template <class T, class D>
 inline bool operator<(BOOST_MOVE_DOC0PTR(bmd::nullptr_type), const unique_ptr<T, D> &x)
-{  return unique_ptr<T, D>::pointer() < x.get();  }
+{  return typename unique_ptr<T, D>::pointer() < x.get();  }
 
 //! <b>Returns</b>: <tt>nullptr < x</tt>.
 //!
 template <class T, class D>
 inline bool operator>(const unique_ptr<T, D> &x, BOOST_MOVE_DOC0PTR(bmd::nullptr_type))
-{  return x.get() > unique_ptr<T, D>::pointer();  }
+{  return x.get() > typename unique_ptr<T, D>::pointer();  }
 
 //! <b>Returns</b>: <tt>x < nullptr</tt>.
 //!
 template <class T, class D>
 inline bool operator>(BOOST_MOVE_DOC0PTR(bmd::nullptr_type), const unique_ptr<T, D> &x)
-{  return unique_ptr<T, D>::pointer() > x.get();  }
+{  return typename unique_ptr<T, D>::pointer() > x.get();  }
 
 //! <b>Returns</b>: <tt>!(nullptr < x)</tt>.
 //!

@@ -58,22 +58,6 @@ class def_constr_deleter
    {  ++state_;   is_array ? delete []p : delete p;  }
 };
 
-template<bool OtherIsArray, bool IsArray, class FromElementType, class ThisElementType, class Type = void>
-struct enable_if_conversion_acceptable
-   : ::boost::move_detail::enable_if_c
-   < OtherIsArray && ::boost::move_detail::is_same_cvelement_and_convertible<FromElementType*, ThisElementType*>::value
-   , Type
-   >
-{};
-
-template<bool OtherIsArray, class FromElementType, class ThisElementType, class Type>
-struct enable_if_conversion_acceptable<OtherIsArray, false, FromElementType, ThisElementType, Type>
-   : ::boost::move_detail::enable_if_c
-   < !OtherIsArray && ::boost::move_detail::is_convertible<FromElementType, ThisElementType>::value
-   , Type
-   >
-{};
-
 //A deleter that can be copy constructed
 template <class T>
 class copy_constr_deleter
@@ -88,24 +72,13 @@ class copy_constr_deleter
 
    template<class U>
    copy_constr_deleter(const copy_constr_deleter<U>&
-      , typename enable_if_conversion_acceptable
-         < copy_constr_deleter<U>::is_array
-         , is_array
-         , typename copy_constr_deleter<U>::element_type
-         , element_type
-      >::type* = 0)
+      , typename boost::move_detail::enable_def_del<U, T>::type* =0)
    {  state_ = 5; }
 
    explicit copy_constr_deleter(int s) : state_(s) {}
 
    template <class U>
-   typename enable_if_conversion_acceptable
-      < copy_constr_deleter<U>::is_array
-      , is_array
-      , typename copy_constr_deleter<U>::element_type
-      , element_type
-      , copy_constr_deleter&
-   >::type
+   typename boost::move_detail::enable_def_del<U, T, copy_constr_deleter&>::type
       operator=(const copy_constr_deleter<U> &d)
    {
       state_ = d.state();
@@ -145,12 +118,7 @@ class move_constr_deleter
 
    template <class U>
    move_constr_deleter(BOOST_RV_REF(move_constr_deleter<U>) d
-      , typename enable_if_conversion_acceptable
-         < move_constr_deleter<U>::is_array
-         , is_array
-         , typename move_constr_deleter<U>::element_type
-         , element_type
-      >::type* = 0)
+      , typename boost::move_detail::enable_def_del<U, T>::type* =0)
       : state_(d.state())
    { d.set_state(0);  }
 
@@ -162,13 +130,7 @@ class move_constr_deleter
    }
 
    template <class U>
-   typename enable_if_conversion_acceptable
-      < move_constr_deleter<U>::is_array
-      , is_array
-      , typename move_constr_deleter<U>::element_type
-      , element_type
-      , move_constr_deleter&
-   >::type
+   typename boost::move_detail::enable_def_del<U, T, move_constr_deleter&>::type
       operator=(BOOST_RV_REF(move_constr_deleter<U>) d)
    {
       state_ = d.state();
@@ -318,7 +280,6 @@ void test()
 
 }  //namespace unique_ptr_asgn_move_convert01{
 
-
 ////////////////////////////////
 //   unique_ptr_asgn_move_convert02
 ////////////////////////////////
@@ -361,8 +322,6 @@ void test()
    }
    BOOST_TEST(A::count == 0);
 }
-
-
 
 }  //namespace unique_ptr_asgn_move_convert02{
 
@@ -507,50 +466,6 @@ void test()
 }
 
 }  //unique_ptr_asgn_move01
-
-////////////////////////////////
-//   unique_ptr_zero
-////////////////////////////////
-namespace unique_ptr_zero {
-
-// test initialization/assignment from zero
-
-void test()
-{
-   //Single unique_ptr
-   reset_counters();
-   {
-   bml::unique_ptr<A> s2(0);
-   BOOST_TEST(A::count == 0);
-   }
-   BOOST_TEST(A::count == 0);
-   {
-   bml::unique_ptr<A> s2(new A);
-   BOOST_TEST(A::count == 1);
-   s2 = 0;
-   BOOST_TEST(A::count == 0);
-   BOOST_TEST(s2.get() == 0);
-   }
-   BOOST_TEST(A::count == 0);
-
-   //Array unique_ptr
-   {
-   bml::unique_ptr<A[]> s2(0);
-   BOOST_TEST(A::count == 0);
-   }
-   BOOST_TEST(A::count == 0);
-   {
-   bml::unique_ptr<A[]> s2(new A[2]);
-   BOOST_TEST(A::count == 2);
-   s2 = 0;
-   BOOST_TEST(A::count == 0);
-   BOOST_TEST(s2.get() == 0);
-   }
-   BOOST_TEST(A::count == 0);
-}
-
-}  //namespace unique_ptr_zero {
-
 
 ////////////////////////////////
 //   unique_ptr_ctor_default01
@@ -710,7 +625,6 @@ void test()
    BOOST_TEST(B::count == 0);
 }
 
-
 }  //namespace unique_ptr_ctor_move_convert02{
 
 ////////////////////////////////
@@ -800,8 +714,6 @@ void test()
 }
 
 }  //namespace unique_ptr_ctor_move_convert04{
-
-
 
 ////////////////////////////////
 //   unique_ptr_ctor_move_convert05
@@ -1072,6 +984,9 @@ void test()
    bml::unique_ptr<A, move_constr_deleter<A> > s(p, ::boost::move(d));
    BOOST_TEST(s.get() == p);
    BOOST_TEST(s.get_deleter().state() == 5);
+   bml::unique_ptr<A, move_constr_deleter<A> > s2(s.release(), move_constr_deleter<A>(6));
+   BOOST_TEST(s2.get() == p);
+   BOOST_TEST(s2.get_deleter().state() == 6);
    }
    BOOST_TEST(A::count == 0);
    //Array unique_ptr
@@ -1083,6 +998,9 @@ void test()
    bml::unique_ptr<A[], move_constr_deleter<A[]> > s(p, ::boost::move(d));
    BOOST_TEST(s.get() == p);
    BOOST_TEST(s.get_deleter().state() == 5);
+   bml::unique_ptr<A[], move_constr_deleter<A[]> > s2(s.release(), move_constr_deleter<A[]>(6));
+   BOOST_TEST(s2.get() == p);
+   BOOST_TEST(s2.get_deleter().state() == 6);
    }
    BOOST_TEST(A::count == 0);
 }
@@ -1848,6 +1766,50 @@ void test()
 }  //namespace unique_ptr_observers_op_index{
 
 ////////////////////////////////
+//   unique_ptr_zero
+////////////////////////////////
+namespace unique_ptr_zero {
+
+// test initialization/assignment from zero
+
+void test()
+{
+   //Single unique_ptr
+   reset_counters();
+   {
+   bml::unique_ptr<A> s2(0);
+   BOOST_TEST(A::count == 0);
+   }
+   BOOST_TEST(A::count == 0);
+   {
+   bml::unique_ptr<A> s2(new A);
+   BOOST_TEST(A::count == 1);
+   s2 = 0;
+   BOOST_TEST(A::count == 0);
+   BOOST_TEST(s2.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
+
+   //Array unique_ptr
+   {
+   bml::unique_ptr<A[]> s2(0);
+   BOOST_TEST(A::count == 0);
+   }
+   BOOST_TEST(A::count == 0);
+   {
+   bml::unique_ptr<A[]> s2(new A[2]);
+   BOOST_TEST(A::count == 2);
+   s2 = 0;
+   BOOST_TEST(A::count == 0);
+   BOOST_TEST(s2.get() == 0);
+   }
+   BOOST_TEST(A::count == 0);
+}
+
+}  //namespace unique_ptr_zero {
+
+
+////////////////////////////////
 //       unique_ptr_nullptr
 ////////////////////////////////
 
@@ -1939,7 +1901,7 @@ void test()
 int main()
 {
    //General
-   pointer_type::test();
+  pointer_type::test();
 
    //Assignment
    unique_ptr_asgn_move_convert01::test();

@@ -265,6 +265,40 @@ struct remove_extent<T[N]>
 };
 
 //////////////////////////////////////
+//             extent
+//////////////////////////////////////
+
+template<class T, unsigned N = 0>
+struct extent
+{
+   static const std::size_t value = 0;
+};
+ 
+template<class T>
+struct extent<T[], 0> 
+{
+   static const std::size_t value = 0;
+};
+
+template<class T, unsigned N>
+struct extent<T[], N>
+{
+   static const std::size_t value = extent<T, N-1>::value;
+};
+
+template<class T, std::size_t N>
+struct extent<T[N], 0> 
+{
+   static const std::size_t value = N;
+};
+ 
+template<class T, std::size_t I, unsigned N>
+struct extent<T[I], N>
+{
+   static const std::size_t value = extent<T, N-1>::value;
+};
+
+//////////////////////////////////////
 //          element_pointer
 //////////////////////////////////////
 template<class T>

@@ -18,9 +18,7 @@
 #include <boost/static_assert.hpp>
 #include <boost/assert.hpp>
 
-#if !defined(BOOST_NO_CXX11_NULLPTR)
-#include <cstddef>   //For std::nullptr_t
-#endif
+#include <cstddef>   //For std::nullptr_t and std::size_t
 
 //!\file
 //! Describes the smart pointer unique_ptr, a drop-in replacement for std::unique_ptr,
@@ -197,16 +195,36 @@ struct is_unique_ptr_convertible<false, FromPointer, ThisPointer>
 {};
 
 ////////////////////////////////////////
-////     enable_def_del / enable_defdel_call
+////        enable_def_del
 ////////////////////////////////////////
+
+//compatible with a pointer type T*:
+//When either Y* is convertible to T*
+//Y is U[N] and T is U cv []
+template<class U, class T>
+struct def_del_compatible_cond
+{
+   static const bool value = is_convertible<U*, T*>::value;
+};
+
+template<class U, class T, std::size_t N>
+struct def_del_compatible_cond<U[N], T[]>
+{
+   static const bool value = def_del_compatible_cond<U[], T[]>::value;
+};
 
 template<class U, class T, class Type = nat>
 struct enable_def_del
-   : enable_if_c
-      < (is_array<T>::value == is_array<U>::value) && is_unique_ptr_convertible
-            <is_array<T>::value, typename remove_extent<U>::type*, typename remove_extent<T>::type*>::value
-      , Type>
+   : enable_if_c<def_del_compatible_cond<U, T>::value, Type>
 {};
+
+////////////////////////////////////////
+////        enable_defdel_call
+////////////////////////////////////////
+
+//When 2nd is T[N], 1st(*)[N] shall be convertible to T[N]*; 
+//When 2nd is T[],  1st(*)[] shall be convertible to T[]*; 
+//Otherwise, 1st* shall be convertible to 2nd*.
 
 template<class U, class T, class Type = nat>
 struct enable_defdel_call
@@ -216,6 +234,11 @@ struct enable_defdel_call
 template<class U, class T, class Type>
 struct enable_defdel_call<U, T[], Type>
    : public enable_def_del<U[], T[], Type>
+{};
+
+template<class U, class T, class Type, std::size_t N>
+struct enable_defdel_call<U, T[N], Type>
+   : public enable_def_del<U[N], T[N], Type>
 {};
 
 ////////////////////////////////////////
@@ -234,17 +257,28 @@ struct enable_up_ptr
 template<class T, class D, class U, class E>
 struct unique_moveconvert_assignable
 {
-   static const bool value = !is_array<U>::value && is_unique_ptr_convertible
-      <false, typename pointer_type<U, E>::type, typename pointer_type<T, D>::type>::value;
+   static const bool value = (extent<T>::value == extent<U>::value)&& is_unique_ptr_convertible
+      <is_array<T>::value, typename pointer_type<U, E>::type, typename pointer_type<T, D>::type>::value;
 };
 
-template<class T, class D, class U, class E>
-struct unique_moveconvert_assignable<T[], D, U, E>
+template<class T, class D, class U, class E, std::size_t N>
+struct unique_moveconvert_assignable<T[], D, U[N], E>
 {
-   static const bool value = is_array<U>::value && is_unique_ptr_convertible
-      <true, typename pointer_type<U, E>::type, typename pointer_type<T, D>::type>::value;
+   static const bool value = unique_moveconvert_assignable<T[], D, U[], E>::value;
+};
+/*
+template<class T, class D, class U, class E, std::size_t N>
+struct unique_moveconvert_assignable<T[N], D, U[], E>
+{
+   static const bool value = unique_moveconvert_assignable<nat[], D, U[], E>::value;
 };
 
+template<class T, class D, class U, class E, std::size_t N, std::size_t M>
+struct unique_moveconvert_assignable<T[N], D, U[M], E>
+{
+   static const bool value = (M == N) && unique_moveconvert_assignable<T[], D, U[], E>::value;
+};
+*/
 template<class T, class D, class U, class E, class Type = nat>
 struct enable_up_moveconv_assign
    : enable_if_c<unique_moveconvert_assignable<T, D, U, E>::value, Type>
@@ -394,6 +428,11 @@ struct default_delete
       element_type * const p = static_cast<element_type*>(ptr);
       bmd::is_array<T>::value ? delete [] p : delete p;
    }
+
+   //! <b>Effects</b>: Same as <tt>(*this)(static_cast<element_type*>(nullptr))</tt>.
+   //!
+   void operator()(BOOST_MOVE_DOC0PTR(bmd::nullptr_type)) const BOOST_NOEXCEPT
+   {  BOOST_STATIC_ASSERT(sizeof(element_type) > 0);  }
 };
 
 
@@ -693,7 +732,7 @@ class unique_ptr
       operator*() const BOOST_NOEXCEPT
    {
       BOOST_STATIC_ASSERT((!bmd::is_array<T>::value));
-      return *get();
+      return *m_data.m_p;
    }
 
    //! <b>Requires</b>: i < the number of elements in the array to which the stored pointer points.
@@ -702,12 +741,11 @@ class unique_ptr
    //!
    //! <b>Remarks</b: If T is not an array type, the program is ill-formed.
    BOOST_MOVE_DOC1ST(element_type&, typename bmd::add_lvalue_reference<element_type>::type)
-      operator[](size_t i) const BOOST_NOEXCEPT
+      operator[](std::size_t i) const BOOST_NOEXCEPT
    {
-      BOOST_STATIC_ASSERT((bmd::is_array<T>::value));
-      const pointer p = this->get();
-      BOOST_ASSERT(p);
-      return p[i];
+      BOOST_ASSERT( bmd::extent<T>::value == 0 || i < bmd::extent<T>::value );
+      BOOST_ASSERT(m_data.m_p);
+      return m_data.m_p[i];
    }
 
    //! <b>Requires</b>: <tt>get() != nullptr</tt>.
@@ -720,9 +758,8 @@ class unique_ptr
    pointer operator->() const BOOST_NOEXCEPT
    {
       BOOST_STATIC_ASSERT((!bmd::is_array<T>::value));
-      const pointer p = this->get();
-      BOOST_ASSERT(p);
-      return p;
+      BOOST_ASSERT(m_data.m_p);
+      return m_data.m_p;
    }
 
    //! <b>Returns</b>: The stored pointer.

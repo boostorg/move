@@ -11,6 +11,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include <boost/move/make_unique.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <cstring>
 
 struct A
 {
@@ -40,6 +41,27 @@ int B::count = 0;
 void reset_counters()
 {  A::count = B::count = 0;  }
 
+static const unsigned PatternSize = 8;
+static const unsigned char ff_patternbuf[PatternSize] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+static const unsigned char ee_patternbuf[PatternSize] = { 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE };
+
+struct default_init
+{
+   static void* operator new(std::size_t sz)
+   {
+      void *const p = ::operator new(sz);
+      return std::memset(p, 0xFF, sz);
+   }
+   static void* operator new[](std::size_t sz)
+   {
+      void *const p = ::operator new[](sz);
+      return std::memset(p, 0xEE, sz);
+   }
+   unsigned char buf[PatternSize];
+};
+
+
+
 namespace bml = ::boost::movelib;
 
 ////////////////////////////////
@@ -53,12 +75,18 @@ void test()
    //Single element deleter
    reset_counters();
    {
+   bml::unique_ptr<default_init> p(bml::make_unique_definit<default_init>());
+   BOOST_TEST(0 == std::memcmp(p.get(), ff_patternbuf, sizeof(ff_patternbuf)));
+   }
+   BOOST_TEST(A::count == 0);
+   {
    bml::unique_ptr<A> p(bml::make_unique<A>());
    BOOST_TEST(A::count == 1);
    BOOST_TEST(p->a == 999);
    BOOST_TEST(p->b == 1000);
    BOOST_TEST(p->c == 1001);
    }
+   BOOST_TEST(A::count == 0);
    {
    bml::unique_ptr<A> p(bml::make_unique<A>(0));
    BOOST_TEST(A::count == 1);
@@ -95,7 +123,7 @@ namespace make_unique_array{
 
 void test()
 {
-   //Single element deleter
+   //Array element
    reset_counters();
    {
       bml::unique_ptr<A[]> p(bml::make_unique<A[]>(10));
@@ -107,6 +135,13 @@ void test()
       }
    }
    BOOST_TEST(A::count == 0);
+   reset_counters();
+   {
+      bml::unique_ptr<default_init[]> p(bml::make_unique_definit<default_init[]>(10));
+      for(unsigned i = 0; i != 10; ++i){
+         BOOST_TEST(0 == std::memcmp(&p[i], ee_patternbuf, sizeof(ee_patternbuf)));
+      }
+   }
 }
 
 }  //namespace make_unique_array{
@@ -157,7 +192,6 @@ void test()
 }
 
 }  //namespace unique_compare{
-
 
 ////////////////////////////////
 //       unique_compare_zero

@@ -95,7 +95,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_nullptr_test", "
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_test", "unique_ptr_observers_test.vcproj", "{C57C28A3-4FE0-6208-BF87-B2B61D3A7670}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_observers_test", "unique_ptr_observers_test.vcproj", "{C57C28A3-4FE0-6208-BF87-B2B61D3A7670}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
@@ -221,6 +221,7 @@ Global
 		..\..\..\..\boost\move\detail\config_begin.hpp = ..\..\..\..\boost\move\detail\config_begin.hpp
 		..\..\..\..\boost\move\detail\config_end.hpp = ..\..\..\..\boost\move\detail\config_end.hpp
 		..\..\..\..\boost\move\core.hpp = ..\..\..\..\boost\move\core.hpp
+		..\..\..\..\boost\move\default_delete.hpp = ..\..\..\..\boost\move\default_delete.hpp
 		..\..\..\..\boost\move\iterator.hpp = ..\..\..\..\boost\move\iterator.hpp
 		..\..\doc\Jamfile.v2 = ..\..\doc\Jamfile.v2
 		..\..\..\..\boost\move\make_unique.hpp = ..\..\..\..\boost\move\make_unique.hpp

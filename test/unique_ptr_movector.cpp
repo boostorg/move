@@ -32,6 +32,7 @@
 #include "unique_ptr_test_utils_beg.hpp"
 
 namespace bml = ::boost::movelib;
+namespace bmupmu = ::boost::move_upmu;
 
 ////////////////////////////////
 //   unique_ptr_ctor_move_defdel
@@ -266,7 +267,7 @@ void test()
 {
    //Single unique_ptr
    reset_counters();
-   BOOST_STATIC_ASSERT((boost::move_detail::is_convertible<B, A>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_convertible<B, A>::value));
    {
    bml::unique_ptr<B, move_constr_deleter<B> > s(new B);
    A* p = s.get();

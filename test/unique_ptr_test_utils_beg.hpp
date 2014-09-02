@@ -71,13 +71,13 @@ class copy_constr_deleter
 
    template<class U>
    copy_constr_deleter(const copy_constr_deleter<U>&
-      , typename boost::move_detail::enable_def_del<U, T>::type* =0)
+      , typename boost::move_upd::enable_def_del<U, T>::type* =0)
    {  state_ = 5; }
 
    explicit copy_constr_deleter(int s) : state_(s) {}
 
    template <class U>
-   typename boost::move_detail::enable_def_del<U, T, copy_constr_deleter&>::type
+   typename boost::move_upd::enable_def_del<U, T, copy_constr_deleter&>::type
       operator=(const copy_constr_deleter<U> &d)
    {
       state_ = d.state();
@@ -117,7 +117,7 @@ class move_constr_deleter
 
    template <class U>
    move_constr_deleter(BOOST_RV_REF(move_constr_deleter<U>) d
-      , typename boost::move_detail::enable_def_del<U, T>::type* =0)
+      , typename boost::move_upd::enable_def_del<U, T>::type* =0)
       : state_(d.state())
    { d.set_state(0);  }
 
@@ -129,7 +129,7 @@ class move_constr_deleter
    }
 
    template <class U>
-   typename boost::move_detail::enable_def_del<U, T, move_constr_deleter&>::type
+   typename boost::move_upd::enable_def_del<U, T, move_constr_deleter&>::type
       operator=(BOOST_RV_REF(move_constr_deleter<U>) d)
    {
       state_ = d.state();

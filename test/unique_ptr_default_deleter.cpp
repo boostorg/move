@@ -10,7 +10,7 @@
 // See http://www.boost.org/libs/move for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-#include <boost/move/unique_ptr.hpp>
+#include <boost/move/default_delete.hpp>
 #include <boost/core/lightweight_test.hpp>
 
 //////////////////////////////////////////////

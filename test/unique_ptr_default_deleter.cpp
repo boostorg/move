@@ -91,7 +91,7 @@ void test()
    const A* p = new const A[2];
    BOOST_TEST(A::count == 2);
    d1(p);
-   bml::default_delete<const A[2]> d0 = d1;
+   bml::default_delete<const A[]> d0 = d1;
    d0(0);
    BOOST_TEST(A::count == 0);
    }

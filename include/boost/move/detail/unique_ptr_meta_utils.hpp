@@ -556,28 +556,21 @@ struct is_unary_function
 //////////////////////////////////////
 
 template< class T, class U
-        , bool enable =  is_convertible< typename remove_cv<U>::type*
-                                       , typename remove_cv<T>::type*>::value &&
+        , bool enable =  is_convertible< U*, T*>::value &&
                         !is_array<T>::value &&
                         !is_same<typename remove_cv<T>::type, void>::value &&
                         !is_same<typename remove_cv<U>::type, typename remove_cv<T>::type>::value
         >
 struct missing_virtual_destructor_default_delete
-{
-   static const bool value = !has_virtual_destructor<T>::value;
-};
+{  static const bool value = !has_virtual_destructor<T>::value;  };
 
 template<class T, class U>
 struct missing_virtual_destructor_default_delete<T, U, false>
-{
-	static const bool value = false;
-};
+{  static const bool value = false;  };
 
 template<class Deleter, class U>
 struct missing_virtual_destructor
-{
-	static const bool value = false;
-};
+{  static const bool value = false;  };
 
 template<class T, class U>
 struct missing_virtual_destructor< ::boost::movelib::default_delete<T>, U >

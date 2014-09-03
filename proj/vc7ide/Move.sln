@@ -231,6 +231,7 @@ Global
 		..\..\..\..\boost\move\detail\move_helpers.hpp = ..\..\..\..\boost\move\detail\move_helpers.hpp
 		..\..\..\..\boost\move\traits.hpp = ..\..\..\..\boost\move\traits.hpp
 		..\..\..\..\boost\move\unique_ptr.hpp = ..\..\..\..\boost\move\unique_ptr.hpp
+		..\..\..\..\boost\move\detail\unique_ptr_meta_utils.hpp = ..\..\..\..\boost\move\detail\unique_ptr_meta_utils.hpp
 		..\..\test\unique_ptr_test_utils_beg.hpp = ..\..\test\unique_ptr_test_utils_beg.hpp
 		..\..\test\unique_ptr_test_utils_end.hpp = ..\..\test\unique_ptr_test_utils_end.hpp
 		..\..\..\..\boost\move\utility.hpp = ..\..\..\..\boost\move\utility.hpp

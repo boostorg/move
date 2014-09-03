@@ -20,6 +20,13 @@
 
 namespace boost {
 
+namespace movelib {
+
+template <class T>
+struct default_delete;
+
+}  //namespace movelib {
+
 #ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
 //Forward declare boost::rv
 template <class T> class rv;
@@ -423,7 +430,7 @@ class is_convertible
 #endif
 
 //////////////////////////////////////
-//    is_unary_function
+//       is_unary_function
 //////////////////////////////////////
 #if defined(BOOST_MSVC) || defined(__BORLANDC_)
 #define BOOST_MOVE_TT_DECL __cdecl
@@ -516,6 +523,66 @@ struct is_unary_function_impl<T&>
 template<typename T>
 struct is_unary_function
 {  static const bool value = is_unary_function_impl<T>::value;   };
+
+//////////////////////////////////////
+//       has_virtual_destructor
+//////////////////////////////////////
+#if (defined(BOOST_MSVC) && defined(BOOST_MSVC_FULL_VER) && (BOOST_MSVC_FULL_VER >=140050215))\
+         || (defined(BOOST_INTEL) && defined(_MSC_VER) && (_MSC_VER >= 1500))
+#  define BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#elif defined(BOOST_CLANG) && defined(__has_feature)
+#  if __has_feature(has_virtual_destructor)
+#     define BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#  endif
+#elif defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3) && !defined(__GCCXML__))) && !defined(BOOST_CLANG)
+#  define BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#elif defined(__ghs__) && (__GHS_VERSION_NUMBER >= 600)
+#  define BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#elif defined(__CODEGEARC__)
+#  define BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#endif
+
+#ifdef BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR
+   template<class T>
+   struct has_virtual_destructor{   static const bool value = BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T);  };
+#else
+   //If no intrinsic is available you trust the programmer knows what is doing
+   template<class T>
+   struct has_virtual_destructor{   static const bool value = true;  };
+#endif
+
+//////////////////////////////////////
+//       missing_virtual_destructor
+//////////////////////////////////////
+
+template< class T, class U
+        , bool enable =  is_convertible< typename remove_cv<U>::type*
+                                       , typename remove_cv<T>::type*>::value &&
+                        !is_array<T>::value &&
+                        !is_same<typename remove_cv<T>::type, void>::value &&
+                        !is_same<typename remove_cv<U>::type, typename remove_cv<T>::type>::value
+        >
+struct missing_virtual_destructor_default_delete
+{
+   static const bool value = !has_virtual_destructor<T>::value;
+};
+
+template<class T, class U>
+struct missing_virtual_destructor_default_delete<T, U, false>
+{
+	static const bool value = false;
+};
+
+template<class Deleter, class U>
+struct missing_virtual_destructor
+{
+	static const bool value = false;
+};
+
+template<class T, class U>
+struct missing_virtual_destructor< ::boost::movelib::default_delete<T>, U >
+   : missing_virtual_destructor_default_delete<T, U>
+{};
 
 }  //namespace move_upmu {
 }  //namespace boost {

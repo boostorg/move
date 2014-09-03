@@ -128,7 +128,11 @@ struct default_delete
    default_delete(const default_delete<U>&
       BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_def_del<U BOOST_MOVE_I T>::type* =0)
       ) BOOST_NOEXCEPT
-   {}
+   {
+      //If T is not an array type, U derives from T
+      //and T has no virtual destructor, then you have a problem
+      BOOST_STATIC_ASSERT(( !::boost::move_upmu::missing_virtual_destructor<default_delete, U>::value ));
+   }
 
    //! <b>Effects</b>: Constructs a default_delete object from another <tt>default_delete<U></tt> object.
    //!
@@ -139,7 +143,12 @@ struct default_delete
    BOOST_MOVE_DOC1ST(default_delete&, 
       typename bmupd::enable_def_del<U BOOST_MOVE_I T BOOST_MOVE_I default_delete &>::type)
       operator=(const default_delete<U>&) BOOST_NOEXCEPT
-   {  return *this;  }
+   {
+      //If T is not an array type, U derives from T
+      //and T has no virtual destructor, then you have a problem
+      BOOST_STATIC_ASSERT(( !::boost::move_upmu::missing_virtual_destructor<default_delete, U>::value ));
+      return *this;
+   }
 
    //! <b>Effects</b>: if T is not an array type, calls <tt>delete</tt> on static_cast<T*>(ptr),
    //!   otherwise calls <tt>delete[]</tt> on static_cast<remove_extent<T>::type*>(ptr).
@@ -155,6 +164,9 @@ struct default_delete
    {
       //U must be a complete type
       BOOST_STATIC_ASSERT(sizeof(U) > 0);
+      //If T is not an array type, U derives from T
+      //and T has no virtual destructor, then you have a problem
+      BOOST_STATIC_ASSERT(( !::boost::move_upmu::missing_virtual_destructor<default_delete, U>::value ));
       element_type * const p = static_cast<element_type*>(ptr);
       bmupmu::is_array<T>::value ? delete [] p : delete p;
    }

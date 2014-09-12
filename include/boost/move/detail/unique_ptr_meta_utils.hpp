@@ -11,27 +11,28 @@
 
 //! \file
 
-#ifndef BOOST_MOVE_DETAIL_META_UTILS_HPP
-#define BOOST_MOVE_DETAIL_META_UTILS_HPP
+#ifndef BOOST_MOVE_UNIQUE_PTR_DETAIL_META_UTILS_HPP
+#define BOOST_MOVE_UNIQUE_PTR_DETAIL_META_UTILS_HPP
 
-#include <boost/move/detail/config_begin.hpp>
 #include <cstddef>   //for std::size_t
 
 //Small meta-typetraits to support move
 
 namespace boost {
 
+namespace movelib {
+
+template <class T>
+struct default_delete;
+
+}  //namespace movelib {
+
 #ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
 //Forward declare boost::rv
 template <class T> class rv;
 #endif
 
-namespace move_detail {
-
-//////////////////////////////////////
-//              empty
-//////////////////////////////////////
-struct empty{};
+namespace move_upmu {
 
 //////////////////////////////////////
 //              nat
@@ -62,10 +63,8 @@ struct if_c<false,T1,T2>
 //             if_
 //////////////////////////////////////
 template<typename T1, typename T2, typename T3>
-struct if_
-{
-   typedef typename if_c<0 != T1::value, T2, T3>::type type;
-};
+struct if_ : if_c<0 != T1::value, T2, T3>
+{};
 
 //enable_if_
 template <bool B, class T = nat>
@@ -85,51 +84,6 @@ struct enable_if_c<false, T> {};
 //////////////////////////////////////
 template <class Cond, class T = nat>
 struct enable_if : public enable_if_c<Cond::value, T> {};
-
-//////////////////////////////////////
-//          disable_if
-//////////////////////////////////////
-template <class Cond, class T = nat>
-struct disable_if : public enable_if_c<!Cond::value, T> {};
-
-//////////////////////////////////////
-//          integral_constant
-//////////////////////////////////////
-template<class T, T v>
-struct integral_constant
-{
-   static const T value = v;
-   typedef T value_type;
-   typedef integral_constant<T, v> type;
-};
-
-typedef integral_constant<bool, true >  true_type;
-typedef integral_constant<bool, false > false_type;
-
-//////////////////////////////////////
-//             identity
-//////////////////////////////////////
-template <class T>
-struct identity
-{
-   typedef T type;
-};
-
-//////////////////////////////////////
-//                and_
-//////////////////////////////////////
-template <typename Condition1, typename Condition2, typename Condition3 = integral_constant<bool, true> >
-struct and_
-   : public integral_constant<bool, Condition1::value && Condition2::value && Condition3::value>
-{};
-
-//////////////////////////////////////
-//                not_
-//////////////////////////////////////
-template <typename Boolean>
-struct not_
-   : public integral_constant<bool, !Boolean::value>
-{};
 
 //////////////////////////////////////
 //          remove_reference
@@ -177,7 +131,6 @@ struct remove_reference< const rv<T> &>
 
 #endif
 
-
 //////////////////////////////////////
 //             remove_const
 //////////////////////////////////////
@@ -217,31 +170,6 @@ struct remove_cv
     typedef typename remove_volatile
       <typename remove_const<T>::type>::type type;
 };
-
-//////////////////////////////////////
-//             add_const
-//////////////////////////////////////
-template<class T>
-struct add_const
-{
-   typedef const T type;
-};
-
-template<class T>
-struct add_const<T&>
-{
-   typedef const T& type;
-};
-
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-
-template<class T>
-struct add_const<T&&>
-{
-   typedef T&& type;
-};
-
-#endif
 
 //////////////////////////////////////
 //          remove_extent
@@ -299,16 +227,6 @@ struct extent<T[I], N>
 };
 
 //////////////////////////////////////
-//          element_pointer
-//////////////////////////////////////
-template<class T>
-struct element_pointer
-{
-   typedef typename remove_extent<T>::type element_type;
-   typedef element_type* type;
-};
-
-//////////////////////////////////////
 //      add_lvalue_reference
 //////////////////////////////////////
 template<class T>
@@ -350,12 +268,11 @@ struct add_lvalue_reference<const volatile void>
 template<class T>
 struct add_const_lvalue_reference
 {
-   typedef typename remove_reference<T>::type         t_unreferenced;
-   typedef typename add_const<t_unreferenced>::type   t_unreferenced_const;
+   typedef typename remove_reference<T>::type   t_unreferenced;
+   typedef const t_unreferenced                 t_unreferenced_const;
    typedef typename add_lvalue_reference
-      <t_unreferenced_const>::type                    type;
+      <t_unreferenced_const>::type              type;
 };
-
 
 //////////////////////////////////////
 //             is_same
@@ -449,54 +366,6 @@ struct is_array<T[N]>
 };
 
 //////////////////////////////////////
-//          is_class_or_union
-//////////////////////////////////////
-template<class T>
-struct is_class_or_union
-{
-   struct twochar { char _[2]; };
-   template <class U>
-   static char is_class_or_union_tester(void(U::*)(void));
-   template <class U>
-   static twochar is_class_or_union_tester(...);
-   static const bool value = sizeof(is_class_or_union_tester<T>(0)) == sizeof(char);
-};
-
-//////////////////////////////////////
-//             addressof
-//////////////////////////////////////
-template<class T>
-struct addr_impl_ref
-{
-   T & v_;
-   inline addr_impl_ref( T & v ): v_( v ) {}
-   inline operator T& () const { return v_; }
-
-   private:
-   addr_impl_ref & operator=(const addr_impl_ref &);
-};
-
-template<class T>
-struct addressof_impl
-{
-   static inline T * f( T & v, long )
-   {
-      return reinterpret_cast<T*>(
-         &const_cast<char&>(reinterpret_cast<const volatile char &>(v)));
-   }
-
-   static inline T * f( T * v, int )
-   {  return v;  }
-};
-
-template<class T>
-inline T * addressof( T & v )
-{
-   return ::boost::move_detail::addressof_impl<T>::f
-      ( ::boost::move_detail::addr_impl_ref<T>( v ), 0 );
-}
-
-//////////////////////////////////////
 //          has_pointer_type
 //////////////////////////////////////
 template <class T>
@@ -561,7 +430,7 @@ class is_convertible
 #endif
 
 //////////////////////////////////////
-//    is_unary_function
+//       is_unary_function
 //////////////////////////////////////
 #if defined(BOOST_MSVC) || defined(__BORLANDC_)
 #define BOOST_MOVE_TT_DECL __cdecl
@@ -655,9 +524,60 @@ template<typename T>
 struct is_unary_function
 {  static const bool value = is_unary_function_impl<T>::value;   };
 
-}  //namespace move_detail {
+//////////////////////////////////////
+//       has_virtual_destructor
+//////////////////////////////////////
+#if (defined(BOOST_MSVC) && defined(BOOST_MSVC_FULL_VER) && (BOOST_MSVC_FULL_VER >=140050215))\
+         || (defined(BOOST_INTEL) && defined(_MSC_VER) && (_MSC_VER >= 1500))
+#  define BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#elif defined(BOOST_CLANG) && defined(__has_feature)
+#  if __has_feature(has_virtual_destructor)
+#     define BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#  endif
+#elif defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3) && !defined(__GCCXML__))) && !defined(BOOST_CLANG)
+#  define BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#elif defined(__ghs__) && (__GHS_VERSION_NUMBER >= 600)
+#  define BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#elif defined(__CODEGEARC__)
+#  define BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#endif
+
+#ifdef BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR
+   template<class T>
+   struct has_virtual_destructor{   static const bool value = BOOST_MOVEUP_HAS_VIRTUAL_DESTRUCTOR(T);  };
+#else
+   //If no intrinsic is available you trust the programmer knows what is doing
+   template<class T>
+   struct has_virtual_destructor{   static const bool value = true;  };
+#endif
+
+//////////////////////////////////////
+//       missing_virtual_destructor
+//////////////////////////////////////
+
+template< class T, class U
+        , bool enable =  is_convertible< U*, T*>::value &&
+                        !is_array<T>::value &&
+                        !is_same<typename remove_cv<T>::type, void>::value &&
+                        !is_same<typename remove_cv<U>::type, typename remove_cv<T>::type>::value
+        >
+struct missing_virtual_destructor_default_delete
+{  static const bool value = !has_virtual_destructor<T>::value;  };
+
+template<class T, class U>
+struct missing_virtual_destructor_default_delete<T, U, false>
+{  static const bool value = false;  };
+
+template<class Deleter, class U>
+struct missing_virtual_destructor
+{  static const bool value = false;  };
+
+template<class T, class U>
+struct missing_virtual_destructor< ::boost::movelib::default_delete<T>, U >
+   : missing_virtual_destructor_default_delete<T, U>
+{};
+
+}  //namespace move_upmu {
 }  //namespace boost {
 
-#include <boost/move/detail/config_end.hpp>
-
-#endif //#ifndef BOOST_MOVE_DETAIL_META_UTILS_HPP
+#endif //#ifndef BOOST_MOVE_UNIQUE_PTR_DETAIL_META_UTILS_HPP

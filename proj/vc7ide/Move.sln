@@ -71,11 +71,35 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_default_deleter_
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_test", "unique_ptr_test.vcproj", "{C57C28A3-4FE0-6208-BF87-A2B61D3A7671}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_functions_test", "unique_ptr_functions.vcproj", "{C57C25A3-4620-FE08-F8B7-AB673D762B60}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_functions_test", "unique_ptr_functions.vcproj", "{C57C25A3-4620-FE08-F8B7-AB673D762B60}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_assign_test", "unique_ptr_assign_test.vcproj", "{C57C28A3-4FE0-6208-BF87-B2B61D3A7674}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_ctordtor_test", "unique_ptr_ctordtor_test.vcproj", "{C57C28A3-4FE0-6208-BF87-B2B61D3A7676}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_modifiers_test", "unique_ptr_modifiers_test.vcproj", "{C57C28A3-4FE0-6208-BF87-B2B61D3A7673}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_movector_test", "unique_ptr_movector_test.vcproj", "{C57C28A3-4FE0-6208-BF87-B2B61D3A7672}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_nullptr_test", "unique_ptr_nullptr_test.vcproj", "{C57C28A3-4FE0-6208-BF87-B2B61D3A7671}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_observers_test", "unique_ptr_observers_test.vcproj", "{C57C28A3-4FE0-6208-BF87-B2B61D3A7670}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unique_ptr_types_test", "unique_ptr_types_test.vcproj", "{C57C28A3-4FE0-6208-BF87-B2B61D3A7675}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
@@ -159,20 +183,45 @@ Global
 		{C57C25A3-4620-FE08-F8B7-AB673D762B60}.Debug.Build.0 = Debug|Win32
 		{C57C25A3-4620-FE08-F8B7-AB673D762B60}.Release.ActiveCfg = Release|Win32
 		{C57C25A3-4620-FE08-F8B7-AB673D762B60}.Release.Build.0 = Release|Win32
-		{C57C28A3-4FE0-6208-BF87-A2B61D3A7671}.Debug.ActiveCfg = Debug|Win32
-		{C57C28A3-4FE0-6208-BF87-A2B61D3A7671}.Debug.Build.0 = Debug|Win32
-		{C57C28A3-4FE0-6208-BF87-A2B61D3A7671}.Release.ActiveCfg = Release|Win32
-		{C57C28A3-4FE0-6208-BF87-A2B61D3A7671}.Release.Build.0 = Release|Win32
 		{C57C25A3-4620-FE08-F8B7-AB673D762B60}.Debug.ActiveCfg = Debug|Win32
 		{C57C25A3-4620-FE08-F8B7-AB673D762B60}.Debug.Build.0 = Debug|Win32
 		{C57C25A3-4620-FE08-F8B7-AB673D762B60}.Release.ActiveCfg = Release|Win32
 		{C57C25A3-4620-FE08-F8B7-AB673D762B60}.Release.Build.0 = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7674}.Debug.ActiveCfg = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7674}.Debug.Build.0 = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7674}.Release.ActiveCfg = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7674}.Release.Build.0 = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7676}.Debug.ActiveCfg = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7676}.Debug.Build.0 = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7676}.Release.ActiveCfg = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7676}.Release.Build.0 = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7673}.Debug.ActiveCfg = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7673}.Debug.Build.0 = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7673}.Release.ActiveCfg = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7673}.Release.Build.0 = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7672}.Debug.ActiveCfg = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7672}.Debug.Build.0 = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7672}.Release.ActiveCfg = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7672}.Release.Build.0 = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7671}.Debug.ActiveCfg = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7671}.Debug.Build.0 = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7671}.Release.ActiveCfg = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7671}.Release.Build.0 = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7670}.Debug.ActiveCfg = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7670}.Debug.Build.0 = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7670}.Release.ActiveCfg = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7670}.Release.Build.0 = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7675}.Debug.ActiveCfg = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7675}.Debug.Build.0 = Debug|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7675}.Release.ActiveCfg = Release|Win32
+		{C57C28A3-4FE0-6208-BF87-B2B61D3A7675}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionItems) = postSolution
 		..\..\..\..\boost\move\algorithm.hpp = ..\..\..\..\boost\move\algorithm.hpp
 		..\..\..\..\boost\move\detail\config_begin.hpp = ..\..\..\..\boost\move\detail\config_begin.hpp
 		..\..\..\..\boost\move\detail\config_end.hpp = ..\..\..\..\boost\move\detail\config_end.hpp
 		..\..\..\..\boost\move\core.hpp = ..\..\..\..\boost\move\core.hpp
+		..\..\..\..\boost\move\default_delete.hpp = ..\..\..\..\boost\move\default_delete.hpp
 		..\..\..\..\boost\move\iterator.hpp = ..\..\..\..\boost\move\iterator.hpp
 		..\..\doc\Jamfile.v2 = ..\..\doc\Jamfile.v2
 		..\..\..\..\boost\move\make_unique.hpp = ..\..\..\..\boost\move\make_unique.hpp
@@ -182,8 +231,12 @@ Global
 		..\..\..\..\boost\move\detail\move_helpers.hpp = ..\..\..\..\boost\move\detail\move_helpers.hpp
 		..\..\..\..\boost\move\traits.hpp = ..\..\..\..\boost\move\traits.hpp
 		..\..\..\..\boost\move\unique_ptr.hpp = ..\..\..\..\boost\move\unique_ptr.hpp
+		..\..\..\..\boost\move\detail\unique_ptr_meta_utils.hpp = ..\..\..\..\boost\move\detail\unique_ptr_meta_utils.hpp
+		..\..\test\unique_ptr_test_utils_beg.hpp = ..\..\test\unique_ptr_test_utils_beg.hpp
+		..\..\test\unique_ptr_test_utils_end.hpp = ..\..\test\unique_ptr_test_utils_end.hpp
 		..\..\..\..\boost\move\utility.hpp = ..\..\..\..\boost\move\utility.hpp
 		..\..\..\..\boost\move\utility_core.hpp = ..\..\..\..\boost\move\utility_core.hpp
+		..\..\..\..\boost\move\detail\workaround.hpp = ..\..\..\..\boost\move\detail\workaround.hpp
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

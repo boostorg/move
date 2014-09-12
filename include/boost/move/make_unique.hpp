@@ -71,13 +71,9 @@ namespace movelib {
 //!
 //! <b>Returns</b>: <tt>unique_ptr<T>(new T(std::forward<Args>(args)...))</tt>.
 template<class T, class... Args>
-inline
-   #if defined(BOOST_MOVE_DOXYGEN_INVOKED)
-   unique_ptr<T>
-   #else
-   typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array
-   #endif
-   make_unique(BOOST_FWD_REF(Args)... args)
+inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
+   typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)
+      make_unique(BOOST_FWD_REF(Args)... args)
 {  return unique_ptr<T>(new T(::boost::forward<Args>(args)...));  }
 
 #else
@@ -109,35 +105,51 @@ inline
 
 #endif
 
+//! <b>Remarks</b>: This function shall not participate in overload resolution unless T is not an array.
+//!
+//! <b>Returns</b>: <tt>unique_ptr<T>(new T)</tt> (default initialization)
+template<class T>
+inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
+   typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)
+      make_unique_definit()
+{
+    return unique_ptr<T>(new T);
+}
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of 
 //!   unknown bound.
 //!
-//! <b>Returns</b>: <tt>unique_ptr<T>(new remove_extent_t<T>[n]())</tt>.
+//! <b>Returns</b>: <tt>unique_ptr<T>(new remove_extent_t<T>[n]())</tt> (value initialization)
 template<class T>
-inline
-   #if defined(BOOST_MOVE_DOXYGEN_INVOKED)
-   unique_ptr<T>
-   #else
-   typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_unknown_bound
-   #endif
-   make_unique(std::size_t n)
+inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
+   typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_unknown_bound)
+      make_unique(std::size_t n)
 {
     typedef typename ::boost::move_detail::remove_extent<T>::type U;
     return unique_ptr<T>(new U[n]());
 }
 
-#if defined(BOOST_MOVE_DOXYGEN_INVOKED) || !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)
+//! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of 
+//!   unknown bound.
+//!
+//! <b>Returns</b>: <tt>unique_ptr<T>(new remove_extent_t<T>[n])</tt> (default initialization)
+template<class T>
+inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
+   typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_unknown_bound)
+      make_unique_definit(std::size_t n)
+{
+    typedef typename ::boost::move_detail::remove_extent<T>::type U;
+    return unique_ptr<T>(new U[n]);
+}
+
+#if !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is
 //!   an array of known bound.
 template<class T, class... Args>
-   #if defined(BOOST_MOVE_DOXYGEN_INVOKED)
-   unspecified
-   #else
-   typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_known_bound 
-   #endif
-   make_unique(BOOST_FWD_REF(Args) ...) = delete;
+inline BOOST_MOVE_DOC1ST(unspecified, 
+   typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_known_bound)
+      make_unique(BOOST_FWD_REF(Args) ...) = delete;
 #endif
 
 }  //namespace movelib {

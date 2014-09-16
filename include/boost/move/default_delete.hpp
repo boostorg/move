@@ -17,7 +17,7 @@
 #include <boost/move/utility_core.hpp>
 #include <boost/static_assert.hpp>
 
-#include <cstddef>   //For std::size_t
+#include <cstddef>   //For std::size_t,std::nullptr_t
 
 //!\file
 //! Describes the default deleter (destruction policy) of <tt>unique_ptr</tt>: <tt>default_delete</tt>.
@@ -79,10 +79,12 @@ struct enable_defdel_call<U, T[N], Type>
 struct bool_conversion {int for_bool; int for_arg(); };
 typedef int bool_conversion::* explicit_bool_arg;
 
-#if !defined(BOOST_NO_CXX11_NULLPTR) 
-typedef std::nullptr_t nullptr_type;
+#if !defined(BOOST_NO_CXX11_NULLPTR) && !defined(BOOST_NO_CXX11_DECLTYPE)
+   typedef decltype(nullptr) nullptr_type;
+#elif !defined(BOOST_NO_CXX11_NULLPTR)
+   typedef std::nullptr_t nullptr_type;
 #else
-typedef int (bool_conversion::*nullptr_type)();
+   typedef int (bool_conversion::*nullptr_type)();
 #endif
 
 }  //namespace move_upd {

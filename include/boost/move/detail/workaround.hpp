@@ -11,7 +11,7 @@
 #ifndef BOOST_MOVE_DETAIL_WORKAROUND_HPP
 #define BOOST_MOVE_DETAIL_WORKAROUND_HPP
 
-#include <boost/intrusive/detail/config_begin.hpp>
+#include <boost/move/detail/config_begin.hpp>
 
 #if    !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
    #define BOOST_MOVE_PERFECT_FORWARDING
@@ -25,6 +25,6 @@
 #define BOOST_MOVE_I ,
 #define BOOST_MOVE_DOCIGN(T1) T1
 
-#include <boost/intrusive/detail/config_end.hpp>
+#include <boost/move/detail/config_end.hpp>
 
 #endif   //#ifndef BOOST_MOVE_DETAIL_WORKAROUND_HPP

@@ -254,6 +254,19 @@
       private:\
    //
 
+   namespace boost{
+   namespace move_detail{
+
+   template< class T>
+   struct forward_type
+   { typedef const T &type; };
+
+   template< class T>
+   struct forward_type< boost::rv<T> >
+   { typedef T type; };
+
+   }}
+
 #else    //BOOST_NO_CXX11_RVALUE_REFERENCES
 
    //Compiler workaround detection
@@ -436,6 +449,13 @@
       //
 
    #endif   //!defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
+
+   namespace boost {
+   namespace move_detail {
+
+   template< class T> struct forward_type { typedef T type; };
+
+   }}
 
 #endif   //BOOST_NO_CXX11_RVALUE_REFERENCES
 

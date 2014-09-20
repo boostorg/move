@@ -70,18 +70,6 @@ struct is_nothrow_move_constructible_or_uncopyable
 
 // Code from Jeffrey Lee Hellrung, many thanks
 
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-   template< class T> struct forward_type { typedef T type; };
-#else // #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-   template< class T>
-   struct forward_type
-   { typedef const T &type; };
-
-   template< class T>
-   struct forward_type< boost::rv<T> >
-   { typedef T type; };
-#endif // #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-
 template< class T > struct is_rvalue_reference : ::boost::move_detail::integral_constant<bool, false> { };
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
    template< class T > struct is_rvalue_reference< T&& > : ::boost::move_detail::integral_constant<bool, true> { };

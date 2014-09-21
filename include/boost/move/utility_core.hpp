@@ -281,6 +281,9 @@ void swap(T &a, T &b)
    b = ::boost::move(c);
 }
 
+template <typename T>
+typename boost::move_detail::add_rvalue_reference<T>::type declval();
+
 }  //namespace move_detail{
 }  //namespace boost{
 

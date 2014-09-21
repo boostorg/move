@@ -142,14 +142,14 @@ namespace move_detail {
 
 template <class I>
 struct is_move_iterator
-   : public ::boost::move_detail::integral_constant<bool, false>
 {
+   static const bool value = false;
 };
 
 template <class I>
 struct is_move_iterator< ::boost::move_iterator<I> >
-   : public ::boost::move_detail::integral_constant<bool, true>
 {
+   static const bool value = true;
 };
 
 }  //namespace move_detail {

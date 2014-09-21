@@ -13,7 +13,7 @@
 #ifndef BOOST_MOVE_UNIQUE_PTR_TEST_UTILS_BEG_HPP
 #define BOOST_MOVE_UNIQUE_PTR_TEST_UTILS_BEG_HPP
 #include <boost/move/core.hpp>
-#include <boost/move/detail/meta_utils.hpp>
+#include <boost/move/detail/unique_ptr_meta_utils.hpp>
 #include <boost/static_assert.hpp>
 
 //////////////////////////////////////////////
@@ -39,8 +39,8 @@ class def_constr_deleter
    def_constr_deleter& operator=(const def_constr_deleter&);
 
    public:
-   typedef typename ::boost::move_detail::remove_extent<T>::type element_type;
-   static const bool is_array = ::boost::move_detail::is_array<T>::value;
+   typedef typename ::boost::move_upmu::remove_extent<T>::type element_type;
+   static const bool is_array = ::boost::move_upmu::is_array<T>::value;
 
    def_constr_deleter() : state_(5) {}
 
@@ -64,8 +64,8 @@ class copy_constr_deleter
    int state_;
 
    public:
-   typedef typename ::boost::move_detail::remove_extent<T>::type element_type;
-   static const bool is_array = ::boost::move_detail::is_array<T>::value;
+   typedef typename ::boost::move_upmu::remove_extent<T>::type element_type;
+   static const bool is_array = ::boost::move_upmu::is_array<T>::value;
 
    copy_constr_deleter() : state_(5) {}
 
@@ -104,8 +104,8 @@ class move_constr_deleter
    BOOST_MOVABLE_BUT_NOT_COPYABLE(move_constr_deleter)
 
    public:
-   typedef typename ::boost::move_detail::remove_extent<T>::type element_type;
-   static const bool is_array = ::boost::move_detail::is_array<T>::value;
+   typedef typename ::boost::move_upmu::remove_extent<T>::type element_type;
+   static const bool is_array = ::boost::move_upmu::is_array<T>::value;
 
    move_constr_deleter() : state_(5) {}
 
@@ -182,7 +182,7 @@ int B::count = 0;
 
 void reset_counters();
 
-BOOST_STATIC_ASSERT((::boost::move_detail::is_convertible<B, A>::value));
+BOOST_STATIC_ASSERT((::boost::move_upmu::is_convertible<B, A>::value));
 
 //Incomplete Type function declarations
 struct I;

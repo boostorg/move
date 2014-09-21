@@ -67,7 +67,7 @@
       : public ::boost::move_detail::if_c
          < ::boost::move_detail::is_class_or_union<T>::value
          , T
-         , ::boost::move_detail::empty
+         , ::boost::move_detail::nat
          >::type
    {
       rv();
@@ -79,7 +79,7 @@
 
    //////////////////////////////////////////////////////////////////////////////
    //
-   //                            move_detail::is_rv
+   //                            is_rv
    //
    //////////////////////////////////////////////////////////////////////////////
 
@@ -87,17 +87,7 @@
 
    template <class T>
    struct is_rv
-      : ::boost::move_detail::integral_constant<bool, false>
-   {};
-
-   template <class T>
-   struct is_rv< rv<T> >
-      : ::boost::move_detail::integral_constant<bool, true>
-   {};
-
-   template <class T>
-   struct is_rv< const rv<T> >
-      : ::boost::move_detail::integral_constant<bool, true>
+      : ::boost::move_detail::is_rv_impl<T>
    {};
 
    }  //namespace move_detail {
@@ -109,17 +99,7 @@
    //////////////////////////////////////////////////////////////////////////////
    template<class T>
    struct has_move_emulation_enabled
-      : ::boost::move_detail::is_convertible< T, ::boost::rv<T>& >
-   {};
-
-   template<class T>
-   struct has_move_emulation_enabled<T&>
-      : ::boost::move_detail::integral_constant<bool, false>
-   {};
-
-   template<class T>
-   struct has_move_emulation_enabled< ::boost::rv<T> >
-      : ::boost::move_detail::integral_constant<bool, false>
+      : ::boost::move_detail::has_move_emulation_enabled_impl<T>
    {};
 
    }  //namespace boost {

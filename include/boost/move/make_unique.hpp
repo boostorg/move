@@ -16,7 +16,7 @@
 #include <boost/move/utility_core.hpp>
 #include <boost/move/unique_ptr.hpp>
 #include <cstddef>   //for std::size_t
-#include <boost/move/detail/meta_utils.hpp>
+#include <boost/move/detail/unique_ptr_meta_utils.hpp>
 
 #if defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
 #include <boost/preprocessor/iteration/local.hpp>
@@ -36,7 +36,7 @@ namespace boost{
 
 #if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
-namespace move_detail {
+namespace move_upmu {
 
 //Compile time switch between
 //single element, unknown bound array
@@ -59,7 +59,7 @@ struct unique_ptr_if<T[N]>
    typedef void t_is_array_of_known_bound;
 };
 
-}  //namespace move_detail {
+}  //namespace move_upmu {
 
 #endif   //!defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
@@ -72,7 +72,7 @@ namespace movelib {
 //! <b>Returns</b>: <tt>unique_ptr<T>(new T(std::forward<Args>(args)...))</tt>.
 template<class T, class... Args>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
-   typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)
+   typename ::boost::move_upmu::unique_ptr_if<T>::t_is_not_array)
       make_unique(BOOST_FWD_REF(Args)... args)
 {  return unique_ptr<T>(new T(::boost::forward<Args>(args)...));  }
 
@@ -95,7 +95,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 
    #define BOOST_PP_LOCAL_MACRO(n) \
    template<class T BOOST_PP_ENUM_TRAILING_PARAMS(n, class P) > \
-   typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array \
+   typename ::boost::move_upmu::unique_ptr_if<T>::t_is_not_array \
       make_unique(BOOST_PP_ENUM(n, BOOST_MOVE_PP_PARAM_LIST, _)) \
    {  return unique_ptr<T>(new T(BOOST_PP_ENUM(n, BOOST_MOVE_PP_PARAM_FORWARD, _)));  } \
    //!
@@ -110,7 +110,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //! <b>Returns</b>: <tt>unique_ptr<T>(new T)</tt> (default initialization)
 template<class T>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
-   typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)
+   typename ::boost::move_upmu::unique_ptr_if<T>::t_is_not_array)
       make_unique_definit()
 {
     return unique_ptr<T>(new T);
@@ -122,10 +122,10 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //! <b>Returns</b>: <tt>unique_ptr<T>(new remove_extent_t<T>[n]())</tt> (value initialization)
 template<class T>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
-   typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_unknown_bound)
+   typename ::boost::move_upmu::unique_ptr_if<T>::t_is_array_of_unknown_bound)
       make_unique(std::size_t n)
 {
-    typedef typename ::boost::move_detail::remove_extent<T>::type U;
+    typedef typename ::boost::move_upmu::remove_extent<T>::type U;
     return unique_ptr<T>(new U[n]());
 }
 
@@ -135,10 +135,10 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //! <b>Returns</b>: <tt>unique_ptr<T>(new remove_extent_t<T>[n])</tt> (default initialization)
 template<class T>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
-   typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_unknown_bound)
+   typename ::boost::move_upmu::unique_ptr_if<T>::t_is_array_of_unknown_bound)
       make_unique_definit(std::size_t n)
 {
-    typedef typename ::boost::move_detail::remove_extent<T>::type U;
+    typedef typename ::boost::move_upmu::remove_extent<T>::type U;
     return unique_ptr<T>(new U[n]);
 }
 
@@ -148,7 +148,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //!   an array of known bound.
 template<class T, class... Args>
 inline BOOST_MOVE_DOC1ST(unspecified, 
-   typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_known_bound)
+   typename ::boost::move_upmu::unique_ptr_if<T>::t_is_array_of_known_bound)
       make_unique(BOOST_FWD_REF(Args) ...) = delete;
 #endif
 

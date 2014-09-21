@@ -21,17 +21,10 @@
 
 namespace boost {
 
-#ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
 //Forward declare boost::rv
 template <class T> class rv;
-#endif
 
 namespace move_detail {
-
-//////////////////////////////////////
-//              empty
-//////////////////////////////////////
-struct empty{};
 
 //////////////////////////////////////
 //              nat
@@ -116,22 +109,6 @@ struct identity
 };
 
 //////////////////////////////////////
-//                and_
-//////////////////////////////////////
-template <typename Condition1, typename Condition2, typename Condition3 = integral_constant<bool, true> >
-struct and_
-   : public integral_constant<bool, Condition1::value && Condition2::value && Condition3::value>
-{};
-
-//////////////////////////////////////
-//                not_
-//////////////////////////////////////
-template <typename Boolean>
-struct not_
-   : public integral_constant<bool, !Boolean::value>
-{};
-
-//////////////////////////////////////
 //          remove_reference
 //////////////////////////////////////
 template<class T>
@@ -177,47 +154,6 @@ struct remove_reference< const rv<T> &>
 
 #endif
 
-
-//////////////////////////////////////
-//             remove_const
-//////////////////////////////////////
-template< class T >
-struct remove_const
-{
-   typedef T type;
-};
-
-template< class T >
-struct remove_const<const T>
-{
-   typedef T type;
-};
-
-//////////////////////////////////////
-//             remove_volatile
-//////////////////////////////////////
-template< class T >
-struct remove_volatile
-{
-   typedef T type;
-};
-
-template< class T >
-struct remove_volatile<volatile T>
-{
-   typedef T type;
-};
-
-//////////////////////////////////////
-//             remove_cv
-//////////////////////////////////////
-template< class T >
-struct remove_cv
-{
-    typedef typename remove_volatile
-      <typename remove_const<T>::type>::type type;
-};
-
 //////////////////////////////////////
 //             add_const
 //////////////////////////////////////
@@ -242,71 +178,6 @@ struct add_const<T&&>
 };
 
 #endif
-
-//////////////////////////////////////
-//          remove_extent
-//////////////////////////////////////
-template<class T>
-struct remove_extent
-{
-   typedef T type;
-};
- 
-template<class T>
-struct remove_extent<T[]>
-{
-   typedef T type;
-};
- 
-template<class T, std::size_t N>
-struct remove_extent<T[N]>
-{
-   typedef T type;
-};
-
-//////////////////////////////////////
-//             extent
-//////////////////////////////////////
-
-template<class T, unsigned N = 0>
-struct extent
-{
-   static const std::size_t value = 0;
-};
- 
-template<class T>
-struct extent<T[], 0> 
-{
-   static const std::size_t value = 0;
-};
-
-template<class T, unsigned N>
-struct extent<T[], N>
-{
-   static const std::size_t value = extent<T, N-1>::value;
-};
-
-template<class T, std::size_t N>
-struct extent<T[N], 0> 
-{
-   static const std::size_t value = N;
-};
- 
-template<class T, std::size_t I, unsigned N>
-struct extent<T[I], N>
-{
-   static const std::size_t value = extent<T, N-1>::value;
-};
-
-//////////////////////////////////////
-//          element_pointer
-//////////////////////////////////////
-template<class T>
-struct element_pointer
-{
-   typedef typename remove_extent<T>::type element_type;
-   typedef element_type* type;
-};
 
 //////////////////////////////////////
 //      add_lvalue_reference
@@ -373,46 +244,6 @@ struct is_same<T, T>
 };
 
 //////////////////////////////////////
-//             is_pointer
-//////////////////////////////////////
-template< class T >
-struct is_pointer
-{
-    static const bool value = false;
-};
-
-template< class T >
-struct is_pointer<T*>
-{
-    static const bool value = true;
-};
-
-//////////////////////////////////////
-//             is_reference
-//////////////////////////////////////
-template< class T >
-struct is_reference
-{
-    static const bool value = false;
-};
-
-template< class T >
-struct is_reference<T&>
-{
-    static const bool value = true;
-};
-
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-
-template< class T >
-struct is_reference<T&&>
-{
-    static const bool value = true;
-};
-
-#endif
-
-//////////////////////////////////////
 //             is_lvalue_reference
 //////////////////////////////////////
 template<class T>
@@ -425,27 +256,6 @@ template<class T>
 struct is_lvalue_reference<T&>
 {
     static const bool value = true;
-};
-
-//////////////////////////////////////
-//          is_array
-//////////////////////////////////////
-template<class T>
-struct is_array
-{
-   static const bool value = false;
-};
- 
-template<class T>
-struct is_array<T[]>
-{
-   static const bool value = true;
-};
- 
-template<class T, std::size_t N>
-struct is_array<T[N]>
-{
-   static const bool value = true;
 };
 
 //////////////////////////////////////
@@ -509,28 +319,6 @@ struct has_pointer_type
 };
 
 //////////////////////////////////////
-//             pointer_type
-//////////////////////////////////////
-template <class T, class D, bool = has_pointer_type<D>::value>
-struct pointer_type_imp
-{
-    typedef typename D::pointer type;
-};
-
-template <class T, class D>
-struct pointer_type_imp<T, D, false>
-{
-    typedef typename remove_extent<T>::type* type;
-};
-
-template <class T, class D>
-struct pointer_type
-{
-    typedef typename pointer_type_imp
-      <typename remove_extent<T>::type, typename remove_reference<D>::type>::type type;
-};
-
-//////////////////////////////////////
 //           is_convertible
 //////////////////////////////////////
 #if defined(_MSC_VER) && (_MSC_VER >= 1400)
@@ -560,100 +348,125 @@ class is_convertible
 
 #endif
 
-//////////////////////////////////////
-//    is_unary_function
-//////////////////////////////////////
-#if defined(BOOST_MSVC) || defined(__BORLANDC_)
-#define BOOST_MOVE_TT_DECL __cdecl
-#else
-#define BOOST_MOVE_TT_DECL
-#endif
+//////////////////////////////////////////////////////////////////////////////
+//
+//                               has_move_emulation_enabled_impl
+//
+//////////////////////////////////////////////////////////////////////////////
+template<class T>
+struct has_move_emulation_enabled_impl
+   : is_convertible< T, ::boost::rv<T>& >
+{};
 
-#if defined(_MSC_EXTENSIONS) && !defined(__BORLAND__) && !defined(_WIN64) && !defined(_M_ARM) && !defined(UNDER_CE)
-#define BOOST_MOVE_TT_TEST_MSC_FUNC_SIGS
-#endif
+template<class T>
+struct has_move_emulation_enabled_impl<T&>
+{  static const bool value = false;  };
 
-template <typename T>
-struct is_unary_function_impl
-{  static const bool value = false; };
+template<class T>
+struct has_move_emulation_enabled_impl< ::boost::rv<T> >
+{  static const bool value = false;  };
 
-// avoid duplicate definitions of is_unary_function_impl
-#ifndef BOOST_MOVE_TT_TEST_MSC_FUNC_SIGS
+//////////////////////////////////////////////////////////////////////////////
+//
+//                            is_rv_impl
+//
+//////////////////////////////////////////////////////////////////////////////
 
-template <typename R>
-struct is_unary_function_impl<R (*)()>
+template <class T>
+struct is_rv_impl
+{  static const bool value = false;  };
+
+template <class T>
+struct is_rv_impl< rv<T> >
 {  static const bool value = true;  };
 
-template <typename R>
-struct is_unary_function_impl<R (*)(...)>
+template <class T>
+struct is_rv_impl< const rv<T> >
 {  static const bool value = true;  };
 
-#else // BOOST_MOVE_TT_TEST_MSC_FUNC_SIGS
+// Code from Jeffrey Lee Hellrung, many thanks
 
-template <typename R>
-struct is_unary_function_impl<R (__stdcall*)()>
+template< class T >
+struct is_rvalue_reference
+{  static const bool value = false;  };
+
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+
+template< class T >
+struct is_rvalue_reference< T&& >
 {  static const bool value = true;  };
 
-#ifndef _MANAGED
+#else // #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 
-template <typename R>
-struct is_unary_function_impl<R (__fastcall*)()>
+template< class T >
+struct is_rvalue_reference< boost::rv<T>& >
 {  static const bool value = true;  };
 
-#endif
-
-template <typename R>
-struct is_unary_function_impl<R (__cdecl*)()>
+template< class T >
+struct is_rvalue_reference< const boost::rv<T>& >
 {  static const bool value = true;  };
 
-template <typename R>
-struct is_unary_function_impl<R (__cdecl*)(...)>
-{  static const bool value = true;  };
+#endif // #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 
-#endif
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 
-// avoid duplicate definitions of is_unary_function_impl
-#ifndef BOOST_MOVE_TT_TEST_MSC_FUNC_SIGS
+template< class T >
+struct add_rvalue_reference
+{ typedef T&& type; };
 
-template <typename R, class T0>
-struct is_unary_function_impl<R (*)(T0)>
-{  static const bool value = true;  };
+#else // #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 
-template <typename R, class T0>
-struct is_unary_function_impl<R (*)(T0...)>
-{  static const bool value = true;  };
+namespace detail_add_rvalue_reference
+{
+   template< class T
+            , bool emulation = has_move_emulation_enabled_impl<T>::value
+            , bool rv        = is_rv_impl<T>::value  >
+   struct add_rvalue_reference_impl { typedef T type; };
 
-#else // BOOST_MOVE_TT_TEST_MSC_FUNC_SIGS
+   template< class T, bool emulation>
+   struct add_rvalue_reference_impl< T, emulation, true > { typedef T & type; };
 
-template <typename R, class T0>
-struct is_unary_function_impl<R (__stdcall*)(T0)>
-{  static const bool value = true;  };
+   template< class T, bool rv >
+   struct add_rvalue_reference_impl< T, true, rv > { typedef ::boost::rv<T>& type; };
+} // namespace detail_add_rvalue_reference
 
-#ifndef _MANAGED
+template< class T >
+struct add_rvalue_reference
+   : detail_add_rvalue_reference::add_rvalue_reference_impl<T>
+{ };
 
-template <typename R, class T0>
-struct is_unary_function_impl<R (__fastcall*)(T0)>
-{  static const bool value = true;  };
+template< class T >
+struct add_rvalue_reference<T &>
+{  typedef T & type; };
 
-#endif
+#endif // #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 
-template <typename R, class T0>
-struct is_unary_function_impl<R (__cdecl*)(T0)>
-{  static const bool value = true;  };
+template< class T > struct remove_rvalue_reference { typedef T type; };
 
-template <typename R, class T0>
-struct is_unary_function_impl<R (__cdecl*)(T0...)>
-{  static const bool value = true;  };
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+   template< class T > struct remove_rvalue_reference< T&& >                  { typedef T type; };
+#else // #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+   template< class T > struct remove_rvalue_reference< rv<T> >                { typedef T type; };
+   template< class T > struct remove_rvalue_reference< const rv<T> >          { typedef T type; };
+   template< class T > struct remove_rvalue_reference< volatile rv<T> >       { typedef T type; };
+   template< class T > struct remove_rvalue_reference< const volatile rv<T> > { typedef T type; };
+   template< class T > struct remove_rvalue_reference< rv<T>& >               { typedef T type; };
+   template< class T > struct remove_rvalue_reference< const rv<T>& >         { typedef T type; };
+   template< class T > struct remove_rvalue_reference< volatile rv<T>& >      { typedef T type; };
+   template< class T > struct remove_rvalue_reference< const volatile rv<T>& >{ typedef T type; };
+#endif // #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 
-#endif
-
-template <typename T>
-struct is_unary_function_impl<T&>
-{  static const bool value = false; };
-
-template<typename T>
-struct is_unary_function
-{  static const bool value = is_unary_function_impl<T>::value;   };
+// Ideas from Boost.Move review, Jeffrey Lee Hellrung:
+//
+//- TypeTraits metafunctions is_lvalue_reference, add_lvalue_reference, and remove_lvalue_reference ?
+//  Perhaps add_reference and remove_reference can be modified so that they behave wrt emulated rvalue
+//  references the same as wrt real rvalue references, i.e., add_reference< rv<T>& > -> T& rather than
+//  rv<T>& (since T&& & -> T&).
+//
+//- Add'l TypeTraits has_[trivial_]move_{constructor,assign}...?
+//
+//- An as_lvalue(T& x) function, which amounts to an identity operation in C++0x, but strips emulated
+//  rvalue references in C++03.  This may be necessary to prevent "accidental moves".
 
 }  //namespace move_detail {
 }  //namespace boost {

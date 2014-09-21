@@ -112,20 +112,21 @@
          //! constructible or if it has no copy constructor. In all other cases const
          //! reference would be returned
          template <class T>
-         rvalue_reference move_if_noexcept(input_reference) noexcept;
+         rvalue_reference_or_const_lvalue_reference move_if_noexcept(input_reference) noexcept;
 
-      #else //BOOST_MOVE_OLD_RVALUE_REF_BINDING_RULES
+      #else //BOOST_MOVE_DOXYGEN_INVOKED
 
          template <class T>
-         inline typename ::boost::move_detail::if_c
-            < ::boost::move_detail::is_nothrow_move_constructible_or_uncopyable<T>::value
-            , T&&
-            , const T&
-            >::type
+         typename ::boost::move_detail::enable_if_c
+            < ::boost::move_detail::is_nothrow_move_constructible_or_uncopyable<T>::value, T&&>::type
                move_if_noexcept(T& x) BOOST_NOEXCEPT
-         {
-            return ::boost::move(x);
-         }
+         {  return ::boost::move(x);   }
+
+         template <class T>
+         typename ::boost::move_detail::enable_if_c
+            < !::boost::move_detail::is_nothrow_move_constructible_or_uncopyable<T>::value, const T&>::type
+               move_if_noexcept(T& x) BOOST_NOEXCEPT
+         {  return x;  }
 
       #endif //BOOST_MOVE_DOXYGEN_INVOKED
 

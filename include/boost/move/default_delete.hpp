@@ -92,7 +92,7 @@ typedef int bool_conversion::* explicit_bool_arg;
 namespace movelib {
 
 namespace bmupd = boost::move_upd;
-namespace bmupmu = boost::move_detail;
+namespace bmupmu = ::boost::move_upmu;
 
 //!The class template <tt>default_delete</tt> serves as the default deleter
 //!(destruction policy) for the class template <tt>unique_ptr</tt>.

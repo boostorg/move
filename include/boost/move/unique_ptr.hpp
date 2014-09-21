@@ -723,7 +723,7 @@ class unique_ptr
    //! <b>Effects</b>: Invokes swap on the stored pointers and on the stored deleters of *this and u.
    void swap(unique_ptr& u) BOOST_NOEXCEPT
    {
-      using bmupmu::swap;
+      using ::boost::move_detail::swap;
       swap(m_data.m_p, u.m_data.m_p);
       swap(m_data.deleter(), u.m_data.deleter());
    }

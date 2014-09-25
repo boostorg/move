@@ -16,7 +16,7 @@
 
 #include <boost/move/detail/config_begin.hpp>
 
-#include <boost/move/utility.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/move/iterator.hpp>
 #include <boost/detail/no_exceptions_support.hpp>
 

@@ -12,7 +12,7 @@
 # define BOOST_COPYABLE_AND_MOVABLE(X)
 # define MOVE(x) (x)
 #else
-#include <boost/move/utility.hpp>
+#include <boost/move/utility_core.hpp>
 # define MOVE(x) boost::move(x)
 #endif
 

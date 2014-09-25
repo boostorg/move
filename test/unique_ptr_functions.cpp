@@ -31,8 +31,8 @@ struct B
    : public A
 {
    static int count;
-   B() {++count;}
-   B(const B&) {++count;}
+   B() : A() {++count;}
+   B(const B&) : A() {++count;}
    virtual ~B() {--count;}
 };
 
@@ -218,25 +218,25 @@ void test()
       BOOST_TEST(!(pb != 0));
       BOOST_TEST(!(0  != pb));
       //Less
-      BOOST_TEST((pa < 0) == (pa.get() < 0));
-      BOOST_TEST((0 < pa) == (0 < pa.get()));
-      BOOST_TEST((pb < 0) == (pb.get() < 0));
-      BOOST_TEST((0 < pb) == (0 < pb.get()));
+      BOOST_TEST((pa < 0) == (pa.get() < (A*)0));
+      BOOST_TEST((0 < pa) == ((A*)0 < pa.get()));
+      BOOST_TEST((pb < 0) == (pb.get() < (A*)0));
+      BOOST_TEST((0 < pb) == ((A*)0 < pb.get()));
       //Greater
-      BOOST_TEST((pa > 0) == (pa.get() > 0));
-      BOOST_TEST((0 > pa) == (0 > pa.get()));
-      BOOST_TEST((pb > 0) == (pb.get() > 0));
-      BOOST_TEST((0 > pb) == (0 > pb.get()));
+      BOOST_TEST((pa > 0) == (pa.get() > (A*)0));
+      BOOST_TEST((0 > pa) == ((A*)0 > pa.get()));
+      BOOST_TEST((pb > 0) == (pb.get() > (A*)0));
+      BOOST_TEST((0 > pb) == ((A*)0 > pb.get()));
       //Less or equal
-      BOOST_TEST((pa <= 0) == (pa.get() <= 0));
-      BOOST_TEST((0 <= pa) == (0 <= pa.get()));
-      BOOST_TEST((pb <= 0) == (pb.get() <= 0));
-      BOOST_TEST((0 <= pb) == (0 <= pb.get()));
+      BOOST_TEST((pa <= 0) == (pa.get() <= (A*)0));
+      BOOST_TEST((0 <= pa) == ((A*)0 <= pa.get()));
+      BOOST_TEST((pb <= 0) == (pb.get() <= (A*)0));
+      BOOST_TEST((0 <= pb) == ((A*)0 <= pb.get()));
       //Greater or equal
-      BOOST_TEST((pa >= 0) == (pa.get() >= 0));
-      BOOST_TEST((0 >= pa) == (0 >= pa.get()));
-      BOOST_TEST((pb >= 0) == (pb.get() >= 0));
-      BOOST_TEST((0 >= pb) == (0 >= pb.get()));
+      BOOST_TEST((pa >= 0) == (pa.get() >= (A*)0));
+      BOOST_TEST((0 >= pa) == ((A*)0 >= pa.get()));
+      BOOST_TEST((pb >= 0) == (pb.get() >= (A*)0));
+      BOOST_TEST((0 >= pb) == ((A*)0 >= pb.get()));
    }
    BOOST_TEST(A::count == 0);
 }
@@ -270,25 +270,25 @@ void test()
       BOOST_TEST(!(pb != nullptr));
       BOOST_TEST(!(nullptr  != pb));
       //Less
-      BOOST_TEST((pa < nullptr) == (pa.get() < nullptr));
-      BOOST_TEST((nullptr < pa) == (nullptr < pa.get()));
-      BOOST_TEST((pb < nullptr) == (pb.get() < nullptr));
-      BOOST_TEST((nullptr < pb) == (nullptr < pb.get()));
+      BOOST_TEST((pa < nullptr) == (pa.get() < (A*)nullptr));
+      BOOST_TEST((nullptr < pa) == ((A*)nullptr < pa.get()));
+      BOOST_TEST((pb < nullptr) == (pb.get() < (A*)nullptr));
+      BOOST_TEST((nullptr < pb) == ((A*)nullptr < pb.get()));
       //Greater
-      BOOST_TEST((pa > nullptr) == (pa.get() > nullptr));
-      BOOST_TEST((nullptr > pa) == (nullptr > pa.get()));
-      BOOST_TEST((pb > nullptr) == (pb.get() > nullptr));
-      BOOST_TEST((nullptr > pb) == (nullptr > pb.get()));
+      BOOST_TEST((pa > nullptr) == (pa.get() > (A*)nullptr));
+      BOOST_TEST((nullptr > pa) == ((A*)nullptr > pa.get()));
+      BOOST_TEST((pb > nullptr) == (pb.get() > (A*)nullptr));
+      BOOST_TEST((nullptr > pb) == ((A*)nullptr > pb.get()));
       //Less or equal
-      BOOST_TEST((pa <= nullptr) == (pa.get() <= nullptr));
-      BOOST_TEST((nullptr <= pa) == (nullptr <= pa.get()));
-      BOOST_TEST((pb <= nullptr) == (pb.get() <= nullptr));
-      BOOST_TEST((nullptr <= pb) == (nullptr <= pb.get()));
+      BOOST_TEST((pa <= nullptr) == (pa.get() <= (A*)nullptr));
+      BOOST_TEST((nullptr <= pa) == ((A*)nullptr <= pa.get()));
+      BOOST_TEST((pb <= nullptr) == (pb.get() <= (A*)nullptr));
+      BOOST_TEST((nullptr <= pb) == ((A*)nullptr <= pb.get()));
       //Greater or equal
-      BOOST_TEST((pa >= nullptr) == (pa.get() >= nullptr));
-      BOOST_TEST((nullptr >= pa) == (nullptr >= pa.get()));
-      BOOST_TEST((pb >= nullptr) == (pb.get() >= nullptr));
-      BOOST_TEST((nullptr >= pb) == (nullptr >= pb.get()));
+      BOOST_TEST((pa >= nullptr) == (pa.get() >= (A*)nullptr));
+      BOOST_TEST((nullptr >= pa) == ((A*)nullptr >= pa.get()));
+      BOOST_TEST((pb >= nullptr) == (pb.get() >= (A*)nullptr));
+      BOOST_TEST((nullptr >= pb) == ((A*)nullptr >= pb.get()));
    }
    BOOST_TEST(A::count == 0);
    #endif   //#if !defined(BOOST_NO_CXX11_NULLPTR)

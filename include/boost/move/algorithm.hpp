@@ -271,4 +271,4 @@ inline F copy_or_move(I f, I l, F r
 
 #include <boost/move/detail/config_end.hpp>
 
-#endif //#ifndef BOOST_MOVE_MOVE_HPP
+#endif //#ifndef BOOST_MOVE_ALGORITHM_HPP

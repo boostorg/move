@@ -87,7 +87,9 @@
 
    template <class T>
    struct is_rv
-      : ::boost::move_detail::is_rv_impl<T>
+        //Derive from integral constant because some Boost code assummes it has
+        //a "type" internal typedef
+      : integral_constant<bool, ::boost::move_detail::is_rv_impl<T>::value >
    {};
 
    }  //namespace move_detail {

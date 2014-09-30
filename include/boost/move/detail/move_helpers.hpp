@@ -12,7 +12,7 @@
 #ifndef BOOST_MOVE_MOVE_HELPERS_HPP
 #define BOOST_MOVE_MOVE_HELPERS_HPP
 
-#include <boost/move/utility.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/move/detail/meta_utils.hpp>
 
 #if defined(BOOST_NO_CXX11_RVALUE_REFERENCES)

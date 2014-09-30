@@ -20,7 +20,7 @@
 
 //boost_move_no_copy_constructor_or_assign typedef
 //used to detect noncopyable types for other Boost libraries.
-#if defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)
+#if defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) || defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
    #define BOOST_MOVE_IMPL_NO_COPY_CTOR_OR_ASSIGN(TYPE) \
       private:\
       TYPE(TYPE &);\
@@ -87,7 +87,9 @@
 
    template <class T>
    struct is_rv
-      : ::boost::move_detail::is_rv_impl<T>
+        //Derive from integral constant because some Boost code assummes it has
+        //a "type" internal typedef
+      : integral_constant<bool, ::boost::move_detail::is_rv_impl<T>::value >
    {};
 
    }  //namespace move_detail {

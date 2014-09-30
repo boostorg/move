@@ -173,8 +173,8 @@ struct B
    : public A
 {
    static int count;
-   B() {++count;}
-   B(const B&) {++count;}
+   B() : A() {++count;}
+   B(const B &b) : A(b) {++count;}
    virtual ~B() {--count;}
 };
 

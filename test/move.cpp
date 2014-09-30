@@ -10,7 +10,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 #include <boost/move/detail/config_begin.hpp>
-#include <boost/move/utility.hpp>
+#include <boost/move/utility_core.hpp>
 #include "../example/movable.hpp"
 #include "../example/copymovable.hpp"
 #include <boost/static_assert.hpp>

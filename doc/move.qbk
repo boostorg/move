@@ -761,6 +761,7 @@ Many thanks to all boosters that have tested, reviewed and improved the library.
 *  Added `move_if_noexcept` utility. Thanks to Antony Polukhin for the implementation.
 *  Fixed bugs:
    *  [@https://svn.boost.org/trac/boost/ticket/9785 Trac #9785: ['"Compiler warning with intel icc in boost/move/core.hpp"]],
+   *  [@https://svn.boost.org/trac/boost/ticket/10460 Trac #10460: ['"Compiler error due to looser throw specifier"]],
    *  [@https://github.com/boostorg/move/pull/3 Git Pull #3: ['"Don't delete copy constructor when rvalue references are disabled"]],
 
 [endsect]

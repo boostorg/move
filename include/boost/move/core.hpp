@@ -71,7 +71,7 @@
          >::type
    {
       rv();
-      ~rv();
+      ~rv() throw();
       rv(rv const&);
       void operator=(rv const&);
    } BOOST_MOVE_ATTRIBUTE_MAY_ALIAS;

@@ -12,7 +12,7 @@
 #endif
 
 #ifdef BOOST_MSVC
-   #pragma warning (push)
-   #pragma warning (disable : 4996) // "function": was declared deprecated (_CRT_SECURE_NO_DEPRECATE/_SCL_SECURE_NO_WARNINGS)
-   #pragma warning (disable : 4675) // "function":  resolved overload was found by argument-dependent lookup
+#  pragma warning (push)
+#  pragma warning (disable : 4996) // "function": was declared deprecated (_CRT_SECURE_NO_DEPRECATE/_SCL_SECURE_NO_WARNINGS)
+#  pragma warning (disable : 4675) // "function":  resolved overload was found by argument-dependent lookup
 #endif

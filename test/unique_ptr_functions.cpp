@@ -44,6 +44,8 @@ void reset_counters()
 static const unsigned PatternSize = 8;
 static const unsigned char ff_patternbuf[PatternSize] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 static const unsigned char ee_patternbuf[PatternSize] = { 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE, 0xEE };
+static const unsigned char dd_patternbuf[PatternSize] = { 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD, 0xDD };
+static const unsigned char cc_patternbuf[PatternSize] = { 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC };
 
 struct default_init
 {
@@ -56,6 +58,16 @@ struct default_init
    {
       void *const p = ::operator new[](sz);
       return std::memset(p, 0xEE, sz);
+   }
+   static void* operator new(std::size_t sz, const std::nothrow_t &)
+   {
+      void *const p = ::operator new(sz);
+      return std::memset(p, 0xDD, sz);
+   }
+   static void* operator new[](std::size_t sz, const std::nothrow_t &)
+   {
+      void *const p = ::operator new[](sz);
+      return std::memset(p, 0xCC, sz);
    }
    unsigned char buf[PatternSize];
 };
@@ -78,6 +90,11 @@ void test()
    bml::unique_ptr<default_init> p(bml::make_unique_definit<default_init>());
    BOOST_TEST(0 == std::memcmp(p.get(), ff_patternbuf, sizeof(ff_patternbuf)));
    }
+   {
+   bml::unique_ptr<default_init> p(bml::make_unique_nothrow_definit<default_init>());
+   BOOST_TEST(0 == std::memcmp(p.get(), dd_patternbuf, sizeof(dd_patternbuf)));
+   }
+
    BOOST_TEST(A::count == 0);
    {
    bml::unique_ptr<A> p(bml::make_unique<A>());
@@ -88,7 +105,7 @@ void test()
    }
    BOOST_TEST(A::count == 0);
    {
-   bml::unique_ptr<A> p(bml::make_unique<A>(0));
+   bml::unique_ptr<A> p(bml::make_unique_nothrow<A>(0));
    BOOST_TEST(A::count == 1);
    BOOST_TEST(p->a == 0);
    BOOST_TEST(p->b == 1000);
@@ -104,7 +121,7 @@ void test()
    }
    BOOST_TEST(A::count == 0);
    {
-   bml::unique_ptr<A> p(bml::make_unique<A>(0, 1, 2));
+   bml::unique_ptr<A> p(bml::make_unique_nothrow<A>(0, 1, 2));
    BOOST_TEST(A::count == 1);
    BOOST_TEST(p->a == 0);
    BOOST_TEST(p->b == 1);
@@ -114,6 +131,7 @@ void test()
 }
 
 }  //namespace make_unique_single{
+
 
 ////////////////////////////////
 //   make_unique_single
@@ -135,11 +153,28 @@ void test()
       }
    }
    BOOST_TEST(A::count == 0);
+   {
+      bml::unique_ptr<A[]> p(bml::make_unique_nothrow<A[]>(10));
+      BOOST_TEST(A::count == 10);
+      for(int i = 0; i != 10; ++i){
+         BOOST_TEST(p[i].a == 999);
+         BOOST_TEST(p[i].b == 1000);
+         BOOST_TEST(p[i].c == 1001);
+      }
+   }
+   BOOST_TEST(A::count == 0);
    reset_counters();
    {
       bml::unique_ptr<default_init[]> p(bml::make_unique_definit<default_init[]>(10));
       for(unsigned i = 0; i != 10; ++i){
          BOOST_TEST(0 == std::memcmp(&p[i], ee_patternbuf, sizeof(ee_patternbuf)));
+      }
+   }
+   reset_counters();
+   {
+      bml::unique_ptr<default_init[]> p(bml::make_unique_nothrow_definit<default_init[]>(10));
+      for(unsigned i = 0; i != 10; ++i){
+         BOOST_TEST(0 == std::memcmp(&p[i], cc_patternbuf, sizeof(cc_patternbuf)));
       }
    }
 }

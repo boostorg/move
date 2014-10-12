@@ -375,7 +375,7 @@
    #if !defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
       //!This macro is used to achieve portable move return semantics.
-      //!The C++11 Standard allows implicit move returns when the object to be returned 
+      //!The C++11 Standard allows implicit move returns when the object to be returned
       //!is designated by a lvalue and:
       //!   - The criteria for elision of a copy operation are met OR
       //!   - The criteria would be met save for the fact that the source object is a function parameter
@@ -390,12 +390,12 @@
       //!For non-conforming compilers with rvalue references like Visual 2010 & 2012,
       //!an explicit move is performed if RET_TYPE is not a reference.
       //!
-      //! <b>Caution</b>: When using this macro in a non-conforming or C++03
+      //! <b>Caution</b>: When using this macro in non-conforming or C++03
       //!compilers, a move will be performed even if the C++11 standard does not allow it
       //!(e.g. returning a static variable). The user is responsible for using this macro
-      //!only used to return local objects that met C++11 criteria.
+      //!only to return local objects that met C++11 criteria.
       #define BOOST_MOVE_RET(RET_TYPE, REF)\
-         (REF)
+         REF
       //
 
    #else //!defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)

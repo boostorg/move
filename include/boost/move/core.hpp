@@ -253,9 +253,17 @@
 
    //Compiler workaround detection
    #if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
-      #if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ < 5) && !defined(__clang__)
-         //Pre-standard rvalue binding rules
-         #define BOOST_MOVE_OLD_RVALUE_REF_BINDING_RULES
+      #if defined(__GNUC__) && !defined(__clang__)
+         #if (__GNUC__ == 4) && (__GNUC_MINOR__ < 5)
+            //Pre-standard rvalue binding rules
+            #define BOOST_MOVE_OLD_RVALUE_REF_BINDING_RULES
+         #endif
+         #if ((__GNUC__ == 4) && (__GNUC_MINOR__ == 9) && (__GNUC_PATCHLEVEL__ < 2)) && \
+             (201103L < __cplusplus)
+            // GCC 4.9 doesn't compile parenthesized return statement in C++14 mode.
+            // https://gcc.gnu.org/PR63437
+            #define BOOST_MOVE_GCC_PARENTHESIZED_RETURN_STMT_BUG
+         #endif
       #elif defined(_MSC_VER) && (_MSC_VER == 1600)
          //Standard rvalue binding rules but with some bugs
          #define BOOST_MOVE_MSVC_10_MEMBER_RVALUE_REF_BUG
@@ -372,7 +380,9 @@
 
    #endif   //#if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
-   #if !defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if !(defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || \
+         defined(BOOST_MOVE_GCC_PARENTHESIZED_RETURN_STMT_BUG)) || \
+       defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
       //!This macro is used to achieve portable move return semantics.
       //!The C++11 Standard allows implicit move returns when the object to be returned
@@ -398,7 +408,9 @@
          REF
       //
 
-   #else //!defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #else //!(defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) ||
+         //  defined(BOOST_MOVE_GCC_PARENTHESIZED_RETURN_STMT_BUG)) ||
+         //defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
       #include <boost/move/detail/meta_utils.hpp>
 
@@ -430,7 +442,9 @@
          boost::move_detail::move_return< RET_TYPE >(REF)
       //
 
-   #endif   //!defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #endif   //!(defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) ||
+            //  defined(BOOST_MOVE_GCC_PARENTHESIZED_RETURN_STMT_BUG)) ||
+            //defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
    namespace boost {
    namespace move_detail {

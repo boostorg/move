@@ -198,6 +198,10 @@
       boost::move_detail::move_return< RET_TYPE >(REF)
    //
 
+   #define BOOST_MOVE_BASE(BASE_TYPE, ARG) \
+      ::boost::move((BASE_TYPE&)(ARG))
+   //
+
    //////////////////////////////////////////////////////////////////////////////
    //
    //                         BOOST_MOVABLE_BUT_NOT_COPYABLE
@@ -373,7 +377,6 @@
       const TYPE & \
    //
 
-
    #endif   //#if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
    #if !defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
@@ -435,6 +438,17 @@
       //
 
    #endif   //!defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
+
+   //!This macro is used to achieve portable optimal move constructors.
+   //!
+   //!When implementing the move constructor, in C++03 compilers the moved-from argument must be
+   //!cast to the base type before calling `::boost::move()` due to rvalue reference limitations.
+   //!
+   //!In C++11 compilers the cast from a rvalue reference of a derived type to a rvalue reference of
+   //!a base type is implicit.
+   #define BOOST_MOVE_BASE(BASE_TYPE, ARG) \
+      ::boost::move((BASE_TYPE&)(ARG))
+   //
 
    namespace boost {
    namespace move_detail {

@@ -16,6 +16,10 @@
 #ifndef BOOST_MOVE_CORE_HPP
 #define BOOST_MOVE_CORE_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/move/detail/config_begin.hpp>
 
 //boost_move_no_copy_constructor_or_assign typedef

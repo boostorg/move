@@ -11,6 +11,10 @@
 #ifndef BOOST_MOVE_UNIQUE_PTR_HPP_INCLUDED
 #define BOOST_MOVE_UNIQUE_PTR_HPP_INCLUDED
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/move/detail/config_begin.hpp>
 #include <boost/move/detail/workaround.hpp>
 #include <boost/move/detail/unique_ptr_meta_utils.hpp>

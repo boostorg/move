@@ -17,6 +17,10 @@
 #ifndef BOOST_MOVE_MOVE_HPP
 #define BOOST_MOVE_MOVE_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/move/detail/config_begin.hpp>
 #include <boost/move/utility.hpp>
 #include <boost/move/iterator.hpp>

@@ -12,6 +12,10 @@
 #ifndef BOOST_MOVE_MOVE_HELPERS_HPP
 #define BOOST_MOVE_MOVE_HELPERS_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/move/utility_core.hpp>
 #include <boost/move/detail/meta_utils.hpp>
 

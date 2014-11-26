@@ -13,6 +13,7 @@
 #include <boost/move/utility_core.hpp>
 #include <boost/move/unique_ptr.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/move/adl_move_swap.hpp>
 #include <boost/core/lightweight_test.hpp>
 
 //////////////////////////////////////////////
@@ -284,7 +285,7 @@ void test()
    BOOST_TEST(s2.get() == p2);
    BOOST_TEST(*s2 == A(2));
    BOOST_TEST(s2.get_deleter().state() == 2);
-   swap(s1, s2);
+   boost::adl_move_swap(s1, s2);
    BOOST_TEST(s1.get() == p2);
    BOOST_TEST(*s1 == A(2));
    BOOST_TEST(s1.get_deleter().state() == 2);

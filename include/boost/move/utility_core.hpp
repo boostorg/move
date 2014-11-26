@@ -277,14 +277,6 @@
 namespace boost{
 namespace move_detail{
 
-template<class T>
-void swap(T &a, T &b)
-{
-   T c((::boost::move(a)));
-   a = ::boost::move(b);
-   b = ::boost::move(c);
-}
-
 template <typename T>
 typename boost::move_detail::add_rvalue_reference<T>::type declval();
 

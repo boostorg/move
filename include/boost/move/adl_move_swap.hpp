@@ -43,45 +43,181 @@
 
 #include <boost/move/utility_core.hpp> //for boost::move
 
+#if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+
+#if defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+namespace boost_move_member_swap {
+
+struct dont_care
+{
+   dont_care(...);
+};
+
+struct private_type
+{
+   static private_type p;
+   private_type const &operator,(int) const;
+};
+
+typedef char yes_type;            
+struct no_type{ char dummy[2]; }; 
+
+template<typename T>
+no_type is_private_type(T const &);
+
+yes_type is_private_type(private_type const &);
+
+template <typename Type>
+class has_member_function_named_swap
+{
+   struct BaseMixin
+   {
+      void swap();
+   };
+
+   struct Base : public Type, public BaseMixin { Base(); };
+   template <typename T, T t> class Helper{};
+
+   template <typename U>
+   static no_type deduce(U*, Helper<void (BaseMixin::*)(), &U::swap>* = 0);
+   static yes_type deduce(...);
+
+   public:
+   static const bool value = sizeof(yes_type) == sizeof(deduce((Base*)(0)));
+};
+
+template<typename Fun, bool HasFunc>
+struct has_member_swap_impl
+{
+   static const bool value = false;
+};
+
+template<typename Fun>
+struct has_member_swap_impl<Fun, true>
+{
+   struct FunWrap : Fun
+   {
+      FunWrap();
+
+      using Fun::swap;
+      private_type swap(dont_care) const;
+   };
+
+   static Fun &declval_fun();
+   static FunWrap declval_wrap();
+
+   static bool const value =
+      sizeof(no_type) == sizeof(is_private_type( (declval_wrap().swap(declval_fun()), 0)) );
+};
+
+template<typename Fun>
+struct has_member_swap : public has_member_swap_impl
+      <Fun, has_member_function_named_swap<Fun>::value>
+{};
+
+}  //namespace boost_move_member_swap
+
 namespace boost_move_adl_swap{
 
+template<class P1, class P2, bool = P1::value>
+struct and_op_impl
+{  static const bool value = false; };
+
+template<class P1, class P2>
+struct and_op_impl<P1, P2, true>
+{  static const bool value = P2::value;   };
+
+template<class P1, class P2>
+struct and_op
+   : and_op_impl<P1, P2>
+{};
+
+//////
+
+template<class P1, class P2, bool = P1::value>
+struct and_op_not_impl
+{  static const bool value = false; };
+
+template<class P1, class P2>
+struct and_op_not_impl<P1, P2, true>
+{  static const bool value = !P2::value;   };
+
+template<class P1, class P2>
+struct and_op_not
+   : and_op_not_impl<P1, P2>
+{};
+
 template<class T>
-void swap_proxy(T& left, T& right, typename boost::move_detail::enable_if_c<!boost::move_detail::has_move_emulation_enabled_impl<T>::value>::type* = 0)
+void swap_proxy(T& x, T& y, typename boost::move_detail::enable_if_c<!boost::move_detail::has_move_emulation_enabled_impl<T>::value>::type* = 0)
 {
    //use std::swap if argument dependent lookup fails
    //Use using directive ("using namespace xxx;") instead as some older compilers
    //don't do ADL with using declarations ("using ns::func;").
    using namespace std;
-   swap(left, right);
+   swap(x, y);
 }
 
 template<class T>
-void swap_proxy(T& left, T& right, typename boost::move_detail::enable_if_c<boost::move_detail::has_move_emulation_enabled_impl<T>::value>::type* = 0)
+void swap_proxy(T& x, T& y
+               , typename boost::move_detail::enable_if< and_op_not_impl<boost::move_detail::has_move_emulation_enabled_impl<T>
+                                                                        , boost_move_member_swap::has_member_swap<T> >
+                                                       >::type* = 0)
+{  T t(::boost::move(x)); x = ::boost::move(y); y = ::boost::move(t);  }
+
+template<class T>
+void swap_proxy(T& x, T& y
+               , typename boost::move_detail::enable_if< and_op_impl< boost::move_detail::has_move_emulation_enabled_impl<T>
+                                                                    , boost_move_member_swap::has_member_swap<T> >
+                                                       >::type* = 0)
+{  x.swap(y);  }
+
+}  //namespace boost_move_adl_swap{
+
+#else
+
+namespace boost_move_adl_swap{
+
+template<class T>
+void swap_proxy(T& x, T& y)
 {
-   T tmp(::boost::move(left));
-   left = ::boost::move(right);
-   right = ::boost::move(tmp);
+   using std::swap;
+   swap(x, y);
 }
 
+}  //namespace boost_move_adl_swap{
+
+#endif   //#if defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+
+namespace boost_move_adl_swap{
+
 template<class T, std::size_t N>
-void swap_proxy(T (& left)[N], T (& right)[N])
+void swap_proxy(T (& x)[N], T (& y)[N])
 {
    for (std::size_t i = 0; i < N; ++i){
-      ::boost_move_adl_swap::swap_proxy(left[i], right[i]);
+      ::boost_move_adl_swap::swap_proxy(x[i], y[i]);
    }
 }
 
 }  //namespace boost_move_adl_swap {
 
+#endif   //!defined(BOOST_MOVE_DOXYGEN_INVOKED)
+
 namespace boost{
 
-// adl_move_swap has two template arguments, instead of one, to
-// avoid ambiguity when swapping objects of a Boost type that does
-// not have its own boost::swap overload.
+//! Exchanges the values of a and b, using Argument Dependent Lookup (ADL) to select a
+//! specialized swap function if available. If no specialized swap function is available,
+//! std::swap is used.
+//!
+//! <b>Exception</b>: If T uses Boost.Move's move emulation and the compiler has
+//! no rvalue references then:
+//!
+//!   -  If T has a <code>T::swap(T&)</code> member, that member is called.
+//!   -  Otherwise a move-based swap is called, equivalent to: 
+//!      <code>T t(::boost::move(x)); x = ::boost::move(y); y = ::boost::move(t);</code>.
 template<class T>
-void adl_move_swap(T& left, T& right)
+void adl_move_swap(T& x, T& y)
 {
-   ::boost_move_adl_swap::swap_proxy(left, right);
+   ::boost_move_adl_swap::swap_proxy(x, y);
 }
 
 }  //namespace boost{

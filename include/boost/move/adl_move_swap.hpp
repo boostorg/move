@@ -25,10 +25,12 @@
 //Try to avoid including <algorithm>, as it's quite big
 #if defined(_MSC_VER) && defined(BOOST_DINKUMWARE_STDLIB)
    #include <utility>   //Dinkum libraries define std::swap in utility which is lighter than algorithm
-#elif defined(BOOST_GCC) && defined(BOOST_GNU_STDLIB)
-   #if (__GNUC__ < 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ < 3))
-      #include <bits/stl_algobase.h>   //algobase is lighter than <algorithm>
-   #elif ((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
+#elif defined(BOOST_GNU_STDLIB)
+   //For non-GCC compilers, where GNUC version is not very reliable, or old GCC versions
+   //use the good old stl_algobase header, which is quite lightweight
+   #if !defined(BOOST_GCC) || ((__GNUC__ < 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ < 3)))
+      #include <bits/stl_algobase.h>
+   #elif (__GNUC__ == 4) && (__GNUC_MINOR__ == 3)
       //In GCC 4.3 a tiny stl_move.h was created with swap and move utilities
       #include <bits/stl_move.h>
    #else
@@ -37,8 +39,10 @@
    #endif
 #elif defined(_LIBCPP_VERSION)
    #include <type_traits>  //The initial import of libc++ defines std::swap and still there
-#else //Fallback
-   #include <algorithm>
+#elif __cplusplus >= 201103L
+   #include <utility>    //Fallback for C++ >= 2011
+#else
+   #include <algorithm>  //Fallback for C++98/03
 #endif
 
 #include <boost/move/utility_core.hpp> //for boost::move

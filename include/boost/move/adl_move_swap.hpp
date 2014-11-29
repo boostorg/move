@@ -25,15 +25,15 @@
 //Try to avoid including <algorithm>, as it's quite big
 #if defined(_MSC_VER) && defined(BOOST_DINKUMWARE_STDLIB)
    #include <utility>   //Dinkum libraries define std::swap in utility which is lighter than algorithm
-#elif defined(BOOST_GNU_STDLIB)
+#elif defined(BOOST_GCC) && defined(BOOST_GNU_STDLIB)
    #if (__GNUC__ < 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ < 3))
       #include <bits/stl_algobase.h>   //algobase is lighter than <algorithm>
    #elif ((__GNUC__ == 4) && (__GNUC_MINOR__ == 3))
       //In GCC 4.3 a tiny stl_move.h was created with swap and move utilities
-      #include <bits/stl_move.h>   //algobase is much lighter than <algorithm>
+      #include <bits/stl_move.h>
    #else
       //In GCC 4.4 stl_move.h was renamed to move.h
-      #include <bits/move.h>   //algobase is much lighter than <algorithm>
+      #include <bits/move.h>
    #endif
 #elif defined(_LIBCPP_VERSION)
    #include <type_traits>  //The initial import of libc++ defines std::swap and still there

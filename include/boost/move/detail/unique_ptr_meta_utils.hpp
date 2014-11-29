@@ -14,6 +14,10 @@
 #ifndef BOOST_MOVE_UNIQUE_PTR_DETAIL_META_UTILS_HPP
 #define BOOST_MOVE_UNIQUE_PTR_DETAIL_META_UTILS_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <cstddef>   //for std::size_t
 
 //Small meta-typetraits to support move

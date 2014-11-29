@@ -14,6 +14,10 @@
 #ifndef BOOST_MOVE_ALGORITHM_HPP
 #define BOOST_MOVE_ALGORITHM_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/move/detail/config_begin.hpp>
 
 #include <boost/move/utility_core.hpp>

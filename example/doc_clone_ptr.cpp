@@ -64,19 +64,19 @@ class Derived : public Base
    // Compiler-generated copy constructor...
 
    Derived(BOOST_RV_REF(Derived) x)             // Move ctor
-      : Base(boost::move(static_cast<Base&>(x))), 
+      : Base(BOOST_MOVE_BASE(Base, x)), 
         mem_(boost::move(x.mem_)) { }
 
    Derived& operator=(BOOST_RV_REF(Derived) x)  // Move assign
    {
-      Base::operator=(boost::move(static_cast<Base&>(x)));
-      mem_  = boost::move(x.mem_);
+      Base::operator=(BOOST_MOVE_BASE(Base, x));
+      mem_ = boost::move(x.mem_);
       return *this;
    }
 
    Derived& operator=(BOOST_COPY_ASSIGN_REF(Derived) x)  // Copy assign
    {
-      Base::operator=(static_cast<const Base&>(x));
+      Base::operator=(x);
       mem_  = x.mem_;
       return *this;
    }

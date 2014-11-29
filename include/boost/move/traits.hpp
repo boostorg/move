@@ -14,6 +14,10 @@
 #ifndef BOOST_MOVE_MOVE_TRAITS_HPP
 #define BOOST_MOVE_MOVE_TRAITS_HPP
 
+#if defined(_MSC_VER)
+#  pragma once
+#endif
+
 #include <boost/move/detail/config_begin.hpp>
 #include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/type_traits/is_nothrow_move_constructible.hpp>

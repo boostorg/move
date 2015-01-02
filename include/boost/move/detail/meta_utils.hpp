@@ -268,7 +268,7 @@ struct is_lvalue_reference<T&>
 template<class T>
 struct is_class_or_union
 {
-   struct twochar { char _[2]; };
+   struct twochar { char dummy[2]; };
    template <class U>
    static char is_class_or_union_tester(void(U::*)(void));
    template <class U>

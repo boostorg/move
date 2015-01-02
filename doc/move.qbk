@@ -766,6 +766,7 @@ Many thanks to all boosters that have tested, reviewed and improved the library.
 
 *  Added [macroref BOOST_MOVE_BASE BOOST_MOVE_BASE] utility.
 *  Added [funcref boost::adl_move_swap adl_move_swap] utility.
+*  Reduced dependencies on other Boost libraries to make the library a bit more lightweight.
 
 [endsect]
 

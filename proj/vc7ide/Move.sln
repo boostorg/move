@@ -231,7 +231,9 @@ Global
 		..\..\..\..\boost\move\detail\config_end.hpp = ..\..\..\..\boost\move\detail\config_end.hpp
 		..\..\..\..\boost\move\core.hpp = ..\..\..\..\boost\move\core.hpp
 		..\..\..\..\boost\move\default_delete.hpp = ..\..\..\..\boost\move\default_delete.hpp
+		..\..\..\..\boost\move\detail\fwd_macros.hpp = ..\..\..\..\boost\move\detail\fwd_macros.hpp
 		..\..\..\..\boost\move\iterator.hpp = ..\..\..\..\boost\move\iterator.hpp
+		..\..\..\..\boost\move\detail\iterator_traits.hpp = ..\..\..\..\boost\move\detail\iterator_traits.hpp
 		..\..\doc\Jamfile.v2 = ..\..\doc\Jamfile.v2
 		..\..\..\..\boost\move\make_unique.hpp = ..\..\..\..\boost\move\make_unique.hpp
 		..\..\..\..\boost\move\detail\meta_utils.hpp = ..\..\..\..\boost\move\detail\meta_utils.hpp
@@ -239,6 +241,7 @@ Global
 		..\..\doc\move.qbk = ..\..\doc\move.qbk
 		..\..\..\..\boost\move\detail\move_helpers.hpp = ..\..\..\..\boost\move\detail\move_helpers.hpp
 		..\..\..\..\boost\move\traits.hpp = ..\..\..\..\boost\move\traits.hpp
+		..\..\..\..\boost\move\detail\type_traits.hpp = ..\..\..\..\boost\move\detail\type_traits.hpp
 		..\..\..\..\boost\move\unique_ptr.hpp = ..\..\..\..\boost\move\unique_ptr.hpp
 		..\..\..\..\boost\move\detail\unique_ptr_meta_utils.hpp = ..\..\..\..\boost\move\detail\unique_ptr_meta_utils.hpp
 		..\..\test\unique_ptr_test_utils_beg.hpp = ..\..\test\unique_ptr_test_utils_beg.hpp

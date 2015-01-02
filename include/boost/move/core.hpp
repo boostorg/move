@@ -21,6 +21,7 @@
 #endif
 
 #include <boost/move/detail/config_begin.hpp>
+#include <boost/move/detail/workaround.hpp>
 
 //boost_move_no_copy_constructor_or_assign typedef
 //used to detect noncopyable types for other Boost libraries.
@@ -258,23 +259,6 @@
    }}
 
 #else    //BOOST_NO_CXX11_RVALUE_REFERENCES
-
-   //Compiler workaround detection
-   #if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
-      #if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ < 5) && !defined(__clang__)
-         //Pre-standard rvalue binding rules
-         #define BOOST_MOVE_OLD_RVALUE_REF_BINDING_RULES
-      #elif defined(_MSC_VER) && (_MSC_VER == 1600)
-         //Standard rvalue binding rules but with some bugs
-         #define BOOST_MOVE_MSVC_10_MEMBER_RVALUE_REF_BUG
-         #define BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG
-         //Use standard library for MSVC to avoid namespace issues as
-         //some move calls in the STL are not fully qualified.
-         //#define BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE
-      #elif defined(_MSC_VER) && (_MSC_VER == 1700)
-         #define BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG
-      #endif
-   #endif
 
    //! This macro marks a type as movable but not copyable, disabling copy construction
    //! and assignment. The user will need to write a move constructor/assignment as explained

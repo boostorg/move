@@ -400,7 +400,9 @@ template<> struct is_integral_cv<                 char16_t>{  static const bool 
 #ifndef BOOST_NO_CXX11_CHAR32_T
 template<> struct is_integral_cv<                 char32_t>{  static const bool value = true; };
 #endif
+#ifndef BOOST_NO_INTRINSIC_WCHAR_T
 template<> struct is_integral_cv<                  wchar_t>{  static const bool value = true; };
+#endif
 template<> struct is_integral_cv<                    short>{  static const bool value = true; };
 template<> struct is_integral_cv<           unsigned short>{  static const bool value = true; };
 template<> struct is_integral_cv<                      int>{  static const bool value = true; };

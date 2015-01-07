@@ -64,7 +64,14 @@ struct unique_ptr_if<T[N]>
    typedef void t_is_array_of_known_bound;
 };
 
-static std::nothrow_t *pnothrow;
+template <int Dummy = 0>
+struct nothrow_holder
+{
+   static std::nothrow_t *pnothrow;   
+};
+
+template <int Dummy>
+std::nothrow_t *nothrow_holder<Dummy>::pnothrow;
 
 }  //namespace move_upmu {
 }  //namespace boost{
@@ -92,7 +99,7 @@ template<class T, class... Args>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_upmu::unique_ptr_if<T>::t_is_not_array)
       make_unique_nothrow(BOOST_FWD_REF(Args)... args)
-{  return unique_ptr<T>(new (*boost::move_upmu::pnothrow)T(::boost::forward<Args>(args)...));  }
+{  return unique_ptr<T>(new (*boost::move_upmu::nothrow_holder<>::pnothrow)T(::boost::forward<Args>(args)...));  }
 
 #else
    #define BOOST_MOVE_MAKE_UNIQUE_CODE(N)\
@@ -104,7 +111,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
       template<class T BOOST_MOVE_I##N BOOST_MOVE_CLASS##N>\
       typename ::boost::move_upmu::unique_ptr_if<T>::t_is_not_array\
          make_unique_nothrow( BOOST_MOVE_UREF##N)\
-      {  return unique_ptr<T>( new (*boost::move_upmu::pnothrow)T ( BOOST_MOVE_FWD##N ) );  }\
+      {  return unique_ptr<T>( new (*boost::move_upmu::nothrow_holder<>::pnothrow)T ( BOOST_MOVE_FWD##N ) );  }\
       //
    BOOST_MOVE_ITERATE_0TO9(BOOST_MOVE_MAKE_UNIQUE_CODE)
    #undef BOOST_MOVE_MAKE_UNIQUE_CODE
@@ -130,7 +137,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
    typename ::boost::move_upmu::unique_ptr_if<T>::t_is_not_array)
       make_unique_nothrow_definit()
 {
-    return unique_ptr<T>(new (*boost::move_upmu::pnothrow)T);
+    return unique_ptr<T>(new (*boost::move_upmu::nothrow_holder<>::pnothrow)T);
 }
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of 
@@ -156,7 +163,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
       make_unique_nothrow(std::size_t n)
 {
     typedef typename ::boost::move_upmu::remove_extent<T>::type U;
-    return unique_ptr<T>(new (*boost::move_upmu::pnothrow)U[n]());
+    return unique_ptr<T>(new (*boost::move_upmu::nothrow_holder<>::pnothrow)U[n]());
 }
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of 
@@ -182,7 +189,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
       make_unique_nothrow_definit(std::size_t n)
 {
     typedef typename ::boost::move_upmu::remove_extent<T>::type U;
-    return unique_ptr<T>(new (*boost::move_upmu::pnothrow) U[n]);
+    return unique_ptr<T>(new (*boost::move_upmu::nothrow_holder<>::pnothrow) U[n]);
 }
 
 #if !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)

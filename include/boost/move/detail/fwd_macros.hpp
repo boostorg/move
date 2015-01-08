@@ -46,35 +46,11 @@ namespace move_detail {
    };
 
    template<class T>
-   struct mref<const T>
-   {
-      explicit mref(const T &t) : t_(t) {}
-      const T &t_;
-      const T & get() {  return t_;   }
-   };
-
-   template<class T>
-   struct mref<const T &&>
-   {
-      explicit mref(const T &t) : t_(t){}
-      const T &t_;
-      const T & get() {  return t_;   }
-   };
-
-   template<class T>
    struct mref
    {
       explicit mref(T &&t) : t_(t) {}
       T &t_;
-      T && get() {  return ::boost::move(t_);   }
-   };
-
-   template<class T>
-   struct mref<T &&>
-   {
-      explicit mref(T &&t) : t_(t){}
-      T &t_;
-      T && get()  { return ::boost::move(t_); }
+      T &&get() {  return ::boost::move(t_);   }
    };
 
 }  //namespace move_detail {
@@ -144,12 +120,14 @@ namespace move_detail {
 #define BOOST_MOVE_DECLVAL9 BOOST_MOVE_DECLVAL8, ::boost::move_detail::declval<P8>()
 
 #ifdef BOOST_MOVE_MSVC_10_MEMBER_RVALUE_REF_BUG
-   #define BOOST_MOVE_MFWD(N) ::boost::forward<P0>(this->m_p##N.get())
-   #define BOOST_MOVE_MREF(T) ::boost::move_detail::mref<T>
+   #define BOOST_MOVE_MREF(T)    ::boost::move_detail::mref<T>
+   #define BOOST_MOVE_MFWD(N)    ::boost::forward<P##N>(this->m_p##N.get())
 #else
-   #define BOOST_MOVE_MFWD(N) ::boost::forward<P0>(this->m_p##N)
-   #define BOOST_MOVE_MREF(T) BOOST_FWD_REF(T)
+   #define BOOST_MOVE_MREF(T)    BOOST_FWD_REF(T)
+   #define BOOST_MOVE_MFWD(N)    ::boost::forward<P##N>(this->m_p##N)
 #endif
+#define BOOST_MOVE_MITFWD(N)  *this->m_p##N
+#define BOOST_MOVE_MINC(N)    ++this->m_p##N
 
 //BOOST_MOVE_MFWDN
 #define BOOST_MOVE_MFWD0
@@ -163,6 +141,31 @@ namespace move_detail {
 #define BOOST_MOVE_MFWD8 BOOST_MOVE_MFWD7, BOOST_MOVE_MFWD(7)
 #define BOOST_MOVE_MFWD9 BOOST_MOVE_MFWD8, BOOST_MOVE_MFWD(8)
 
+//BOOST_MOVE_MINCN
+#define BOOST_MOVE_MINC0
+#define BOOST_MOVE_MINC1 BOOST_MOVE_MINC(0)
+#define BOOST_MOVE_MINC2 BOOST_MOVE_MINC1, BOOST_MOVE_MINC(1)
+#define BOOST_MOVE_MINC3 BOOST_MOVE_MINC2, BOOST_MOVE_MINC(2)
+#define BOOST_MOVE_MINC4 BOOST_MOVE_MINC3, BOOST_MOVE_MINC(3)
+#define BOOST_MOVE_MINC5 BOOST_MOVE_MINC4, BOOST_MOVE_MINC(4)
+#define BOOST_MOVE_MINC6 BOOST_MOVE_MINC5, BOOST_MOVE_MINC(5)
+#define BOOST_MOVE_MINC7 BOOST_MOVE_MINC6, BOOST_MOVE_MINC(6)
+#define BOOST_MOVE_MINC8 BOOST_MOVE_MINC7, BOOST_MOVE_MINC(7)
+#define BOOST_MOVE_MINC9 BOOST_MOVE_MINC8, BOOST_MOVE_MINC(8)
+
+//BOOST_MOVE_MITFWDN
+#define BOOST_MOVE_MITFWD0
+#define BOOST_MOVE_MITFWD1 BOOST_MOVE_MITFWD(0)
+#define BOOST_MOVE_MITFWD2 BOOST_MOVE_MITFWD1, BOOST_MOVE_MITFWD(1)
+#define BOOST_MOVE_MITFWD3 BOOST_MOVE_MITFWD2, BOOST_MOVE_MITFWD(2)
+#define BOOST_MOVE_MITFWD4 BOOST_MOVE_MITFWD3, BOOST_MOVE_MITFWD(3)
+#define BOOST_MOVE_MITFWD5 BOOST_MOVE_MITFWD4, BOOST_MOVE_MITFWD(4)
+#define BOOST_MOVE_MITFWD6 BOOST_MOVE_MITFWD5, BOOST_MOVE_MITFWD(5)
+#define BOOST_MOVE_MITFWD7 BOOST_MOVE_MITFWD6, BOOST_MOVE_MITFWD(6)
+#define BOOST_MOVE_MITFWD8 BOOST_MOVE_MITFWD7, BOOST_MOVE_MITFWD(7)
+#define BOOST_MOVE_MITFWD9 BOOST_MOVE_MITFWD8, BOOST_MOVE_MITFWD(8)
+
+
 //BOOST_MOVE_FWD_INITN
 #define BOOST_MOVE_FWD_INIT0
 #define BOOST_MOVE_FWD_INIT1 m_p0(::boost::forward<P0>(p0))
@@ -175,6 +178,18 @@ namespace move_detail {
 #define BOOST_MOVE_FWD_INIT8 BOOST_MOVE_FWD_INIT7, m_p7(::boost::forward<P7>(p7))
 #define BOOST_MOVE_FWD_INIT9 BOOST_MOVE_FWD_INIT8, m_p8(::boost::forward<P8>(p8))
 
+//BOOST_MOVE_VAL_INITN
+#define BOOST_MOVE_VAL_INIT0
+#define BOOST_MOVE_VAL_INIT1 m_p0(p0)
+#define BOOST_MOVE_VAL_INIT2 BOOST_MOVE_VAL_INIT1, m_p1(p1)
+#define BOOST_MOVE_VAL_INIT3 BOOST_MOVE_VAL_INIT2, m_p2(p2)
+#define BOOST_MOVE_VAL_INIT4 BOOST_MOVE_VAL_INIT3, m_p3(p3)
+#define BOOST_MOVE_VAL_INIT5 BOOST_MOVE_VAL_INIT4, m_p4(p4)
+#define BOOST_MOVE_VAL_INIT6 BOOST_MOVE_VAL_INIT5, m_p5(p5)
+#define BOOST_MOVE_VAL_INIT7 BOOST_MOVE_VAL_INIT6, m_p6(p6)
+#define BOOST_MOVE_VAL_INIT8 BOOST_MOVE_VAL_INIT7, m_p7(p7)
+#define BOOST_MOVE_VAL_INIT9 BOOST_MOVE_VAL_INIT8, m_p8(p8)
+
 //BOOST_MOVE_UREFN
 #define BOOST_MOVE_UREF0
 #define BOOST_MOVE_UREF1 BOOST_FWD_REF(P0) p0
@@ -186,6 +201,18 @@ namespace move_detail {
 #define BOOST_MOVE_UREF7 BOOST_MOVE_UREF6, BOOST_FWD_REF(P6) p6
 #define BOOST_MOVE_UREF8 BOOST_MOVE_UREF7, BOOST_FWD_REF(P7) p7
 #define BOOST_MOVE_UREF9 BOOST_MOVE_UREF8, BOOST_FWD_REF(P8) p8
+
+//BOOST_MOVE_VALN
+#define BOOST_MOVE_VAL0
+#define BOOST_MOVE_VAL1 P0 p0
+#define BOOST_MOVE_VAL2 BOOST_MOVE_VAL1, BOOST_FWD_REF(P1) p1
+#define BOOST_MOVE_VAL3 BOOST_MOVE_VAL2, BOOST_FWD_REF(P2) p2
+#define BOOST_MOVE_VAL4 BOOST_MOVE_VAL3, BOOST_FWD_REF(P3) p3
+#define BOOST_MOVE_VAL5 BOOST_MOVE_VAL4, BOOST_FWD_REF(P4) p4
+#define BOOST_MOVE_VAL6 BOOST_MOVE_VAL5, BOOST_FWD_REF(P5) p5
+#define BOOST_MOVE_VAL7 BOOST_MOVE_VAL6, BOOST_FWD_REF(P6) p6
+#define BOOST_MOVE_VAL8 BOOST_MOVE_VAL7, BOOST_FWD_REF(P7) p7
+#define BOOST_MOVE_VAL9 BOOST_MOVE_VAL8, BOOST_FWD_REF(P8) p8
 
 //BOOST_MOVE_UREFQN
 #define BOOST_MOVE_UREFQ0
@@ -283,6 +310,18 @@ namespace move_detail {
 #define BOOST_MOVE_MREF7 BOOST_MOVE_MREF6 BOOST_MOVE_MREF(P6) m_p6;
 #define BOOST_MOVE_MREF8 BOOST_MOVE_MREF7 BOOST_MOVE_MREF(P7) m_p7;
 #define BOOST_MOVE_MREF9 BOOST_MOVE_MREF8 BOOST_MOVE_MREF(P8) m_p8;
+
+//BOOST_MOVE_MEMBX
+#define BOOST_MOVE_MEMB0
+#define BOOST_MOVE_MEMB1 P0 m_p0;
+#define BOOST_MOVE_MEMB2 BOOST_MOVE_MEMB1 P1 m_p1;
+#define BOOST_MOVE_MEMB3 BOOST_MOVE_MEMB2 P2 m_p2;
+#define BOOST_MOVE_MEMB4 BOOST_MOVE_MEMB3 P3 m_p3;
+#define BOOST_MOVE_MEMB5 BOOST_MOVE_MEMB4 P4 m_p4;
+#define BOOST_MOVE_MEMB6 BOOST_MOVE_MEMB5 P5 m_p5;
+#define BOOST_MOVE_MEMB7 BOOST_MOVE_MEMB6 P6 m_p6;
+#define BOOST_MOVE_MEMB8 BOOST_MOVE_MEMB7 P7 m_p7;
+#define BOOST_MOVE_MEMB9 BOOST_MOVE_MEMB8 P8 m_p8;
 
 //BOOST_MOVE_TMPL_LTN
 #define BOOST_MOVE_TMPL_LT0

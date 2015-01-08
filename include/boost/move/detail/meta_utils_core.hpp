@@ -42,10 +42,8 @@ struct if_c<false,T1,T2>
 //             if_
 //////////////////////////////////////
 template<typename T1, typename T2, typename T3>
-struct if_
-{
-   typedef typename if_c<0 != T1::value, T2, T3>::type type;
-};
+struct if_ : if_c<0 != T1::value, T2, T3>
+{};
 
 //enable_if_
 template <bool B, class T = void>
@@ -64,13 +62,13 @@ struct enable_if_c<false, T> {};
 //           enable_if
 //////////////////////////////////////
 template <class Cond, class T = void>
-struct enable_if : public enable_if_c<Cond::value, T> {};
+struct enable_if : enable_if_c<Cond::value, T> {};
 
 //////////////////////////////////////
 //          disable_if
 //////////////////////////////////////
 template <class Cond, class T = void>
-struct disable_if : public enable_if_c<!Cond::value, T> {};
+struct disable_if : enable_if_c<!Cond::value, T> {};
 
 //////////////////////////////////////
 //          integral_constant

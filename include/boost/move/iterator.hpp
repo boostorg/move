@@ -14,7 +14,7 @@
 #ifndef BOOST_MOVE_ITERATOR_HPP
 #define BOOST_MOVE_ITERATOR_HPP
 
-#if defined(_MSC_VER)
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 

@@ -11,7 +11,7 @@
 #ifndef BOOST_MOVE_MAKE_UNIQUE_HPP_INCLUDED
 #define BOOST_MOVE_MAKE_UNIQUE_HPP_INCLUDED
 
-#if defined(_MSC_VER)
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 

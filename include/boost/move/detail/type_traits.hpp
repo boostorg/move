@@ -16,7 +16,7 @@
 #ifndef BOOST_MOVE_DETAIL_TYPE_TRAITS_HPP
 #define BOOST_MOVE_DETAIL_TYPE_TRAITS_HPP
 
-#if defined(_MSC_VER)
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 

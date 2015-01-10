@@ -14,7 +14,7 @@
 #ifndef BOOST_MOVE_DETAIL_META_UTILS_HPP
 #define BOOST_MOVE_DETAIL_META_UTILS_HPP
 
-#if defined(_MSC_VER)
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 

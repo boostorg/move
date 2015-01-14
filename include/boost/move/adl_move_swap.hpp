@@ -12,7 +12,7 @@
 #ifndef BOOST_MOVE_ADL_MOVE_SWAP_HPP
 #define BOOST_MOVE_ADL_MOVE_SWAP_HPP
 
-#if defined(_MSC_VER)
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 

@@ -104,7 +104,9 @@
 #     define BOOST_MOVE_HAS_TRIVIAL_CONSTRUCTOR(T) __has_trivial_constructor(T)
 #   endif
 #   if __has_feature(has_trivial_copy)
-#     define BOOST_MOVE_HAS_TRIVIAL_COPY(T) (__has_trivial_copy(T))
+#     //There are problems with deleted copy constructors detected as trivially copyable.
+#     //http://stackoverflow.com/questions/12754886/has-trivial-copy-behaves-differently-in-clang-and-gcc-whos-right
+#     define BOOST_MOVE_HAS_TRIVIAL_COPY(T) (__has_trivial_copy(T) && ::boost::move_detail::is_copy_constructible<T>::value)
 #   endif
 #   if __has_feature(has_trivial_assign)
 #     define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) (__has_trivial_assign(T) )
@@ -530,6 +532,35 @@ struct is_function
 {};
 
 //////////////////////////////////////
+//             is_arithmetic
+//////////////////////////////////////
+template <class T>
+struct is_arithmetic
+{
+   static const bool value = is_floating_point<T>::value ||
+                             is_integral<T>::value;
+};
+
+//////////////////////////////////////
+//    is_member_function_pointer
+//////////////////////////////////////
+template <class T>
+struct is_member_function_pointer_cv
+{
+   static const bool value = false;
+};
+
+template <class T, class C>
+struct is_member_function_pointer_cv<T C::*>
+   : is_function<T>
+{};
+
+template <class T>
+struct is_member_function_pointer
+    : is_member_function_pointer_cv<typename remove_cv<T>::type>
+{};
+
+//////////////////////////////////////
 //             is_enum
 //////////////////////////////////////
 #if !defined(BOOST_MOVE_IS_ENUM)
@@ -537,15 +568,14 @@ struct is_function
 template <class T>
 struct is_enum_nonintrinsic
 {
-   static const bool value =  !is_void<T>::value           &&
-                              !is_floating_point<T>::value &&
-                              !is_integral<T>::value       &&
+   static const bool value =  !is_arithmetic<T>::value     &&
+                              !is_reference<T>::value      &&
+                              !is_class_or_union<T>::value &&
+                              !is_array<T>::value          &&
+                              !is_void<T>::value           &&
                               !is_nullptr_t<T>::value      &&
                               !is_member_pointer<T>::value &&
                               !is_pointer<T>::value        &&
-                              !is_array<T>::value          &&
-                              !is_class_or_union<T>::value &&
-                              !is_reference<T>::value      &&
                               !is_function<T>::value;
 };
 #endif

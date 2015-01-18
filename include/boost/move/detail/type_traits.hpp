@@ -811,6 +811,15 @@ struct is_nothrow_move_assignable
 {  static const bool value = BOOST_MOVE_IS_NOTHROW_MOVE_ASSIGNABLE(T);  };
 
 //////////////////////////////////////
+//    is_nothrow_swappable
+//////////////////////////////////////
+template<class T>
+struct is_nothrow_swappable
+{
+   static const bool value = is_empty<T>::value || is_pod<T>::value;
+};
+
+//////////////////////////////////////
 //       alignment_of
 //////////////////////////////////////
 template <typename T>

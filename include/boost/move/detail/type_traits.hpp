@@ -679,7 +679,7 @@ struct empty_helper_t1 : public T
 
 struct empty_helper_t2 { int i[256]; };
 
-template <typename T, bool IsClass = false>
+template <typename T, bool IsClass = is_class<T>::value >
 struct is_empty_nonintrinsic
 {
    static const bool value = false;

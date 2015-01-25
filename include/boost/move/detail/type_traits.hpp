@@ -70,6 +70,7 @@
     // user defined specializations as well as compiler intrinsics as
     // and when they become available:
 #   include <msl_utility>
+#   define BOOST_MOVE_IS_UNION(T) BOOST_STD_EXTENSION_NAMESPACE::is_union<T>::value
 #   define BOOST_MOVE_IS_POD(T) BOOST_STD_EXTENSION_NAMESPACE::is_POD<T>::value
 #   define BOOST_MOVE_HAS_TRIVIAL_CONSTRUCTOR(T) BOOST_STD_EXTENSION_NAMESPACE::has_trivial_default_ctor<T>::value
 #   define BOOST_MOVE_HAS_TRIVIAL_COPY(T) BOOST_STD_EXTENSION_NAMESPACE::has_trivial_copy_ctor<T>::value
@@ -79,7 +80,9 @@
 
 #if (defined(BOOST_MSVC) && defined(BOOST_MSVC_FULL_VER) && (BOOST_MSVC_FULL_VER >=140050215))\
          || (defined(BOOST_INTEL) && defined(_MSC_VER) && (_MSC_VER >= 1500))
+#   define BOOST_MOVE_IS_UNION(T) __is_union(T)
 #   define BOOST_MOVE_IS_POD(T)                    (__is_pod(T) && __has_trivial_constructor(T))
+#   define BOOST_MOVE_IS_EMPTY(T)                  __is_empty(T)
 #   define BOOST_MOVE_HAS_TRIVIAL_CONSTRUCTOR(T)   __has_trivial_constructor(T)
 #   define BOOST_MOVE_HAS_TRIVIAL_COPY(T)          (__has_trivial_copy(T)|| ::boost::move_detail::is_pod<T>::value)
 #   define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T)        (__has_trivial_assign(T) || ::boost::move_detail::is_pod<T>::value)
@@ -97,14 +100,22 @@
 
 #if defined(BOOST_CLANG) && defined(__has_feature)
 
+#   if __has_feature(is_union)
+#     define BOOST_MOVE_IS_UNION(T) __is_union(T)
+#   endif
 #   if (!defined(__GLIBCXX__) || (__GLIBCXX__ >= 20080306 && __GLIBCXX__ != 20080519)) && __has_feature(is_pod)
 #     define BOOST_MOVE_IS_POD(T) __is_pod(T)
+#   endif
+#   if (!defined(__GLIBCXX__) || (__GLIBCXX__ >= 20080306 && __GLIBCXX__ != 20080519)) && __has_feature(is_empty)
+#     define BOOST_MOVE_IS_EMPTY(T) __is_empty(T)
 #   endif
 #   if __has_feature(has_trivial_constructor)
 #     define BOOST_MOVE_HAS_TRIVIAL_CONSTRUCTOR(T) __has_trivial_constructor(T)
 #   endif
 #   if __has_feature(has_trivial_copy)
-#     define BOOST_MOVE_HAS_TRIVIAL_COPY(T) (__has_trivial_copy(T))
+#     //There are problems with deleted copy constructors detected as trivially copyable.
+#     //http://stackoverflow.com/questions/12754886/has-trivial-copy-behaves-differently-in-clang-and-gcc-whos-right
+#     define BOOST_MOVE_HAS_TRIVIAL_COPY(T) (__has_trivial_copy(T) && ::boost::move_detail::is_copy_constructible<T>::value)
 #   endif
 #   if __has_feature(has_trivial_assign)
 #     define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) (__has_trivial_assign(T) )
@@ -141,7 +152,9 @@
 #  define BOOST_MOVE_INTEL_TT_OPTS
 #endif
 
+#   define BOOST_MOVE_IS_UNION(T) __is_union(T)
 #   define BOOST_MOVE_IS_POD(T) __is_pod(T)
+#   define BOOST_MOVE_IS_EMPTY(T) __is_empty(T)
 #   define BOOST_MOVE_HAS_TRIVIAL_CONSTRUCTOR(T) ((__has_trivial_constructor(T) BOOST_MOVE_INTEL_TT_OPTS))
 #   define BOOST_MOVE_HAS_TRIVIAL_COPY(T) ((__has_trivial_copy(T) BOOST_MOVE_INTEL_TT_OPTS))
 #   define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) ((__has_trivial_assign(T) BOOST_MOVE_INTEL_TT_OPTS) )
@@ -161,7 +174,9 @@
 
 #if defined(__ghs__) && (__GHS_VERSION_NUMBER >= 600)
 
+#   define BOOST_MOVE_IS_UNION(T) __is_union(T)
 #   define BOOST_MOVE_IS_POD(T) __is_pod(T)
+#   define BOOST_MOVE_IS_EMPTY(T) __is_empty(T)
 #   define BOOST_MOVE_HAS_TRIVIAL_CONSTRUCTOR(T) __has_trivial_constructor(T)
 #   define BOOST_MOVE_HAS_TRIVIAL_COPY(T) (__has_trivial_copy(T))
 #   define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) (__has_trivial_assign(T))
@@ -175,7 +190,9 @@
 #endif
 
 # if defined(__CODEGEARC__)
+#   define BOOST_MOVE_IS_UNION(T) __is_union(T)
 #   define BOOST_MOVE_IS_POD(T) __is_pod(T)
+#   define BOOST_MOVE_IS_EMPTY(T) __is_empty(T)
 #   define BOOST_MOVE_HAS_TRIVIAL_CONSTRUCTOR(T) (__has_trivial_default_constructor(T))
 #   define BOOST_MOVE_HAS_TRIVIAL_COPY(T) (__has_trivial_copy_constructor(T))
 #   define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) (__has_trivial_assign(T))
@@ -190,11 +207,24 @@
 #endif
 
 //Fallback definitions
+
+#ifdef BOOST_MOVE_IS_UNION
+   #define BOOST_MOVE_IS_UNION_IMPL(T) BOOST_MOVE_IS_UNION(T)
+#else
+   #define BOOST_MOVE_IS_UNION_IMPL(T) false
+#endif
+
 #ifdef BOOST_MOVE_IS_POD
    #define BOOST_MOVE_IS_POD_IMPL(T) BOOST_MOVE_IS_POD(T)
 #else
    #define BOOST_MOVE_IS_POD_IMPL(T) \
       (::boost::move_detail::is_scalar<T>::value || ::boost::move_detail::is_void<T>::value)
+#endif
+
+#ifdef BOOST_MOVE_IS_EMPTY
+   #define BOOST_MOVE_IS_EMPTY_IMPL(T) BOOST_MOVE_IS_EMPTY(T)
+#else
+   #define BOOST_MOVE_IS_EMPTY_IMPL(T)    ::boost::move_detail::is_empty_nonintrinsic<T>::value
 #endif
 
 #ifdef BOOST_MOVE_HAS_TRIVIAL_COPY
@@ -419,6 +449,21 @@ struct is_integral
    : public is_integral_cv<typename remove_cv<T>::type>
 {};
 
+//////////////////////////////////////
+//          remove_all_extents
+//////////////////////////////////////
+template <class T>
+struct remove_all_extents
+{  typedef T type;};
+
+template <class T>
+struct remove_all_extents<T[]>
+{  typedef typename remove_all_extents<T>::type type; };
+
+template <class T, size_t N>
+struct remove_all_extents<T[N]>
+{  typedef typename remove_all_extents<T>::type type;};
+
 //////////////////////////
 //    is_scalar
 //////////////////////////
@@ -530,6 +575,57 @@ struct is_function
 {};
 
 //////////////////////////////////////
+//       is_union
+//////////////////////////////////////
+template<class T>
+struct is_union_noextents_cv
+{  static const bool value = BOOST_MOVE_IS_UNION_IMPL(T); };
+
+template<class T>
+struct is_union
+   : is_union_noextents_cv<typename remove_cv<typename remove_all_extents<T>::type>::type>
+{};
+
+//////////////////////////////////////
+//             is_class
+//////////////////////////////////////
+template <class T>
+struct is_class
+{
+   static const bool value = is_class_or_union<T>::value && ! is_union<T>::value;
+};
+
+
+//////////////////////////////////////
+//             is_arithmetic
+//////////////////////////////////////
+template <class T>
+struct is_arithmetic
+{
+   static const bool value = is_floating_point<T>::value ||
+                             is_integral<T>::value;
+};
+
+//////////////////////////////////////
+//    is_member_function_pointer
+//////////////////////////////////////
+template <class T>
+struct is_member_function_pointer_cv
+{
+   static const bool value = false;
+};
+
+template <class T, class C>
+struct is_member_function_pointer_cv<T C::*>
+   : is_function<T>
+{};
+
+template <class T>
+struct is_member_function_pointer
+    : is_member_function_pointer_cv<typename remove_cv<T>::type>
+{};
+
+//////////////////////////////////////
 //             is_enum
 //////////////////////////////////////
 #if !defined(BOOST_MOVE_IS_ENUM)
@@ -537,15 +633,14 @@ struct is_function
 template <class T>
 struct is_enum_nonintrinsic
 {
-   static const bool value =  !is_void<T>::value           &&
-                              !is_floating_point<T>::value &&
-                              !is_integral<T>::value       &&
+   static const bool value =  !is_arithmetic<T>::value     &&
+                              !is_reference<T>::value      &&
+                              !is_class_or_union<T>::value &&
+                              !is_array<T>::value          &&
+                              !is_void<T>::value           &&
                               !is_nullptr_t<T>::value      &&
                               !is_member_pointer<T>::value &&
                               !is_pointer<T>::value        &&
-                              !is_array<T>::value          &&
-                              !is_class_or_union<T>::value &&
-                              !is_reference<T>::value      &&
                               !is_function<T>::value;
 };
 #endif
@@ -553,21 +648,6 @@ struct is_enum_nonintrinsic
 template <class T>
 struct is_enum
 {  static const bool value = BOOST_MOVE_IS_ENUM_IMPL(T);  };
-
-//////////////////////////////////////
-//          remove_all_extents
-//////////////////////////////////////
-template <class T>
-struct remove_all_extents
-{  typedef T type;};
-
-template <class T>
-struct remove_all_extents<T[]>
-{  typedef typename remove_all_extents<T>::type type; };
-
-template <class T, size_t N>
-struct remove_all_extents<T[N]>
-{  typedef typename remove_all_extents<T>::type type;};
 
 //////////////////////////////////////
 //       is_pod
@@ -580,6 +660,41 @@ template<class T>
 struct is_pod
    : is_pod_noextents_cv<typename remove_cv<typename remove_all_extents<T>::type>::type>
 {};
+
+//////////////////////////////////////
+//             is_empty
+//////////////////////////////////////
+#if !defined(BOOST_MOVE_IS_EMPTY)
+
+template <typename T>
+struct empty_helper_t1 : public T
+{
+   empty_helper_t1();  // hh compiler bug workaround
+   int i[256];
+   private:
+
+   empty_helper_t1(const empty_helper_t1&);
+   empty_helper_t1& operator=(const empty_helper_t1&);
+};
+
+struct empty_helper_t2 { int i[256]; };
+
+template <typename T, bool IsClass = is_class<T>::value >
+struct is_empty_nonintrinsic
+{
+   static const bool value = false;
+};
+
+template <typename T>
+struct is_empty_nonintrinsic<T, true>
+{
+   static const bool value = sizeof(empty_helper_t1<T>) == sizeof(empty_helper_t2);
+};
+#endif
+
+template <class T>
+struct is_empty
+{  static const bool value = BOOST_MOVE_IS_EMPTY_IMPL(T);  };
 
 //////////////////////////////////////
 //       is_copy_constructible
@@ -694,6 +809,15 @@ struct is_nothrow_copy_assignable
 template<class T>
 struct is_nothrow_move_assignable
 {  static const bool value = BOOST_MOVE_IS_NOTHROW_MOVE_ASSIGNABLE(T);  };
+
+//////////////////////////////////////
+//    is_nothrow_swappable
+//////////////////////////////////////
+template<class T>
+struct is_nothrow_swappable
+{
+   static const bool value = is_empty<T>::value || is_pod<T>::value;
+};
 
 //////////////////////////////////////
 //       alignment_of

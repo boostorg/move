@@ -47,7 +47,7 @@
 
 #if defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
-   #include <boost/move/detail/meta_utils.hpp>
+   #include <boost/move/detail/type_traits.hpp>
 
    //Move emulation rv breaks standard aliasing rules so add workarounds for some compilers
    #if defined(__GNUC__) && (__GNUC__ >= 4) && \
@@ -70,7 +70,7 @@
    template <class T>
    class rv
       : public ::boost::move_detail::if_c
-         < ::boost::move_detail::is_class_or_union<T>::value
+         < ::boost::move_detail::is_class<T>::value
          , T
          , ::boost::move_detail::nat
          >::type

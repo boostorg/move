@@ -11,6 +11,10 @@
 #ifndef BOOST_MOVE_DETAIL_WORKAROUND_HPP
 #define BOOST_MOVE_DETAIL_WORKAROUND_HPP
 
+#ifndef BOOST_CONFIG_HPP
+#  include <boost/config.hpp>
+#endif
+#
 #if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif

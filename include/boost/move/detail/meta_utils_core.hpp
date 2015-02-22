@@ -14,6 +14,10 @@
 #ifndef BOOST_MOVE_DETAIL_META_UTILS_CORE_HPP
 #define BOOST_MOVE_DETAIL_META_UTILS_CORE_HPP
 
+#ifndef BOOST_CONFIG_HPP
+#  include <boost/config.hpp>
+#endif
+#
 #if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif

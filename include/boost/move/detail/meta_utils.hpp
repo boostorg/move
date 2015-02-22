@@ -14,10 +14,13 @@
 #ifndef BOOST_MOVE_DETAIL_META_UTILS_HPP
 #define BOOST_MOVE_DETAIL_META_UTILS_HPP
 
+#ifndef BOOST_CONFIG_HPP
+#  include <boost/config.hpp>
+#endif
+#
 #if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
-
 #include <boost/move/detail/meta_utils_core.hpp>
 #include <cstddef>   //for std::size_t
 

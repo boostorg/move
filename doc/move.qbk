@@ -767,6 +767,8 @@ Many thanks to all boosters that have tested, reviewed and improved the library.
 *  Added [macroref BOOST_MOVE_BASE BOOST_MOVE_BASE] utility.
 *  Added [funcref boost::adl_move_swap adl_move_swap] utility.
 *  Reduced dependencies on other Boost libraries to make the library a bit more lightweight.
+*  Fixed bugs:
+   *  [@https://svn.boost.org/trac/boost/ticket/11044 Trac #11044: ['"boost::rv inherits off union, when such passed as template argument"]].
 
 [endsect]
 

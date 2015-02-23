@@ -847,7 +847,7 @@ struct alignment_of_impl
     // Using a combination of the two seems to make the most of a bad job:
    : alignment_logic< sizeof(alignment_of_hack<T>) - 2*sizeof(T), __alignof(T)>
 {};
-#elif !defined(BOOST_ALIGNMENT_OF)
+#elif !defined(BOOST_MOVE_ALIGNMENT_OF)
    : alignment_logic< sizeof(alignment_of_hack<T>) - 2*sizeof(T), sizeof(T)>
 {};
 #else

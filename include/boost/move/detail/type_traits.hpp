@@ -341,23 +341,17 @@ struct is_pointer<T*>
 {  static const bool value = true; };
 
 //////////////////////////
-//    add_reference
+//       unvoid_ref
 //////////////////////////
+template <typename T> struct unvoid_ref : add_lvalue_reference<T>{};
+template <> struct unvoid_ref<void>                { typedef unvoid_ref & type; };
+template <> struct unvoid_ref<const void>          { typedef unvoid_ref & type; };
+template <> struct unvoid_ref<volatile void>       { typedef unvoid_ref & type; };
+template <> struct unvoid_ref<const volatile void> { typedef unvoid_ref & type; };
+
 template <typename T>
-struct add_reference
-{  typedef T& type;  };
-
-template<class T>
-struct add_reference<T&>
-{  typedef T& type;  };
-
-template<>
-struct add_reference<void>
-{  typedef nat &type;   };
-
-template<>
-struct add_reference<const void>
-{  typedef const nat &type;   };
+struct add_reference : add_lvalue_reference<T>
+{};
 
 //////////////////////////
 //    add_const_reference
@@ -369,6 +363,14 @@ struct add_const_reference
 template <class T>
 struct add_const_reference<T&>
 {  typedef T& type;   };
+
+//////////////////////////
+//    add_const_if_c
+//////////////////////////
+template<class T, bool Add>
+struct add_const_if_c
+   : if_c<Add, typename add_const<T>::type, T>
+{};
 
 //////////////////////////
 //    remove_const

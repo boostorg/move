@@ -739,6 +739,46 @@ struct is_copy_constructible
 };
 
 //////////////////////////////////////
+//       is_copy_assignable
+//////////////////////////////////////
+#if !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) && !defined(BOOST_NO_CXX11_DECLTYPE) \
+   && !defined(BOOST_INTEL_CXX_VERSION) && \
+      !(defined(BOOST_MSVC) && _MSC_VER == 1800)
+#define BOOST_MOVE_TT_CXX11_IS_COPY_ASSIGNABLE
+#endif
+
+template <class T>
+struct is_copy_assignable
+{
+// Intel compiler has problems with SFINAE for copy constructors and deleted functions:
+//
+// error: function *function_name* cannot be referenced -- it is a deleted function
+// static boost::type_traits::yes_type test(T1&, decltype(T1(boost::declval<T1&>()))* = 0);
+//                                                        ^ 
+//
+// MSVC 12.0 (Visual 2013) has problems when the copy constructor has been deleted. See:
+// https://connect.microsoft.com/VisualStudio/feedback/details/800328/std-is-copy-constructible-is-broken
+#if defined(BOOST_MOVE_TT_CXX11_IS_COPY_ASSIGNABLE)
+   typedef char yes_type;
+   struct no_type { char dummy[2]; };
+   
+   template <class U>   static typename add_reference<U>::type source();
+   template <class U>   static decltype(source<U&>() = source<const U&>(), yes_type() ) test(int);
+   template <class>     static no_type test(...);
+
+   static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
+#else
+   static typename add_reference<T>::type produce();
+
+   template <class T1>
+   static no_type test(T1&, typename T1::boost_move_no_copy_constructor_or_assign* = 0);
+   static yes_type test(...);
+
+   static const bool value = sizeof(test(produce())) == sizeof(yes_type);
+#endif
+};
+
+//////////////////////////////////////
 //       is_trivially_destructible
 //////////////////////////////////////
 template<class T>
@@ -757,7 +797,12 @@ struct is_trivially_default_constructible
 //////////////////////////////////////
 template<class T>
 struct is_trivially_copy_constructible
-{  static const bool value = BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T); };
+{
+   //In several compilers BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE return true even with
+   //deleted copy constructors so make sure the type is copy constructible.
+   static const bool value = ::boost::move_detail::is_copy_constructible<T>::value &&
+                             BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T);
+};
 
 //////////////////////////////////////
 //       is_trivially_move_constructible
@@ -771,7 +816,12 @@ struct is_trivially_move_constructible
 //////////////////////////////////////
 template<class T>
 struct is_trivially_copy_assignable
-{  static const bool value = BOOST_MOVE_IS_TRIVIALLY_COPY_ASSIGNABLE(T);  };
+{
+   //In several compilers BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE return true even with
+   //deleted copy constructors so make sure the type is copy constructible.
+   static const bool value = ::boost::move_detail::is_copy_assignable<T>::value &&
+                             BOOST_MOVE_IS_TRIVIALLY_COPY_ASSIGNABLE(T);
+};                             
 
 //////////////////////////////////////
 //       is_trivially_move_assignable

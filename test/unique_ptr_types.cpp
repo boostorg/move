@@ -12,6 +12,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include <boost/move/utility_core.hpp>
 #include <boost/move/unique_ptr.hpp>
+#include <boost/move/detail/type_traits.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/core/lightweight_test.hpp>
 
@@ -150,12 +151,30 @@ void test()
 ////////////////////////////////
 //             main
 ////////////////////////////////
+
+#if __cplusplus >= 201103L
+#include <memory>
+#endif
+
 int main()
 {
    //General
    unique_ptr_pointer_type::test();
    unique_ptr_deleter_type::test();
    unique_ptr_element_type::test();
+
+   typedef bml::unique_ptr<int> unique_ptr_t;
+   BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_constructible<unique_ptr_t>::value));
+   BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<unique_ptr_t>::value));
+   BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_constructible<unique_ptr_t>::value));
+   BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_assignable<unique_ptr_t>::value));
+   #if __cplusplus >= 201103L
+   typedef std::unique_ptr<int> std_unique_ptr_t;
+   BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_constructible<std_unique_ptr_t>::value));
+   BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<std_unique_ptr_t>::value));
+   BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_constructible<std_unique_ptr_t>::value));
+   BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_assignable<std_unique_ptr_t>::value));
+   #endif
 
    //Test results
    return boost::report_errors();

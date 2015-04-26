@@ -149,12 +149,30 @@ void test()
 }  //namespace unique_ptr_element_type {
 
 ////////////////////////////////
-//             main
+//    unique_ptr_construct_assign_traits
 ////////////////////////////////
 
-#if __cplusplus >= 201103L
-#include <memory>
-#endif
+namespace unique_ptr_construct_assign_traits {
+
+   void test()
+   {
+      typedef bml::unique_ptr<int> unique_ptr_t;
+      //Even if BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE is not defined
+      //boost::unique_ptr shall work with boost::movelib traits
+      BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_constructible<unique_ptr_t>::value));
+      //Even if BOOST_MOVE_TT_CXX11_IS_COPY_ASSIGNABLE is not defined
+      //boost::unique_ptr shall work with boost::movelib traits
+      BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<unique_ptr_t>::value));
+      //Important traits for containers like boost::vector
+      BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_constructible<unique_ptr_t>::value));
+      BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_assignable<unique_ptr_t>::value));
+   }
+
+}  //namespace unique_ptr_construct_assign_traits {
+
+////////////////////////////////
+//             main
+////////////////////////////////
 
 int main()
 {
@@ -162,23 +180,10 @@ int main()
    unique_ptr_pointer_type::test();
    unique_ptr_deleter_type::test();
    unique_ptr_element_type::test();
-
-   typedef bml::unique_ptr<int> unique_ptr_t;
-   BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_constructible<unique_ptr_t>::value));
-   BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<unique_ptr_t>::value));
-   BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_constructible<unique_ptr_t>::value));
-   BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_assignable<unique_ptr_t>::value));
-   #if __cplusplus >= 201103L
-   typedef std::unique_ptr<int> std_unique_ptr_t;
-   BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_constructible<std_unique_ptr_t>::value));
-   BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<std_unique_ptr_t>::value));
-   BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_constructible<std_unique_ptr_t>::value));
-   BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_assignable<std_unique_ptr_t>::value));
-   #endif
+   unique_ptr_construct_assign_traits::test();
 
    //Test results
    return boost::report_errors();
-
 }
 
 #include "unique_ptr_test_utils_end.hpp"

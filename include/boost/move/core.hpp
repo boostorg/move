@@ -153,6 +153,14 @@
       >& \
    //
 
+   #define BOOST_RV_REF_BEG_IF_CXX11 \
+      \
+   //
+
+   #define BOOST_RV_REF_END_IF_CXX11 \
+      \
+   //
+
    #define BOOST_FWD_REF(TYPE)\
       const TYPE & \
    //
@@ -346,6 +354,19 @@
    //!and ended with BOOST_RV_REF_END
    #define BOOST_RV_REF_END\
       && \
+   //
+
+   //!This macro expands to BOOST_RV_REF_BEG if BOOST_NO_CXX11_RVALUE_REFERENCES
+   //!is not defined, empty otherwise
+   #define BOOST_RV_REF_BEG_IF_CXX11 \
+      BOOST_RV_REF_BEG \
+   //
+
+   //!This macro expands to BOOST_RV_REF_END if BOOST_NO_CXX11_RVALUE_REFERENCES
+   //!is not defined, empty otherwise
+   #define BOOST_RV_REF_END_IF_CXX11 \
+      BOOST_RV_REF_END \
+   //
 
    //!This macro is used to achieve portable syntax in copy
    //!assignment for classes marked as BOOST_COPYABLE_AND_MOVABLE.

@@ -344,6 +344,17 @@ struct is_pointer<T*>
 {  static const bool value = true; };
 
 //////////////////////////
+//       is_const
+//////////////////////////
+template<class T>
+struct is_const
+{  static const bool value = false; };
+
+template<class T>
+struct is_const<const T>
+{  static const bool value = true; };
+
+//////////////////////////
 //       unvoid_ref
 //////////////////////////
 template <typename T> struct unvoid_ref : add_lvalue_reference<T>{};

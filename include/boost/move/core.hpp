@@ -53,10 +53,10 @@
 
    #include <boost/move/detail/type_traits.hpp>
 
-   #if 1
-      #define BOOST_MOVE_TO_RV_CAST(RV_TYPE, ARG) static_cast<RV_TYPE>(ARG)
-   #else
+   #if defined(BOOST_MOVE_ADDRESS_SANITIZER_ON)
       #define BOOST_MOVE_TO_RV_CAST(RV_TYPE, ARG) reinterpret_cast<RV_TYPE>(ARG)
+   #else
+      #define BOOST_MOVE_TO_RV_CAST(RV_TYPE, ARG) static_cast<RV_TYPE>(ARG)
    #endif
 
    //Move emulation rv breaks standard aliasing rules so add workarounds for some compilers

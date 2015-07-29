@@ -347,7 +347,7 @@ struct disable_if_convertible
 //                         and_
 //
 //////////////////////////////////////////////////////////////////////////////
-template<bool Bool, class B = true_, class C = true_, class D = true_>
+template<bool, class B = true_, class C = true_, class D = true_>
 struct and_impl
    : and_impl<B::value, C, D>
 {};
@@ -374,7 +374,7 @@ struct and_
 //                            or_
 //
 //////////////////////////////////////////////////////////////////////////////
-template<bool Bool, class B = false_, class C = false_, class D = false_>
+template<bool, class B = false_, class C = false_, class D = false_>
 struct or_impl
    : or_impl<B::value, C, D>
 {};

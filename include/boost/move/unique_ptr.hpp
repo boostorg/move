@@ -105,8 +105,8 @@ struct unique_ptr_data
    {}
 
    template <class U>
-   unique_ptr_data(P p, BOOST_FWD_REF(U) d) BOOST_NOEXCEPT
-      : m_p(p), d(::boost::forward<U>(d))
+   unique_ptr_data(P p, BOOST_FWD_REF(U) d1) BOOST_NOEXCEPT
+      : m_p(p), d(::boost::forward<U>(d1))
    {}
 
    del_ref deleter()       { return d; }

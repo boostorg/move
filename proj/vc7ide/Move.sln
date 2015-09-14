@@ -249,6 +249,7 @@ Global
 		..\..\..\..\boost\move\move.hpp = ..\..\..\..\boost\move\move.hpp
 		..\..\doc\move.qbk = ..\..\doc\move.qbk
 		..\..\..\..\boost\move\detail\move_helpers.hpp = ..\..\..\..\boost\move\detail\move_helpers.hpp
+		..\..\..\..\boost\move\detail\std_ns_begin.hpp = ..\..\..\..\boost\move\detail\std_ns_begin.hpp
 		..\..\..\..\boost\move\traits.hpp = ..\..\..\..\boost\move\traits.hpp
 		..\..\..\..\boost\move\detail\type_traits.hpp = ..\..\..\..\boost\move\detail\type_traits.hpp
 		..\..\..\..\boost\move\unique_ptr.hpp = ..\..\..\..\boost\move\unique_ptr.hpp

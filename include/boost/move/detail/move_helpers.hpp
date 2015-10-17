@@ -36,10 +36,6 @@
 #define BOOST_MOVE_CATCH_FWD(U)    U &&
 #endif
 
-#if defined(BOOST_GCC) && (BOOST_GCC <= 40000)
-#define BOOST_MOVE_HELPERS_RETURN_SFINAE_BROKEN
-#endif
-
 ////////////////////////////////////////
 //
 // BOOST_MOVE_CONVERSION_AWARE_CATCH

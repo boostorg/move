@@ -22,9 +22,8 @@
 
 //Based on Boost.Core's swap.
 //Many thanks to Steven Watanabe, Joseph Gauterin and Niels Dekker.
-
-#include <boost/config.hpp>
 #include <cstddef> //for std::size_t
+#include <boost/move/detail/workaround.hpp>  //forceinline
 
 //Try to avoid including <algorithm>, as it's quite big
 #if defined(_MSC_VER) && defined(BOOST_DINKUMWARE_STDLIB)
@@ -156,7 +155,7 @@ struct and_op_not
 {};
 
 template<class T>
-void swap_proxy(T& x, T& y, typename boost::move_detail::enable_if_c<!boost::move_detail::has_move_emulation_enabled_impl<T>::value>::type* = 0)
+BOOST_MOVE_FORCEINLINE void swap_proxy(T& x, T& y, typename boost::move_detail::enable_if_c<!boost::move_detail::has_move_emulation_enabled_impl<T>::value>::type* = 0)
 {
    //use std::swap if argument dependent lookup fails
    //Use using directive ("using namespace xxx;") instead as some older compilers
@@ -166,14 +165,14 @@ void swap_proxy(T& x, T& y, typename boost::move_detail::enable_if_c<!boost::mov
 }
 
 template<class T>
-void swap_proxy(T& x, T& y
+BOOST_MOVE_FORCEINLINE void swap_proxy(T& x, T& y
                , typename boost::move_detail::enable_if< and_op_not_impl<boost::move_detail::has_move_emulation_enabled_impl<T>
                                                                         , boost_move_member_swap::has_member_swap<T> >
                                                        >::type* = 0)
 {  T t(::boost::move(x)); x = ::boost::move(y); y = ::boost::move(t);  }
 
 template<class T>
-void swap_proxy(T& x, T& y
+BOOST_MOVE_FORCEINLINE void swap_proxy(T& x, T& y
                , typename boost::move_detail::enable_if< and_op_impl< boost::move_detail::has_move_emulation_enabled_impl<T>
                                                                     , boost_move_member_swap::has_member_swap<T> >
                                                        >::type* = 0)
@@ -186,7 +185,7 @@ void swap_proxy(T& x, T& y
 namespace boost_move_adl_swap{
 
 template<class T>
-void swap_proxy(T& x, T& y)
+BOOST_MOVE_FORCEINLINE void swap_proxy(T& x, T& y)
 {
    using std::swap;
    swap(x, y);
@@ -223,7 +222,7 @@ namespace boost{
 //!   -  Otherwise a move-based swap is called, equivalent to: 
 //!      <code>T t(::boost::move(x)); x = ::boost::move(y); y = ::boost::move(t);</code>.
 template<class T>
-void adl_move_swap(T& x, T& y)
+BOOST_MOVE_FORCEINLINE void adl_move_swap(T& x, T& y)
 {
    ::boost_move_adl_swap::swap_proxy(x, y);
 }

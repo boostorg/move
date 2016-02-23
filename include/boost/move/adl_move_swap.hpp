@@ -227,6 +227,40 @@ BOOST_MOVE_FORCEINLINE void adl_move_swap(T& x, T& y)
    ::boost_move_adl_swap::swap_proxy(x, y);
 }
 
+//! Exchanges elements between range [first1, last1) and another range starting at first2
+//! using boost::adl_move_swap.
+//! 
+//! Parameters:
+//!   first1, last1	-	the first range of elements to swap
+//!   first2	-	beginning of the second range of elements to swap
+//!
+//! Type requirements:
+//!   - ForwardIt1, ForwardIt2 must meet the requirements of ForwardIterator.
+//!   - The types of dereferenced ForwardIt1 and ForwardIt2 must meet the
+//!     requirements of Swappable
+//!
+//! Return value: Iterator to the element past the last element exchanged in the range
+//! beginning with first2.
+template<class ForwardIt1, class ForwardIt2>
+ForwardIt2 adl_move_swap_ranges(ForwardIt1 first1, ForwardIt1 last1, ForwardIt2 first2)
+{
+    while (first1 != last1) {
+      ::boost::adl_move_swap(*first1, *first2);
+      ++first1;
+      ++first2;
+    }
+   return first2;
+}
+
+template<class BidirIt1, class BidirIt2>
+BidirIt2 adl_move_swap_ranges_backward(BidirIt1 first1, BidirIt1 last1, BidirIt2 last2)
+{
+   while (first1 != last1) {
+      ::boost::adl_move_swap(*(--last1), *(--last2));
+   }
+   return last2;
+}
+
 }  //namespace boost{
 
 #endif   //#ifndef BOOST_MOVE_ADL_MOVE_SWAP_HPP

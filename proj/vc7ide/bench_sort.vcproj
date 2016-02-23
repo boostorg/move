@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="move_test"
-	ProjectGUID="{CD57C283-1862-42FE-BF87-B96D3A2A7912}"
+	Name="bench_sort"
+	ProjectGUID="{CD2617A8-6217-9EB7-24CE-6C9AA035376A}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -13,7 +13,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="../../Bin/Win32/Debug"
-			IntermediateDirectory="Debug/move_test"
+			IntermediateDirectory="Debug/bench_sort"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -36,11 +36,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/move_test_d.exe"
+				OutputFile="$(OutDir)/bench_sort_d.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/move_test.pdb"
+				ProgramDatabaseFile="$(OutDir)/bench_sort.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 				FixedBaseAddress="1"/>
@@ -68,7 +68,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="../../Bin/Win32/Release"
-			IntermediateDirectory="Release/move_test"
+			IntermediateDirectory="Release/bench_sort"
 			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
@@ -87,7 +87,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib"
-				OutputFile="$(OutDir)/move_test.exe"
+				OutputFile="$(OutDir)/bench_sort.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../../stage/lib"
 				GenerateDebugInformation="TRUE"
@@ -123,9 +123,9 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{34957FC1-7BC5-1646-05A6-27542AA2A2FF}">
+			UniqueIdentifier="{1D875633-A605-0546-5C56-3A5FEAD72B0A}">
 			<File
-				RelativePath="..\..\test\move.cpp">
+				RelativePath="..\..\test\bench_sort.cpp">
 			</File>
 		</Filter>
 	</Files>

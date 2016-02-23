@@ -301,6 +301,7 @@
       BOOST_MOVE_IMPL_NO_COPY_CTOR_OR_ASSIGN(TYPE)\
       public:\
       typedef int boost_move_emulation_t;\
+      private:\
    //
 
    //! This macro marks a type as copyable and movable.

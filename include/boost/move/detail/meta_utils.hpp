@@ -312,6 +312,17 @@ class is_convertible
 
 #endif
 
+template <class T, class U, bool IsSame = is_same<T, U>::value>
+struct is_same_or_convertible
+   : is_convertible<T, U>
+{};
+
+template <class T, class U>
+struct is_same_or_convertible<T, U, true>
+{
+   static const bool value = true;
+};
+
 template<
       bool C
     , typename F1
@@ -343,6 +354,16 @@ struct enable_if_convertible
 template<class T, class U, class R = void>
 struct disable_if_convertible
    : disable_if< is_convertible<T, U>, R>
+{};
+
+template<class T, class U, class R = void>
+struct enable_if_same_or_convertible
+   : enable_if< is_same_or_convertible<T, U>, R>
+{};
+
+template<class T, class U, class R = void>
+struct disable_if_same_or_convertible
+   : disable_if< is_same_or_convertible<T, U>, R>
 {};
 
 //////////////////////////////////////////////////////////////////////////////

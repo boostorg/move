@@ -230,7 +230,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    boost::movelib::unique_ptr<std::size_t[]> pkeys(new std::size_t[NK ? NK : L]);
    T *A              = pdata.get();
    std::size_t *Keys = pkeys.get();
-   std::printf("\n - - N: %u, NK: %u - -\n",L,NK);
+   std::printf("\n - - N: %u, NK: %u - -\n", (unsigned)L, (unsigned)NK);
 
    nanosecond_type prev_clock = 0;
    nanosecond_type back_clock;

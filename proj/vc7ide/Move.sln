@@ -119,6 +119,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bench_merge", "bench_merge.
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "adaptive_sort_test", "adaptive_sort_test.vcproj", "{CD617A28-6217-B79E-4CE2-6BA035379A6A}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -247,6 +251,10 @@ Global
 		{CD2617A8-6217-9EB7-24CE-6C9AA035376A}.Debug.Build.0 = Debug|Win32
 		{CD2617A8-6217-9EB7-24CE-6C9AA035376A}.Release.ActiveCfg = Release|Win32
 		{CD2617A8-6217-9EB7-24CE-6C9AA035376A}.Release.Build.0 = Release|Win32
+		{CD617A28-6217-B79E-4CE2-6BA035379A6A}.Debug.ActiveCfg = Debug|Win32
+		{CD617A28-6217-B79E-4CE2-6BA035379A6A}.Debug.Build.0 = Debug|Win32
+		{CD617A28-6217-B79E-4CE2-6BA035379A6A}.Release.ActiveCfg = Release|Win32
+		{CD617A28-6217-B79E-4CE2-6BA035379A6A}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionItems) = postSolution
 		..\..\..\..\boost\move\algo\adaptive_merge.hpp = ..\..\..\..\boost\move\algo\adaptive_merge.hpp

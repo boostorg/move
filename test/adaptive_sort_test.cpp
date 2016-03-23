@@ -28,16 +28,8 @@ using boost::timer::nanosecond_type;
 #include <boost/move/algo/adaptive_sort.hpp>
 #include <boost/move/core.hpp>
 
-
-template<class T, class Compare>
-void adaptive_sort_buffered(T *elements, std::size_t element_count, Compare comp, std::size_t BufLen)
-{
-   boost::movelib::unique_ptr<char[]> mem(new char[sizeof(T)*BufLen]);
-   boost::movelib::adaptive_sort(elements, elements + element_count, comp, reinterpret_cast<T*>(mem.get()), BufLen);
-}
-
 template<class T>
-bool test_all_permutations(std::size_t const element_count, std::size_t const num_keys, std::size_t const num_iter)
+bool test_random_shuffled(std::size_t const element_count, std::size_t const num_keys, std::size_t const num_iter)
 {
    boost::movelib::unique_ptr<T[]> elements(new T[element_count]);
    boost::movelib::unique_ptr<std::size_t[]> key_reps(new std::size_t[num_keys ? num_keys : element_count]);
@@ -49,7 +41,7 @@ bool test_all_permutations(std::size_t const element_count, std::size_t const nu
       elements[i].key=key;
    }
 
-   std::srand(255);
+   std::srand(0);
 
    for (std::size_t i = 0; i != num_iter; ++i)
    {
@@ -81,11 +73,11 @@ int main()
    #else
    const std::size_t NIter = 10;
    #endif
-   test_all_permutations<order_type>(10001, 65,   NIter);
-   test_all_permutations<order_type>(10001, 101,  NIter);
-   test_all_permutations<order_type>(10001, 1023, NIter);
-   test_all_permutations<order_type>(10001, 4095, NIter);
-   test_all_permutations<order_type>(10001, 0,    NIter);
+   test_random_shuffled<order_type>(10001, 65,   NIter);
+   test_random_shuffled<order_type>(10001, 101,  NIter);
+   test_random_shuffled<order_type>(10001, 1023, NIter);
+   test_random_shuffled<order_type>(10001, 4095, NIter);
+   test_random_shuffled<order_type>(10001, 0,    NIter);
 
    return 0;
 }

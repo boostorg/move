@@ -167,7 +167,7 @@ void op_merge_left( RandIt buf_first
          op(forward_t(), first2, last2, buf_first);
          return;
       }
-		else if(comp(*first2, *first1)){
+      else if(comp(*first2, *first1)){
          op(first2, buf_first);
          ++first2;
       }
@@ -214,7 +214,7 @@ void op_merge_right
 {
    RandIt const first2 = last1;
    while(first1 != last1){
-		if(last2 == first2){
+      if(last2 == first2){
          op(backward_t(), first1, last1, buf_last);
          return;
       }
@@ -230,7 +230,7 @@ void op_merge_right
          ++last1;
       }
    }
-	if(last2 != buf_last){  //In case all remaining elements are in the same place
+   if(last2 != buf_last){  //In case all remaining elements are in the same place
                            //(e.g. buffer is exactly the size of the first half
                            //and all elements from the second half are less)
       op(backward_t(), first2, last2, buf_last);
@@ -257,7 +257,7 @@ void swap_merge_right
    op_merge_right(first1, last1, last2, buf_last, comp, swap_op());
 }
 
-// cost: min(L1,L2)^2+max(L1,L2)
+//Complexity: min(len1,len2)^2 + max(len1,len2)
 template<class RandIt, class Compare>
 void merge_bufferless(RandIt first, RandIt middle, RandIt last, Compare comp)
 {
@@ -271,12 +271,12 @@ void merge_bufferless(RandIt first, RandIt middle, RandIt last, Compare comp)
          }
          do{
             ++first;
-			} while(first != middle && !comp(*middle, *first));
+         } while(first != middle && !comp(*middle, *first));
       }
    }
    else{
       while(middle != last){
-			RandIt p = upper_bound(first, middle, last[-1], comp);
+         RandIt p = upper_bound(first, middle, last[-1], comp);
          last = rotate_gcd(p, middle, last);
          middle = p;
          if(middle == first){

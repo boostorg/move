@@ -1005,7 +1005,7 @@ BOOST_MOVE_ALIGNED_STORAGE_WITH_BOOST_ALIGNMENT(0x1000)
 
 template<class T, std::size_t Len>
 union aligned_union
-{	
+{   
    T aligner;
    char dummy[Len];
 };
@@ -1023,7 +1023,7 @@ struct aligned_next<Len, Align, T, true>
 //End of search defaults to max_align_t
 template<std::size_t Len, std::size_t Align>
 struct aligned_next<Len, Align, max_align_t, false>
-{	typedef aligned_union<max_align_t, Len> type;   };
+{   typedef aligned_union<max_align_t, Len> type;   };
 
 //Now define a search list through types
 #define BOOST_MOVE_ALIGNED_NEXT_STEP(TYPE, NEXT_TYPE)\

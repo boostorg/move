@@ -283,8 +283,8 @@ Global
 		..\..\..\..\boost\move\detail\iterator_traits.hpp = ..\..\..\..\boost\move\detail\iterator_traits.hpp
 		..\..\doc\Jamfile.v2 = ..\..\doc\Jamfile.v2
 		..\..\..\..\boost\move\make_unique.hpp = ..\..\..\..\boost\move\make_unique.hpp
-		..\..\..\..\boost\move\algo\merge.hpp = ..\..\..\..\boost\move\algo\merge.hpp
-		..\..\..\..\boost\move\algo\merge_sort.hpp = ..\..\..\..\boost\move\algo\merge_sort.hpp
+		..\..\..\..\boost\move\algo\detail\merge.hpp = ..\..\..\..\boost\move\algo\detail\merge.hpp
+		..\..\..\..\boost\move\algo\detail\merge_sort.hpp = ..\..\..\..\boost\move\algo\detail\merge_sort.hpp
 		..\..\..\..\boost\move\detail\meta_utils.hpp = ..\..\..\..\boost\move\detail\meta_utils.hpp
 		..\..\..\..\boost\move\detail\meta_utils_core.hpp = ..\..\..\..\boost\move\detail\meta_utils_core.hpp
 		..\..\..\..\boost\move\move.hpp = ..\..\..\..\boost\move\move.hpp

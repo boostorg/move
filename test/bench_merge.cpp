@@ -68,23 +68,23 @@ void adaptive_merge_buffered(T *elements, T *mid, T *last, Compare comp, std::si
 
 enum AlgoType
 {
-   InplaceMerge,
+   StdMerge,
    AdaptiveMerge,
    SqrtHAdaptiveMerge,
    SqrtAdaptiveMerge,
    Sqrt2AdaptiveMerge,
    QuartAdaptiveMerge,
-   BuflessMerge,
+   StdInplaceMerge,
    MaxMerge
 };
 
-const char *AlgoNames [] = { "InplaceMerge    "
+const char *AlgoNames [] = { "StdMerge        "
                            , "AdaptMerge      "
                            , "SqrtHAdaptMerge "
                            , "SqrtAdaptMerge  "
                            , "Sqrt2AdaptMerge "
                            , "QuartAdaptMerge "
-                           , "BuflessMerge    "
+                           , "StdInplaceMerge "
                            };
 
 BOOST_STATIC_ASSERT((sizeof(AlgoNames)/sizeof(*AlgoNames)) == MaxMerge);
@@ -102,7 +102,7 @@ bool measure_algo(T *elements, std::size_t key_reps[], std::size_t element_count
    timer.resume();
    switch(alg)
    {
-      case InplaceMerge:
+      case StdMerge:
          std::inplace_merge(elements, elements+split_pos, elements+element_count, order_type_less<T>());
       break;
       case AdaptiveMerge:
@@ -124,8 +124,8 @@ bool measure_algo(T *elements, std::size_t key_reps[], std::size_t element_count
          adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less<T>()
                             , (element_count-1)/4+1);
       break;
-      case BuflessMerge:
-         boost::movelib::merge_bufferless(elements, elements+split_pos, elements+element_count, order_type_less<T>());
+      case StdInplaceMerge:
+         boost::movelib::merge_bufferless_ONlogN(elements, elements+split_pos, elements+element_count, order_type_less<T>());
       break;
    }
    timer.stop();
@@ -177,7 +177,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    nanosecond_type prev_clock = 0;
    nanosecond_type back_clock;
    bool res = true;
-   res = res && measure_algo(A,Keys,L,NK,InplaceMerge, prev_clock);
+   res = res && measure_algo(A,Keys,L,NK,StdMerge, prev_clock);
    back_clock = prev_clock;/*
    //
    prev_clock = back_clock;
@@ -195,8 +195,8 @@ bool measure_all(std::size_t L, std::size_t NK)
    prev_clock = back_clock;
    res = res && measure_algo(A,Keys,L,NK,AdaptiveMerge, prev_clock);
    //
-   //prev_clock = back_clock;
-   //res = res && measure_algo(A,Keys,L,NK,BuflessMerge, prev_clock);
+   prev_clock = back_clock;
+   res = res && measure_algo(A,Keys,L,NK,StdInplaceMerge, prev_clock);
    //
    if(!res)
       throw int(0);
@@ -205,43 +205,54 @@ bool measure_all(std::size_t L, std::size_t NK)
 
 //Undef it to run the long test
 #define BENCH_MERGE_SHORT
+#define BENCH_SORT_UNIQUE_VALUES
 
 int main()
 {
    try{
+   #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_type>(101,1);
    measure_all<order_type>(101,7);
    measure_all<order_type>(101,31);
+   #endif
    measure_all<order_type>(101,0);
 
    //
+   #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_type>(1101,1);
    measure_all<order_type>(1001,7);
    measure_all<order_type>(1001,31);
    measure_all<order_type>(1001,127);
    measure_all<order_type>(1001,511);
+   #endif
    measure_all<order_type>(1001,0);
    //
    #ifndef BENCH_MERGE_SHORT
+   #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_type>(10001,65);
    measure_all<order_type>(10001,255);
    measure_all<order_type>(10001,1023);
    measure_all<order_type>(10001,4095);
+   #endif
    measure_all<order_type>(10001,0);
 
    //
+   #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_type>(100001,511);
    measure_all<order_type>(100001,2047);
    measure_all<order_type>(100001,8191);
    measure_all<order_type>(100001,32767);
+   #endif
    measure_all<order_type>(100001,0);
 
    //
    #ifdef NDEBUG
+   #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_type>(1000001,1);
    measure_all<order_type>(1000001,1024);
    measure_all<order_type>(1000001,32768);
    measure_all<order_type>(1000001,524287);
+   #endif
    measure_all<order_type>(1000001,0);
    measure_all<order_type>(1500001,0);
    //measure_all<order_type>(10000001,0);

@@ -80,6 +80,7 @@ enum AlgoType
    Sqrt2AdaptiveSort,
    QuartAdaptiveSort,
    NoBufMergeSort,
+   InplaceStableSort,
    SlowStableSort,
    HeapSort,
    MaxSort
@@ -93,6 +94,7 @@ const char *AlgoNames [] = { "MergeSort      "
                            , "Sqrt2AdaptSort "
                            , "QuartAdaptSort "
                            , "NoBufMergeSort "
+                           , "InplStableSort "
                            , "SlowSort       "
                            , "HeapSort       "
                            };
@@ -139,6 +141,9 @@ bool measure_algo(T *elements, std::size_t key_reps[], std::size_t element_count
       break;
       case NoBufMergeSort:
          boost::movelib::bufferless_merge_sort(elements, elements+element_count, order_type_less<T>());
+      break;
+      case InplaceStableSort:
+         boost::movelib::inplace_stable_sort(elements, elements+element_count, order_type_less<T>());
       break;
       case SlowStableSort:
          boost::movelib::detail_adaptive::slow_stable_sort(elements, elements+element_count, order_type_less<T>());
@@ -222,6 +227,9 @@ bool measure_all(std::size_t L, std::size_t NK)
    res = res && measure_algo(A,Keys,L,NK,AdaptiveSort, prev_clock);
    //
    prev_clock = back_clock;
+   res = res && measure_algo(A,Keys,L,NK,InplaceStableSort, prev_clock);
+   //
+   prev_clock = back_clock;
    res = res && measure_algo(A,Keys,L,NK,NoBufMergeSort, prev_clock);
    //
    //prev_clock = back_clock;
@@ -234,46 +242,57 @@ bool measure_all(std::size_t L, std::size_t NK)
 
 //Undef it to run the long test
 #define BENCH_SORT_SHORT
+#define BENCH_SORT_UNIQUE_VALUES
 
 int main()
 {
-   measure_all<order_type>(101,1);
+   #ifndef BENCH_SORT_UNIQUE_VALUES
+   //measure_all<order_type>(101,1);
    measure_all<order_type>(101,7);
    measure_all<order_type>(101,31);
+   #endif
    measure_all<order_type>(101,0);
 
    //
+   #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_type>(1101,1);
    measure_all<order_type>(1001,7);
    measure_all<order_type>(1001,31);
    measure_all<order_type>(1001,127);
    measure_all<order_type>(1001,511);
+   #endif
    measure_all<order_type>(1001,0);
    //
    #ifndef BENCH_SORT_SHORT
+   #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_type>(10001,65);
    measure_all<order_type>(10001,255);
    measure_all<order_type>(10001,1023);
    measure_all<order_type>(10001,4095);
    measure_all<order_type>(10001,0);
+   #endif
 
    //
+   #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_type>(100001,511);
    measure_all<order_type>(100001,2047);
    measure_all<order_type>(100001,8191);
    measure_all<order_type>(100001,32767);
+   #endif
    measure_all<order_type>(100001,0);
 
    //
-   #ifdef NDEBUG
+   //#ifdef NDEBUG
+   #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_type>(1000001,1);
    measure_all<order_type>(1000001,1024);
    measure_all<order_type>(1000001,32768);
    measure_all<order_type>(1000001,524287);
+   #endif
    measure_all<order_type>(1000001,0);
    measure_all<order_type>(1500001,0);
    //measure_all<order_type>(10000001,0);
-   #endif   //NDEBUG
+   //#endif   //NDEBUG
 
    #endif   //#ifndef BENCH_SORT_SHORT
 

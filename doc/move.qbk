@@ -762,6 +762,13 @@ Many thanks to all boosters that have tested, reviewed and improved the library.
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_62 Boost 1.62 Release]
+
+*  Fixed bugs:
+   * [@https://github.com/boostorg/move/pull/9 Git Pull #9: ['"Fix assignment of move-and-copy emulated classes"]],
+
+[endsect]
+
 [section:release_notes_boost_1_61 Boost 1.61 Release]
 
 *  Experimental: asymptotically optimal bufferless merge and sort algorithms: [funcref boost::movelib::adaptive_merge adaptive_merge]

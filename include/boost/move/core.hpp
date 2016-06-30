@@ -261,7 +261,7 @@
    #define BOOST_COPYABLE_AND_MOVABLE(TYPE)\
       public:\
       TYPE& operator=(TYPE &t)\
-      {  this->operator=(static_cast<const ::boost::rv<TYPE>&>(t));  }\
+      {  this->operator=(*BOOST_MOVE_TO_RV_CAST(const ::boost::rv<TYPE>*, &t)); return *this;}\
       public:\
       BOOST_MOVE_FORCEINLINE operator ::boost::rv<TYPE>&() \
       {  return *BOOST_MOVE_TO_RV_CAST(::boost::rv<TYPE>*, this);  }\

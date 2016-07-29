@@ -663,6 +663,32 @@ However, "pass by value" is not optimal for classes (like containers, strings, e
 
 [endsect]
 
+[section:templated_assignment_operator Templated assignment operator in copyable and movable types]
+
+
+[import ../example/doc_template_assign.cpp]
+
+Given a movable and copyable class, if a templated assignment operator (*) is added:
+
+[template_assign_example_foo_bar]
+
+C++98 and C++11 compilers will behave different when assigning from a `[const] Foo` lvalue:
+
+[template_assign_example_main]
+
+This different behaviour is a side-effect of the move emulation that can't be easily avoided by
+[*Boost.Move]. One workaround is to SFINAE-out the templated assignment operator with `disable_if`:
+
+[c++]
+
+   template<class U> // Modified templated assignment
+   typename boost::disable_if<boost::is_same<U, Foo>, Foo&>::type
+      operator=(const U& rhs)
+   {  i = -rhs.i; return *this;  } //(2)
+
+
+[endsect]
+
 [endsect]
 
 [section:how_the_library_works How the library works]
@@ -761,6 +787,14 @@ Many thanks to all boosters that have tested, reviewed and improved the library.
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_62 Boost 1.62 Release]
+
+*  Documented new limitations reported in Trac tickets
+   [@https://svn.boost.org/trac/boost/ticket/12194 #12194 ['"Copy assignment on moveable and copyable classes uses wrong type"]] and
+   [@https://svn.boost.org/trac/boost/ticket/12307 #12307 ['"Copy assignment on moveable and copyable classes uses wrong type"]].
+
+[endsect]
 
 [section:release_notes_boost_1_61 Boost 1.61 Release]
 

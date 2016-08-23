@@ -647,11 +647,22 @@ namespace move_detail {
 #define BOOST_MOVE_IF_I_0
 #define BOOST_MOVE_IF_I_1 ,
 
+//BOOST_MOVE_IF
+#define BOOST_MOVE_IF(cond, t, f) BOOST_MOVE_IF_I(cond, t, f)
+#define BOOST_MOVE_IF_I(cond, t, f) BOOST_MOVE_IIF(BOOST_MOVE_BOOL(cond), t, f)
+
+#define BOOST_MOVE_IIF(bit, t, f)   BOOST_MOVE_IIF_I(bit, t, f)
+#define BOOST_MOVE_IIF_I(bit, t, f) BOOST_MOVE_IIF_##bit(t, f)
+#define BOOST_MOVE_IIF_0(t, f) f
+#define BOOST_MOVE_IIF_1(t, f) t
+
 /*
-#define BOOST_MOVE_I_IF_I(x) BOOST_MOVE_I_IF_I2(BOOST_MOVE_BOOL(x))
-#define BOOST_MOVE_I_IF_I2(x) BOOST_MOVE_I_##x
-#define BOOST_MOVE_I_0
-#define BOOST_MOVE_I_1 ,
+#define BOOST_MOVE_IIF(bit, t, f) BOOST_MOVE_IIF_OO((bit, t, f))
+#define BOOST_MOVE_IIF_OO(par) BOOST_MOVE_IIF_I ## par
+#define BOOST_MOVE_IIF_I(bit, t, f) BOOST_MOVE_IIF_II(BOOST_MOVE_IIF_ ## bit(t, f))
+#define BOOST_MOVE_IIF_II(id) id
+#define BOOST_MOVE_IIF_0(t, f) f
+#define BOOST_MOVE_IIF_1(t, f) t
 */
 
 //BOOST_MOVE_COLON

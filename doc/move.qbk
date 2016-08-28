@@ -792,7 +792,7 @@ Many thanks to all boosters that have tested, reviewed and improved the library.
 
 *  Documented new limitations reported in Trac tickets
    [@https://svn.boost.org/trac/boost/ticket/12194 #12194 ['"Copy assignment on moveable and copyable classes uses wrong type"]] and
-   [@https://svn.boost.org/trac/boost/ticket/12307 #12307 ['"Copy assignment on moveable and copyable classes uses wrong type"]].
+   [@https://svn.boost.org/trac/boost/ticket/12307 #12307 ['"Copy assignment from const ref handled differently in C++11/C++98"]].
 
 [endsect]
 

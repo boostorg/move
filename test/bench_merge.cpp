@@ -27,7 +27,7 @@ using boost::timer::nanosecond_type;
 //#define BOOST_MOVE_ADAPTIVE_SORT_STATS
 void print_stats(const char *str, boost::ulong_long_type element_count)
 {
-   std::printf("%sCmp:%8.04f Cpy:%9.04f\n", str, double(order_type::num_compare)/element_count, double(order_type::num_copy)/element_count );
+   std::printf("%sCmp:%8.04f Cpy:%9.04f\n", str, double(order_perf_type::num_compare)/element_count, double(order_perf_type::num_copy)/element_count );
 }
 
 #include <boost/move/algo/adaptive_merge.hpp>
@@ -83,7 +83,7 @@ const char *AlgoNames [] = { "StdMerge        "
                            , "SqrtHAdaptMerge "
                            , "SqrtAdaptMerge  "
                            , "Sqrt2AdaptMerge "
-                           , "QuartAdaptMerge "
+                           , "QHalfAdaptMerge "
                            , "StdInplaceMerge "
                            };
 
@@ -92,53 +92,53 @@ BOOST_STATIC_ASSERT((sizeof(AlgoNames)/sizeof(*AlgoNames)) == MaxMerge);
 template<class T>
 bool measure_algo(T *elements, std::size_t key_reps[], std::size_t element_count, std::size_t key_len, unsigned alg, nanosecond_type &prev_clock)
 {
-   std::size_t const split_pos = generate_elements(elements, element_count, key_reps, key_len, order_type_less<T>());
+   std::size_t const split_pos = generate_elements(elements, element_count, key_reps, key_len, order_type_less());
 
    std::printf("%s ", AlgoNames[alg]);
-   order_type::num_compare=0;
-   order_type::num_copy=0;
-   order_type::num_elements = element_count;
+   order_perf_type::num_compare=0;
+   order_perf_type::num_copy=0;
+   order_perf_type::num_elements = element_count;
    cpu_timer timer;
    timer.resume();
    switch(alg)
    {
       case StdMerge:
-         std::inplace_merge(elements, elements+split_pos, elements+element_count, order_type_less<T>());
+         std::inplace_merge(elements, elements+split_pos, elements+element_count, order_type_less());
       break;
       case AdaptiveMerge:
-         boost::movelib::adaptive_merge(elements, elements+split_pos, elements+element_count, order_type_less<T>());
+         boost::movelib::adaptive_merge(elements, elements+split_pos, elements+element_count, order_type_less());
       break;
       case SqrtHAdaptiveMerge:
-         adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less<T>()
+         adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
                             , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count)/2+1);
       break;
       case SqrtAdaptiveMerge:
-         adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less<T>()
+         adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
                             , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
       break;
       case Sqrt2AdaptiveMerge:
-         adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less<T>()
+         adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
                             , 2*boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
       break;
       case QuartAdaptiveMerge:
-         adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less<T>()
+         adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
                             , (element_count-1)/4+1);
       break;
       case StdInplaceMerge:
-         boost::movelib::merge_bufferless_ONlogN(elements, elements+split_pos, elements+element_count, order_type_less<T>());
+         boost::movelib::merge_bufferless_ONlogN(elements, elements+split_pos, elements+element_count, order_type_less());
       break;
    }
    timer.stop();
 
-   if(order_type::num_elements == element_count){
+   if(order_perf_type::num_elements == element_count){
       std::printf(" Tmp Ok ");
    } else{
       std::printf(" Tmp KO ");
    }
    nanosecond_type new_clock = timer.elapsed().wall;
 
-   //std::cout << "Cmp:" << order_type::num_compare << " Cpy:" << order_type::num_copy;   //for old compilers without ll size argument
-   std::printf("Cmp:%8.04f Cpy:%9.04f", double(order_type::num_compare)/element_count, double(order_type::num_copy)/element_count );
+   //std::cout << "Cmp:" << order_perf_type::num_compare << " Cpy:" << order_perf_type::num_copy;   //for old compilers without ll size argument
+   std::printf("Cmp:%8.04f Cpy:%9.04f", double(order_perf_type::num_compare)/element_count, double(order_perf_type::num_copy)/element_count );
 
    double time = double(new_clock);
 
@@ -178,10 +178,10 @@ bool measure_all(std::size_t L, std::size_t NK)
    nanosecond_type back_clock;
    bool res = true;
    res = res && measure_algo(A,Keys,L,NK,StdMerge, prev_clock);
-   back_clock = prev_clock;/*
+   back_clock = prev_clock;
    //
    prev_clock = back_clock;
-   res = res && measure_algo(A,Keys,L,NK,QuartAdaptiveMerge, prev_clock);*/
+   res = res && measure_algo(A,Keys,L,NK,QuartAdaptiveMerge, prev_clock);
    //
    prev_clock = back_clock;
    res = res && measure_algo(A,Keys,L,NK,Sqrt2AdaptiveMerge, prev_clock);
@@ -211,58 +211,55 @@ int main()
 {
    try{
    #ifndef BENCH_SORT_UNIQUE_VALUES
-   measure_all<order_type>(101,1);
-   measure_all<order_type>(101,7);
-   measure_all<order_type>(101,31);
+   measure_all<order_perf_type>(101,1);
+   measure_all<order_perf_type>(101,7);
+   measure_all<order_perf_type>(101,31);
    #endif
-   measure_all<order_type>(101,0);
+   measure_all<order_perf_type>(101,0);
 
    //
    #ifndef BENCH_SORT_UNIQUE_VALUES
-   measure_all<order_type>(1101,1);
-   measure_all<order_type>(1001,7);
-   measure_all<order_type>(1001,31);
-   measure_all<order_type>(1001,127);
-   measure_all<order_type>(1001,511);
+   measure_all<order_perf_type>(1101,1);
+   measure_all<order_perf_type>(1001,7);
+   measure_all<order_perf_type>(1001,31);
+   measure_all<order_perf_type>(1001,127);
+   measure_all<order_perf_type>(1001,511);
    #endif
-   measure_all<order_type>(1001,0);
+   measure_all<order_perf_type>(1001,0);
    //
    #ifndef BENCH_MERGE_SHORT
    #ifndef BENCH_SORT_UNIQUE_VALUES
-   measure_all<order_type>(10001,65);
-   measure_all<order_type>(10001,255);
-   measure_all<order_type>(10001,1023);
-   measure_all<order_type>(10001,4095);
+   measure_all<order_perf_type>(10001,65);
+   measure_all<order_perf_type>(10001,255);
+   measure_all<order_perf_type>(10001,1023);
+   measure_all<order_perf_type>(10001,4095);
    #endif
-   measure_all<order_type>(10001,0);
+   measure_all<order_perf_type>(10001,0);
 
    //
    #ifndef BENCH_SORT_UNIQUE_VALUES
-   measure_all<order_type>(100001,511);
-   measure_all<order_type>(100001,2047);
-   measure_all<order_type>(100001,8191);
-   measure_all<order_type>(100001,32767);
+   measure_all<order_perf_type>(100001,511);
+   measure_all<order_perf_type>(100001,2047);
+   measure_all<order_perf_type>(100001,8191);
+   measure_all<order_perf_type>(100001,32767);
    #endif
-   measure_all<order_type>(100001,0);
+   measure_all<order_perf_type>(100001,0);
 
    //
    #ifdef NDEBUG
    #ifndef BENCH_SORT_UNIQUE_VALUES
-   measure_all<order_type>(1000001,1);
-   measure_all<order_type>(1000001,1024);
-   measure_all<order_type>(1000001,32768);
-   measure_all<order_type>(1000001,524287);
+   measure_all<order_perf_type>(1000001,1);
+   measure_all<order_perf_type>(1000001,1024);
+   measure_all<order_perf_type>(1000001,32768);
+   measure_all<order_perf_type>(1000001,524287);
    #endif
-   measure_all<order_type>(1000001,0);
-   measure_all<order_type>(1500001,0);
-   //measure_all<order_type>(10000001,0);
-   //measure_all<order_type>(15000001,0);
-   //measure_all<order_type>(100000001,0);
+   measure_all<order_perf_type>(1000001,0);
+   measure_all<order_perf_type>(3000001,0);
    #endif   //NDEBUG
 
    #endif   //#ifndef BENCH_MERGE_SHORT
 
-   //measure_all<order_type>(100000001,0);
+   //measure_all<order_perf_type>(100000001,0);
    }
    catch(...)
    {

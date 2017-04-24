@@ -19,6 +19,7 @@
 #include <boost/timer/timer.hpp>
 
 #include "order_type.hpp"
+#include "random_shuffle.hpp"
 
 using boost::timer::cpu_timer;
 using boost::timer::cpu_times;
@@ -45,9 +46,9 @@ std::size_t generate_elements(T elements[], std::size_t element_count, std::size
       std::size_t  key = key_len ? (i % key_len) : i;
       elements[i].key=key;
    }
-   std::random_shuffle(elements, elements + element_count);
-   std::random_shuffle(elements, elements + element_count);
-   std::random_shuffle(elements, elements + element_count);
+   ::random_shuffle(elements, elements + element_count);
+   ::random_shuffle(elements, elements + element_count);
+   ::random_shuffle(elements, elements + element_count);
    for(std::size_t i = 0; i < element_count; ++i){
       elements[i].val = key_reps[elements[i].key]++;
    }

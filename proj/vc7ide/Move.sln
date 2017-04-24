@@ -296,6 +296,7 @@ Global
 		..\..\..\..\boost\move\detail\fwd_macros.hpp = ..\..\..\..\boost\move\detail\fwd_macros.hpp
 		..\..\..\..\boost\move\algo\insertion_sort.hpp = ..\..\..\..\boost\move\algo\insertion_sort.hpp
 		..\..\..\..\boost\move\iterator.hpp = ..\..\..\..\boost\move\iterator.hpp
+		..\..\..\..\boost\move\detail\iterator_to_raw_pointer.hpp = ..\..\..\..\boost\move\detail\iterator_to_raw_pointer.hpp
 		..\..\..\..\boost\move\detail\iterator_traits.hpp = ..\..\..\..\boost\move\detail\iterator_traits.hpp
 		..\..\doc\Jamfile.v2 = ..\..\doc\Jamfile.v2
 		..\..\..\..\boost\move\make_unique.hpp = ..\..\..\..\boost\move\make_unique.hpp
@@ -308,8 +309,11 @@ Global
 		..\..\doc\move.qbk = ..\..\doc\move.qbk
 		..\..\..\..\boost\move\detail\move_helpers.hpp = ..\..\..\..\boost\move\detail\move_helpers.hpp
 		..\..\..\..\boost\move\detail\placement_new.hpp = ..\..\..\..\boost\move\detail\placement_new.hpp
+		..\..\..\..\boost\move\detail\pointer_element.hpp = ..\..\..\..\boost\move\detail\pointer_element.hpp
+		..\..\..\..\boost\move\detail\reverse_iterator.hpp = ..\..\..\..\boost\move\detail\reverse_iterator.hpp
 		..\..\..\..\boost\move\detail\std_ns_begin.hpp = ..\..\..\..\boost\move\detail\std_ns_begin.hpp
 		..\..\..\..\boost\move\detail\std_ns_end.hpp = ..\..\..\..\boost\move\detail\std_ns_end.hpp
+		..\..\..\..\boost\move\detail\to_raw_pointer.hpp = ..\..\..\..\boost\move\detail\to_raw_pointer.hpp
 		..\..\..\..\boost\move\traits.hpp = ..\..\..\..\boost\move\traits.hpp
 		..\..\..\..\boost\move\detail\type_traits.hpp = ..\..\..\..\boost\move\detail\type_traits.hpp
 		..\..\..\..\boost\move\unique_ptr.hpp = ..\..\..\..\boost\move\unique_ptr.hpp

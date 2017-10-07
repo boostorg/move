@@ -2437,7 +2437,8 @@ void adaptive_merge_impl
 
       //Not the minimum number of keys is not available on the first range, so fallback to rotations
       if(collected != to_collect && collected < 4){
-         merge_bufferless(first, first+len1, first+len1+len2, comp);
+         merge_bufferless(first, first+collected, first+len1, comp);
+         merge_bufferless(first, first + len1, first + len1 + len2, comp);
          return;
       }
 

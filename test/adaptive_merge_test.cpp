@@ -69,6 +69,7 @@ bool test_random_shuffled(std::size_t const element_count, std::size_t const num
 int main()
 {
    const std::size_t NIter = 100;
+   test_random_shuffled<order_move_type>(10001, 3,    NIter);
    test_random_shuffled<order_move_type>(10001, 65,   NIter);
    test_random_shuffled<order_move_type>(10001, 101,  NIter);
    test_random_shuffled<order_move_type>(10001, 1023, NIter);

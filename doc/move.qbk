@@ -788,6 +788,15 @@ Many thanks to all boosters that have tested, reviewed and improved the library.
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_66 Boost 1.66 Release]
+
+*  Fixed bugs:
+   *  [@https://github.com/boostorg/move/pull/14   Git Pull  #14: ['"Workaround for bogus [-Wignored-attributes] warning on GCC 6.x/7.x"]].
+   *  [@https://github.com/boostorg/move/issues/15 Git Issue #15: ['"Incorrect merge in adaptive_merge when the number of unique items is limited"]].
+
+[endsect]
+
+
 [section:release_notes_boost_1_65 Boost 1.65 Release]
 
 *  Fixed bug:

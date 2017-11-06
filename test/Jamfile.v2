@@ -22,7 +22,5 @@ rule test_all
    return $(all_rules) ;
 }
 
-test-suite move_test : [ test_all r ] 
-: <link>static
-;
+test-suite move_test : [ test_all r ] ;
  

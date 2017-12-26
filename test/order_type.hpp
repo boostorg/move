@@ -75,6 +75,9 @@ struct order_move_type
    std::size_t key;
    std::size_t val;
 
+   static const std::size_t moved_constr_mark = std::size_t(-1);
+   static const std::size_t moved_assign_mark = std::size_t(-2);
+
    order_move_type()
       : key(0u), val(0u)
    {}
@@ -104,8 +107,8 @@ struct order_move_type
 
 struct order_type_less
 {
-   template<class T>
-   bool operator()(const T &a, T const &b) const
+   template<class T, class U>
+   bool operator()(const T &a, U const &b) const
    {  return a < b;   }
 };
 

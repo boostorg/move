@@ -217,6 +217,9 @@
 						RelativePath="..\..\..\..\boost\move\algo\detail\basic_op.hpp">
 					</File>
 					<File
+						RelativePath="..\..\..\..\boost\move\algo\detail\heap_sort.hpp">
+					</File>
+					<File
 						RelativePath="..\..\..\..\boost\move\algo\detail\insertion_sort.hpp">
 					</File>
 					<File
@@ -224,6 +227,9 @@
 					</File>
 					<File
 						RelativePath="..\..\..\..\boost\move\algo\detail\merge_sort.hpp">
+					</File>
+					<File
+						RelativePath="..\..\..\..\boost\move\algo\detail\pdqsort.hpp">
 					</File>
 					<File
 						RelativePath="..\..\..\..\boost\move\algo\detail\set_difference.hpp">

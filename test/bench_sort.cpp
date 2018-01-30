@@ -78,6 +78,7 @@ enum AlgoType
    MergeSort,
    StableSort,
    PdQsort,
+   StdSort,
    AdaptiveSort,
    SqrtHAdaptiveSort,
    SqrtAdaptiveSort,
@@ -92,6 +93,7 @@ enum AlgoType
 const char *AlgoNames [] = { "MergeSort      "
                            , "StableSort     "
                            , "PdQsort        "
+                           , "StdSort        "
                            , "AdaptSort      "
                            , "SqrtHAdaptSort "
                            , "SqrtAdaptSort  "
@@ -125,6 +127,9 @@ bool measure_algo(T *elements, std::size_t key_reps[], std::size_t element_count
       break;
       case PdQsort:
          boost::movelib::pdqsort(elements,elements+element_count,order_type_less());
+      break;
+      case StdSort:
+         std::sort(elements,elements+element_count,order_type_less());
       break;
       case AdaptiveSort:
          boost::movelib::adaptive_sort(elements, elements+element_count, order_type_less());
@@ -190,7 +195,7 @@ bool measure_algo(T *elements, std::size_t key_reps[], std::size_t element_count
               , units
               , prev_clock ? double(new_clock)/double(prev_clock): 1.0);
    prev_clock = new_clock;
-   bool res = is_order_type_ordered(elements, element_count, alg != HeapSort && alg != PdQsort);
+   bool res = is_order_type_ordered(elements, element_count, alg != HeapSort && alg != PdQsort && alg != StdSort);
    return res;
 }
 
@@ -214,6 +219,9 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    res = res && measure_algo(A,Keys,L,NK,PdQsort, prev_clock);
+   //
+   prev_clock = back_clock;
+   res = res && measure_algo(A,Keys,L,NK,StdSort, prev_clock);
    //
    prev_clock = back_clock;
    res = res && measure_algo(A,Keys,L,NK,HeapSort, prev_clock);

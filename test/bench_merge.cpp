@@ -26,6 +26,7 @@ using boost::timer::cpu_times;
 using boost::timer::nanosecond_type;
 
 //#define BOOST_MOVE_ADAPTIVE_SORT_STATS
+//#define BOOST_MOVE_ADAPTIVE_SORT_STATS_LEVEL 2
 void print_stats(const char *str, boost::ulong_long_type element_count)
 {
    std::printf("%sCmp:%8.04f Cpy:%9.04f\n", str, double(order_perf_type::num_compare)/element_count, double(order_perf_type::num_copy)/element_count );
@@ -84,7 +85,7 @@ const char *AlgoNames [] = { "StdMerge        "
                            , "SqrtHAdaptMerge "
                            , "SqrtAdaptMerge  "
                            , "Sqrt2AdaptMerge "
-                           , "QHalfAdaptMerge "
+                           , "QuartAdaptMerge "
                            , "StdInplaceMerge "
                            };
 
@@ -256,6 +257,7 @@ int main()
    #endif
    measure_all<order_perf_type>(1000001,0);
    measure_all<order_perf_type>(3000001,0);
+   measure_all<order_perf_type>(5000001,0);
    #endif   //NDEBUG
 
    #endif   //#ifndef BENCH_MERGE_SHORT

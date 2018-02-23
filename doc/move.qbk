@@ -784,9 +784,20 @@ and Klaus Triendl discovered how to bind const rlvalues using `class rv`.
 
 Many thanks to all boosters that have tested, reviewed and improved the library.
 
+Special thanks to:
+
+* Orson Peters, author of [@https://github.com/orlp/pdqsort Pattern-defeating quicksort (pdqsort)].
+* Andrey Astrelin, author of [@https://github.com/Mrrl/GrailSort Grail Sort].
+
 [endsect]
 
 [section:release_notes Release Notes]
+
+[section:release_notes_boost_1_67 Boost 1.67 Release]
+
+*  Added pdqsort and heap_sort implementations, initially as a detail, they will be official in the future once better tested.
+
+[endsect]
 
 [section:release_notes_boost_1_66 Boost 1.66 Release]
 

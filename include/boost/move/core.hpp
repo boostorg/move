@@ -70,7 +70,7 @@
    //
    //////////////////////////////////////////////////////////////////////////////
    template <class T>
-   class rv
+   class BOOST_MOVE_ATTRIBUTE_MAY_ALIAS rv
       : public ::boost::move_detail::if_c
          < ::boost::move_detail::is_class<T>::value
          , T
@@ -81,7 +81,7 @@
       ~rv() throw();
       rv(rv const&);
       void operator=(rv const&);
-   } BOOST_MOVE_ATTRIBUTE_MAY_ALIAS;
+   };
 
 
    //////////////////////////////////////////////////////////////////////////////

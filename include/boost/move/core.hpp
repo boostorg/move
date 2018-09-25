@@ -63,7 +63,7 @@
    #if defined(BOOST_GCC) && (BOOST_GCC >= 40400) && (BOOST_GCC < 40500)
    #define BOOST_RV_ATTRIBUTE_MAY_ALIAS BOOST_MAY_ALIAS
    #else
-   #define BOOST_RV_ATTRIBUTE_MAY_ALIAS BOOST_MAY_ALIAS
+   #define BOOST_RV_ATTRIBUTE_MAY_ALIAS 
    #endif
 
    namespace boost {

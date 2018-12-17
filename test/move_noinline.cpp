@@ -51,5 +51,5 @@ int main()
     m2 = ::boost::move(m);
     BOOST_TEST(m.moved());
     BOOST_TEST_NOT(m2.moved());
-    return 0;
+    return boost::report_errors();
 }

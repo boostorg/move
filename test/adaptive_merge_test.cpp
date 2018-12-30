@@ -42,11 +42,11 @@ bool test_random_shuffled(std::size_t const element_count, std::size_t const num
    for (std::size_t i = 0; i != num_iter; ++i)
    {
       ::random_shuffle(elements.get(), elements.get() + element_count);
-      for(std::size_t i = 0; i < (num_keys ? num_keys : element_count); ++i){
-         key_reps[i]=0;
+      for(std::size_t j = 0; j < (num_keys ? num_keys : element_count); ++j){
+         key_reps[j]=0;
       }
-      for(std::size_t i = 0; i < element_count; ++i){
-         elements[i].val = key_reps[elements[i].key]++;
+      for(std::size_t j = 0; j < element_count; ++j){
+         elements[j].val = key_reps[elements[j].key]++;
       }
 
       boost::movelib::unique_ptr<char[]> buf(new char [sizeof(T)*(element_count-element_count/2)]);

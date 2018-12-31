@@ -612,7 +612,7 @@ void adaptive_sort( RandIt first, RandIt last, Compare comp
    typedef typename iterator_traits<RandIt>::size_type  size_type;
    typedef typename iterator_traits<RandIt>::value_type value_type;
 
-   ::boost::movelib::detail_adaptive::adaptive_xbuf<value_type, RandRawIt> xbuf(uninitialized, uninitialized_len);
+   ::boost::movelib::adaptive_xbuf<value_type, RandRawIt> xbuf(uninitialized, uninitialized_len);
    ::boost::movelib::detail_adaptive::adaptive_sort_impl(first, size_type(last - first), comp, xbuf);
 }
 

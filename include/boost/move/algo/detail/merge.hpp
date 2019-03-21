@@ -853,15 +853,26 @@ template<typename BidirectionalIterator1, typename BidirectionalIterator2,
 {
    if (len1 > len2 && len2 <= buffer_size)
    {
-      BidirectionalIterator2 buffer_end = boost::move(middle, last, buffer);
-      boost::move_backward(first, middle, last);
-      return boost::move(buffer, buffer_end, first);
+      if(len2) //Protect against self-move ranges
+      {
+         BidirectionalIterator2 buffer_end = boost::move(middle, last, buffer);
+         boost::move_backward(first, middle, last);
+         return boost::move(buffer, buffer_end, first);
+      }
+      else
+         return first;
    }
    else if (len1 <= buffer_size)
    {
-      BidirectionalIterator2 buffer_end = boost::move(first, middle, buffer);
-      boost::move(middle, last, first);
-      return boost::move_backward(buffer, buffer_end, last);
+      if(len1) //Protect against self-move ranges
+      {
+         BidirectionalIterator2 buffer_end = boost::move(first, middle, buffer);
+         BidirectionalIterator1 ret = boost::move(middle, last, first);
+         boost::move(buffer, buffer_end, ret);
+         return ret;
+      }
+      else
+         return last;
    }
    else
       return rotate_gcd(first, middle, last);

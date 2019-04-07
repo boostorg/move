@@ -309,7 +309,7 @@ void adaptive_merge_impl
 template<class RandIt, class Compare>
 void adaptive_merge( RandIt first, RandIt middle, RandIt last, Compare comp
                 , typename iterator_traits<RandIt>::value_type* uninitialized = 0
-                , std::size_t uninitialized_len = 0)
+                , typename iterator_traits<RandIt>::size_type uninitialized_len = 0)
 {
    typedef typename iterator_traits<RandIt>::size_type  size_type;
    typedef typename iterator_traits<RandIt>::value_type value_type;
@@ -340,7 +340,7 @@ void adaptive_merge( RandIt first, RandIt middle, RandIt last, Compare comp
          return;
    } while(1);
 
-   ::boost::movelib::adaptive_xbuf<value_type> xbuf(uninitialized, uninitialized_len);
+   ::boost::movelib::adaptive_xbuf<value_type, value_type*, size_type> xbuf(uninitialized, size_type(uninitialized_len));
    ::boost::movelib::detail_adaptive::adaptive_merge_impl(first, size_type(middle - first), size_type(last - middle), comp, xbuf);
 }
 

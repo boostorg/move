@@ -807,7 +807,7 @@ Special thanks to:
 *  Removed support for deprecated GCC compilers.
 *  Fixed bugs:
    *  [@https://github.com/boostorg/move/pull/23 Git Pull #23: ['"Add minimal cmake file"]].
-   *  [@https://github.com/boostorg/move/issues/25 Git Pull #25: ['"daptive_merge is broken for iterator_traits<RandIt>::size_type != std::size_t"]].
+   *  [@https://github.com/boostorg/move/issues/25 Git Issue #25: ['"adaptive_merge is broken for iterator_traits<RandIt>::size_type != std::size_t"]].
 
 [endsect]
 

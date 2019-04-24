@@ -802,6 +802,13 @@ Special thanks to:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_71 Boost 1.71 Release]
+
+*  Fixed bugs:
+   *  [@https://github.com/boostorg/move/issues/26 Git Issue #26: ['"Invalid iterator increment/decrement in the last iteration of adaptive_sort_combine_blocks"]].
+
+[endsect]
+
 [section:release_notes_boost_1_70 Boost 1.70 Release]
 
 *  Removed support for deprecated GCC compilers.

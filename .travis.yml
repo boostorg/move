@@ -178,6 +178,15 @@ jobs:
         - cd $BOOST_ROOT/libs/$SELF
         - ci/travis/valgrind.sh
 
+    - os: linux
+      env:
+        - COMMENT=cmake
+      script:
+        - cd $BOOST_ROOT
+        - mkdir __build__ && cd __build__
+        - cmake -DBOOST_ENABLE_CMAKE=1 -DBoost_VERBOSE=1 -DBOOST_INCLUDE_LIBRARIES=move ..
+        - ctest --output-on-failure -R boost_move
+
     #################### Jobs to run on pushes to master, develop ###################
 
     # Coverity Scan

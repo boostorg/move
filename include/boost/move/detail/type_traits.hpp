@@ -902,6 +902,7 @@ struct alignment_of_hack
    char c;
    T t2;
    alignment_of_hack();
+   ~alignment_of_hack();
 };
 
 template <unsigned A, unsigned S>

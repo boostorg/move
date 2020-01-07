@@ -802,6 +802,13 @@ Special thanks to:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_73 Boost 1.73 Release]
+
+*  Fixed bugs:
+   *  [@https://github.com/boostorg/move/issues/28 Git Issue #28: ['"Warning C4624 on MSVC 2019"]].
+
+[endsect]
+
 [section:release_notes_boost_1_71 Boost 1.71 Release]
 
 *  Fixed bugs:

@@ -193,7 +193,7 @@
 #   define BOOST_MOVE_ALIGNMENT_OF(T) __alignof__(T)
 #endif
 
-# if defined(__CODEGEARC__)
+# if defined(BOOST_CODEGEARC)
 #   define BOOST_MOVE_IS_UNION(T) __is_union(T)
 #   define BOOST_MOVE_IS_POD(T) __is_pod(T)
 #   define BOOST_MOVE_IS_EMPTY(T) __is_empty(T)

@@ -410,6 +410,15 @@ template<typename T> struct remove_cv<const volatile T>  {  typedef T type;   };
 template<typename T> struct remove_cv<volatile T>        {  typedef T type;   };
 
 //////////////////////////
+//    remove_cvref
+//////////////////////////
+template<class T>
+struct remove_cvref
+   : remove_cv<typename remove_reference<T>::type>
+{
+};
+
+//////////////////////////
 //    make_unsigned
 //////////////////////////
 template <class T>

@@ -9,9 +9,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <boost/move/detail/config_begin.hpp>
-#include <cassert>
-
 //[file_descriptor_def
 
 #include <boost/move/utility_core.hpp>
@@ -25,8 +22,8 @@ class file_descriptor
       return 1;
    }
 
-   void operating_system_close_file(int fd)
-   {  (void)fd;   assert(fd != 0); }
+   void operating_system_close_file(int)
+   {}
    //->
    int os_descr_;
 
@@ -88,5 +85,3 @@ int main()
    return 0;
 }
 //]
-
-#include <boost/move/detail/config_end.hpp>

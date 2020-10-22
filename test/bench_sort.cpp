@@ -17,11 +17,11 @@
 
 #include <boost/config.hpp>
 #include <boost/move/unique_ptr.hpp>
-#include <boost/timer/timer.hpp>
+#include <boost/move/detail/nsec_clock.hpp>
+#include <cstdlib>
 
-using boost::timer::cpu_timer;
-using boost::timer::cpu_times;
-using boost::timer::nanosecond_type;
+using boost::move_detail::cpu_timer;
+using boost::move_detail::nanosecond_type;
 
 #include "order_type.hpp"
 #include "random_shuffle.hpp"
@@ -304,9 +304,9 @@ bool measure_all(std::size_t L, std::size_t NK)
    //prev_clock = back_clock;
    //elements = original_elements;
    //res = res && measure_algo(elements.data(), L,SlowStableSort, prev_clock);
-   //
+
    if(!res)
-      throw int(0);
+      std::abort();
    return res;
 }
 

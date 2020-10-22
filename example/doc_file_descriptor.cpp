@@ -33,7 +33,10 @@ class file_descriptor
    public:
    explicit file_descriptor(const char *filename)              //Constructor
       : os_descr_(operating_system_open_file(filename))
-   {  if(!os_descr_) throw std::runtime_error("file not found");  }
+   {
+      //=if(!os_descr_)
+         //=throw std::runtime_error("file not found");
+   }
 
    ~file_descriptor()                                          //Destructor
    {  if(os_descr_)  operating_system_close_file(os_descr_);  }

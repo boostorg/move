@@ -25,6 +25,8 @@
 #define BOOST_MOVE_DETAIL_NSEC_CLOCK_HPP
 
 #include <boost/config.hpp>
+#include <boost/cstdint.hpp>
+#include <boost/cstdlib.hpp>
 
 
 #   if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32))
@@ -42,32 +44,40 @@
 #include <boost/winapi/get_last_error.hpp>
 #include <boost/winapi/error_codes.hpp>
 #include <boost/assert.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 namespace boost { namespace move_detail {
 
+template<int Dummy>
+struct QPFHolder
+{
+   static inline double get_nsec_per_tic()
+   {
+      boost::winapi::LARGE_INTEGER_ freq;
+      boost::winapi::BOOL_ r = boost::winapi::QueryPerformanceFrequency( &freq );
+      boost::ignore_unused(r);
+      BOOST_ASSERT(r != 0 && "Boost::Move - get_nanosecs_per_tic Internal Error");
+
+      return double(1000000000.0L / freq.QuadPart);
+   }
+
+   static const double nanosecs_per_tic;
+};
+
+template<int Dummy>
+const double QPFHolder<Dummy>::nanosecs_per_tic = get_nsec_per_tic();
+
 inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 {
-   boost::winapi::LARGE_INTEGER_ freq;
-   if ( !boost::winapi::QueryPerformanceFrequency( &freq ) )
-   {
-      BOOST_ASSERT(0 && "Boost::Move - get_nanosecs_per_tic Internal Error");
-      return 0u;
-   }
-
-   double nanosecs_per_tic = double(1000000000.0L / freq.QuadPart);
-
+   double nanosecs_per_tic = QPFHolder<0>::nanosecs_per_tic;
+   
    boost::winapi::LARGE_INTEGER_ pcount;
-   if ( nanosecs_per_tic <= 0.0L )
-   {
-      BOOST_ASSERT(0 && "Boost::Move - get_nanosecs_per_tic Internal Error");
-      return 0u;
-   }
    unsigned times=0;
-   while ( ! boost::winapi::QueryPerformanceCounter( &pcount ) )
+   while ( !boost::winapi::QueryPerformanceCounter( &pcount ) )
    {
       if ( ++times > 3 )
       {
-         BOOST_ASSERT(0 && "Boost::Move - QueryPerformanceCounter Internal Error");
+         BOOST_ASSERT("Boost::Move - QueryPerformanceCounter Internal Error");
          return 0u;
       }
    }

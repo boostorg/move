@@ -1032,7 +1032,45 @@ typedef union max_align max_align_t;
 //    aligned_storage
 /////////////////////////////
 
-#if !defined(BOOST_NO_ALIGNMENT)
+#if defined(_MSC_VER) && defined(_M_IX86)
+
+// Special version for usual alignments on x86 MSVC because it might crash
+// when passsing aligned types by value even for 8 byte alignment.
+template<std::size_t Align>
+struct aligned_struct;
+
+template <> struct aligned_struct<1> { char data; };
+template <> struct aligned_struct<2> { short data; };
+template <> struct aligned_struct<4> { int data; };
+template <> struct aligned_struct<8> { double data; };
+
+#define BOOST_MOVE_ALIGNED_STRUCT(x) \
+  template <> struct aligned_struct<x> { \
+    __declspec(align(x)) char data; \
+  }
+BOOST_MOVE_ALIGNED_STRUCT(16);
+BOOST_MOVE_ALIGNED_STRUCT(32);
+BOOST_MOVE_ALIGNED_STRUCT(64);
+BOOST_MOVE_ALIGNED_STRUCT(128);
+BOOST_MOVE_ALIGNED_STRUCT(512);
+BOOST_MOVE_ALIGNED_STRUCT(1024);
+BOOST_MOVE_ALIGNED_STRUCT(2048);
+BOOST_MOVE_ALIGNED_STRUCT(4096);
+
+template<std::size_t Len, std::size_t Align>
+union aligned_union
+{
+   aligned_struct<Align> aligner;
+   unsigned char data[Len];
+};
+
+template<std::size_t Len, std::size_t Align>
+struct aligned_storage_impl
+{
+   typedef aligned_union<Len, Align> type;
+};
+
+#elif !defined(BOOST_NO_ALIGNMENT)
 
 template<std::size_t Len, std::size_t Align>
 struct aligned_struct;

@@ -1060,8 +1060,9 @@ BOOST_MOVE_ALIGNED_STRUCT(4096);
 template<std::size_t Len, std::size_t Align>
 union aligned_union
 {
-   aligned_struct<Align> aligner;
-   unsigned char data[Len];
+   typedef aligned_struct<Align> aligner_t;
+   aligner_t aligner;
+   unsigned char data[Len > sizeof(aligner_t) ? Len : sizeof(aligner_t)];
 };
 
 template<std::size_t Len, std::size_t Align>
@@ -1106,7 +1107,7 @@ template<std::size_t Len, std::size_t Align>
 union aligned_struct_wrapper
 {
    aligned_struct<Len, Align> aligner;
-   unsigned char data[sizeof(aligned_struct<Len, Align>)];
+   unsigned char data[Len > sizeof(aligner) ? Len : sizeof(aligner)];
 };
 
 template<std::size_t Len, std::size_t Align>
@@ -1121,7 +1122,7 @@ template<class T, std::size_t Len>
 union aligned_union
 {   
    T aligner;
-   unsigned char data[Len];
+   unsigned char data[Len > sizeof(aligner) ? Len : sizeof(aligner)];
 };
 
 template<std::size_t Len, std::size_t Align, class T, bool Ok>

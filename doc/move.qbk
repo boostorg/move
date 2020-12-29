@@ -802,6 +802,13 @@ Special thanks to:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_76 Boost 1.76 Release]
+
+*  Fixed bugs:
+   *  [@https://github.com/boostorg/move/issues/35 Git Issue #35: ['"New nothrow move traits are incomplete"]].
+
+[endsect]
+
 [section:release_notes_boost_1_75 Boost 1.75 Release]
 
 *  Fixed bugs:

@@ -20,13 +20,6 @@ target_link_libraries(boost_move
     Boost::static_assert
 )
 
-if(BOOST_SUPERPROJECT_VERSION)
-
-  include(BoostInstall)
-  boost_install(TARGETS boost_move HEADER_DIRECTORY include/)
-
-endif()
-
 if(BUILD_TESTING)
 
   add_subdirectory(test)

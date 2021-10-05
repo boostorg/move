@@ -178,7 +178,7 @@ void adaptive_sort_combine_blocks
    boost::ignore_unused(l_total_combined);
    BOOST_ASSERT(l_total_combined <= len);
 
-   size_type const max_i = n_reg_combined + (l_irreg_combined != 0);
+   size_type const max_i = size_type(n_reg_combined + (l_irreg_combined != 0));
 
    if(merge_left || !use_buf) {
       for( size_type combined_i = 0; combined_i != max_i; ) {
@@ -209,7 +209,7 @@ void adaptive_sort_combine_blocks
       }
    }
    else{
-      combined_first += l_reg_combined*(max_i-1);
+      combined_first += size_type(l_reg_combined*(max_i-1u));
       for( size_type combined_i = max_i; combined_i; ) {
          --combined_i;
          bool const is_last = combined_i==n_reg_combined;
@@ -299,7 +299,7 @@ bool adaptive_sort_combine_all_blocks
 
       //Combine to form l_merged*2 segments
       if(n_keys){
-         size_type upper_n_keys_this_iter = 2*l_merged/l_block;
+         size_type upper_n_keys_this_iter = size_type(2u*l_merged/l_block);
          if(upper_n_keys_this_iter > 256){
             adaptive_sort_combine_blocks
                ( keys, comp, !use_internal_buf || is_merge_left ? first : first-l_block
@@ -416,7 +416,8 @@ bool adaptive_sort_build_params
    n_min_ideal_keys += 1;
    BOOST_ASSERT(n_min_ideal_keys <= l_intbuf);
 
-   if(xbuf.template supports_aligned_trailing<size_type>(l_intbuf, (len-l_intbuf-1)/l_intbuf+1)){
+   if(xbuf.template supports_aligned_trailing<size_type>
+         (l_intbuf, size_type((len-l_intbuf-1u)/l_intbuf+1u))){
       n_keys = 0u;
       l_build_buf = l_intbuf;
    }
@@ -455,8 +456,8 @@ bool adaptive_sort_build_params
             return false;
          }
          n_keys = l_intbuf;
-         while(n_keys&(n_keys-1)){
-            n_keys &= n_keys-1;  // make it power or 2
+         while(n_keys & (n_keys-1u)){
+            n_keys &= size_type(n_keys-1u);  // make it power or 2
          }
          while(n_keys > collected){
             n_keys/=2;
@@ -569,7 +570,9 @@ void adaptive_sort_impl
 
          //Classic merge sort until internal buffer and xbuf are exhausted
          size_type const l_merged = adaptive_sort_build_blocks
-            (first+n_key_plus_buf-l_build_buf, len-n_key_plus_buf+l_build_buf, l_base, l_build_buf, xbuf, comp);
+            ( first + size_type(n_key_plus_buf-l_build_buf)
+            , size_type(len-n_key_plus_buf+l_build_buf)
+            , l_base, l_build_buf, xbuf, comp);
          BOOST_MOVE_ADAPTIVE_SORT_PRINT_L1("   After build_blocks:   ", len);
 
          //Non-trivial merge

@@ -39,26 +39,26 @@ class heap_sort_helper
    static void adjust_heap(RandomAccessIterator first, size_type hole_index, size_type const len, value_type &value, Compare comp)
    {
       size_type const top_index = hole_index;
-      size_type second_child = 2 * (hole_index + 1);
+      size_type second_child = size_type(2u*(hole_index + 1u));
 
       while (second_child < len) {
-         if (comp(*(first + second_child), *(first + (second_child - 1))))
+         if (comp(*(first + second_child), *(first + size_type(second_child - 1u))))
             second_child--;
          *(first + hole_index) = boost::move(*(first + second_child));
          hole_index = second_child;
-         second_child = 2 * (second_child + 1);
+         second_child = size_type(2u * (second_child + 1u));
       }
       if (second_child == len) {
-         *(first + hole_index) = boost::move(*(first + (second_child - 1)));
+         *(first + hole_index) = boost::move(*(first + size_type(second_child - 1u)));
          hole_index = second_child - 1;
       }
 
       {  //push_heap-like ending
-         size_type parent = (hole_index - 1) / 2;
+         size_type parent = size_type((hole_index - 1u) / 2u);
          while (hole_index > top_index && comp(*(first + parent), value)) {
             *(first + hole_index) = boost::move(*(first + parent));
             hole_index = parent;
-            parent = (hole_index - 1) / 2;
+            parent = size_type((hole_index - 1u) / 2u);
          }    
          *(first + hole_index) = boost::move(value);
       }
@@ -68,7 +68,7 @@ class heap_sort_helper
    {
       size_type const len = size_type(last - first);
       if (len > 1) {
-         size_type parent = len/2u - 1u;
+         size_type parent = size_type(len/2u - 1u);
 
          do {
             value_type v(boost::move(*(first + parent)));

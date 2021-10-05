@@ -285,8 +285,8 @@ typename iterator_traits<RandIt>::size_type
    BOOST_ASSERT(ix_first_block <= ix_last_block);
    size_type ix_min_block = 0u;
    for (size_type szt_i = ix_first_block; szt_i < ix_last_block; ++szt_i) {
-      const value_type &min_val = first[ix_min_block*l_block];
-      const value_type &cur_val = first[szt_i*l_block];
+      const value_type &min_val = first[size_type(ix_min_block*l_block)];
+      const value_type &cur_val = first[size_type(szt_i*l_block)];
       const key_type   &min_key = key_first[ix_min_block];
       const key_type   &cur_key = key_first[szt_i];
 
@@ -322,7 +322,7 @@ void merge_blocks_bufferless
    size_type n_bef_irreg2 = 0;
    bool l_irreg_pos_count = true;
    RandItKeys key_mid(key_first + n_block_a);
-   RandIt const first_irr2 = first + l_irreg1 + (n_block_a+n_block_b)*l_block;
+   RandIt const first_irr2 = first + size_type(l_irreg1 + (n_block_a+n_block_b)*l_block);
    RandIt const last_irr2  = first_irr2 + l_irreg2;
 
    {  //Selection sort blocks
@@ -331,12 +331,12 @@ void merge_blocks_bufferless
 
       size_type min_check = n_block_a == n_block_left ? 0u : n_block_a;
       size_type max_check = min_value<size_type>(min_check+1, n_block_left);
-      for (RandIt f = first+l_irreg1; n_block_left; --n_block_left, ++key_range2, f += l_block, min_check -= min_check != 0, max_check -= max_check != 0) {
+      for ( RandIt f = first+l_irreg1; n_block_left; --n_block_left) {
          size_type const next_key_idx = find_next_block(key_range2, key_comp, f, l_block, min_check, max_check, comp);
          RandItKeys const key_next(key_range2 + next_key_idx);
-         max_check = min_value<size_type>(max_value<size_type>(max_check, next_key_idx+size_type(2)), n_block_left);
+         max_check = min_value<size_type>(max_value<size_type>(max_check, size_type(next_key_idx+2)), n_block_left);
 
-         RandIt const first_min = f + next_key_idx*l_block;
+         RandIt const first_min = f + size_type(next_key_idx*l_block);
 
          //Check if irregular b block should go here.
          //If so, break to the special code handling the irregular block
@@ -349,6 +349,11 @@ void merge_blocks_bufferless
          BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(f, f+l_block, comp));
          BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(first_min, first_min + l_block, comp));
          BOOST_MOVE_ADAPTIVE_SORT_INVARIANT((f == (first+l_irreg1)) || !comp(*f, *(f-l_block)));
+         //Update context
+         ++key_range2;
+         f += l_block;
+         min_check = size_type(min_check - (min_check != 0));
+         max_check = size_type(max_check - (max_check != 0));
       }
    }
    BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(first+l_irreg1+n_bef_irreg2*l_block, first_irr2, comp));
@@ -436,7 +441,7 @@ Unsigned floor_sqrt(Unsigned const n)
    Unsigned y = x/2 + (x&1);
    while (y < x){
       x = y;
-      y = (x + n / x)/2;
+      y = Unsigned((x + n / x)/2U);
    }
    return x;
 }
@@ -445,7 +450,7 @@ template<class Unsigned>
 Unsigned ceil_sqrt(Unsigned const n)
 {
    Unsigned r = floor_sqrt(n);
-   return r + Unsigned((n%r) != 0);
+   return Unsigned(r + Unsigned((n%r) != 0));
 }
 
 template<class Unsigned>
@@ -459,7 +464,7 @@ Unsigned floor_merge_multiple(Unsigned const n, Unsigned &base, Unsigned &pow)
    }
    base = s;
    pow = p;
-   return s << p;
+   return Unsigned(s << p);
 }
 
 template<class Unsigned>
@@ -476,7 +481,7 @@ Unsigned ceil_merge_multiple(Unsigned const n, Unsigned &base, Unsigned &pow)
          ++pow;
       }
    }
-   return base << pow;
+   return Unsigned(base << pow);
 }
 
 template<class Unsigned>
@@ -688,10 +693,10 @@ void combine_params
    typedef SizeType   size_type;
 
    //Initial parameters for selection sort blocks
-   l_irreg1 = l_prev_merged%l_block;
-   l_irreg2 = (l_combined-l_irreg1)%l_block;
+   l_irreg1 = size_type(l_prev_merged%l_block);
+   l_irreg2 = size_type((l_combined-l_irreg1)%l_block);
    BOOST_ASSERT(((l_combined-l_irreg1-l_irreg2)%l_block) == 0);
-   size_type const n_reg_block = (l_combined-l_irreg1-l_irreg2)/l_block;
+   size_type const n_reg_block = size_type((l_combined-l_irreg1-l_irreg2)/l_block);
    n_block_a = l_prev_merged/l_block;
    n_block_b = n_reg_block - n_block_a;
    BOOST_ASSERT(n_reg_block>=n_block_a);
@@ -941,11 +946,11 @@ OutputIt op_merge_blocks_with_irreg
 {
    typedef typename iterator_traits<RandIt>::size_type size_type;
 
-   for(; n_block_left; --n_block_left, ++key_first, min_check -= min_check != 0, max_check -= max_check != 0){
+   for(; n_block_left; --n_block_left){
       size_type next_key_idx = find_next_block(key_first, key_comp, first_reg, l_block, min_check, max_check, comp);  
       max_check = min_value<size_type>(max_value<size_type>(max_check, next_key_idx+size_type(2)), n_block_left);
       RandIt const last_reg  = first_reg + l_block;
-      RandIt first_min = first_reg + next_key_idx*l_block;
+      RandIt first_min = first_reg + size_type(next_key_idx*l_block);
       RandIt const last_min  = first_min + l_block;
       boost::ignore_unused(last_min);
 
@@ -973,6 +978,9 @@ OutputIt op_merge_blocks_with_irreg
 
       BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(orig_dest, dest, comp));
       first_reg = last_reg;
+      ++key_first;
+      min_check = size_type(min_check - (min_check != 0));
+      max_check = size_type(max_check - (max_check != 0));
    }
    return dest;
 }
@@ -1016,7 +1024,7 @@ void op_merge_blocks_left
    RandIt first1 = first;
    RandIt last1  = first1 + l_irreg1;
    RandIt first2 = last1;
-   RandIt const irreg2 = first2 + n_block_left*l_block;
+   RandIt const irreg2 = first2 + size_type(n_block_left*l_block);
    bool is_range1_A = true;
 
    RandItKeys key_range2(key_first);
@@ -1026,10 +1034,10 @@ void op_merge_blocks_left
    ////////////////////////////////////////////////////////////////////////////
    size_type min_check = n_block_a == n_block_left ? 0u : n_block_a;
    size_type max_check = min_value<size_type>(min_check+size_type(1), n_block_left);
-   for (; n_block_left; --n_block_left, ++key_range2, min_check -= min_check != 0, max_check -= max_check != 0) {
+   for (; n_block_left; --n_block_left) {
       size_type const next_key_idx = find_next_block(key_range2, key_comp, first2, l_block, min_check, max_check, comp);
       max_check = min_value<size_type>(max_value<size_type>(max_check, next_key_idx+size_type(2)), n_block_left);
-      RandIt const first_min = first2 + next_key_idx*l_block;
+      RandIt const first_min = first2 + size_type(next_key_idx*l_block);
       RandIt const last_min  = first_min + l_block;
 
       boost::ignore_unused(last_min);
@@ -1100,6 +1108,10 @@ void op_merge_blocks_left
       BOOST_MOVE_ADAPTIVE_SORT_INVARIANT( (is_range2_A && n_block_a_left) || (!is_range2_A && n_block_b_left));
       is_range2_A ? --n_block_a_left : --n_block_b_left;
       first2 = last2;
+      //Update context
+      ++key_range2;
+      min_check = size_type(min_check - (min_check != 0));
+      max_check = size_type(max_check - (max_check != 0));
    }
 
    BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(!n_block_b || n_block_a == count_if_with(key_first, key_range2 + n_block_left, key_comp, *key_mid));
@@ -1191,10 +1203,11 @@ void merge_blocks_right
    , Compare comp
    , bool const xbuf_used)
 {
+   typedef typename iterator_traits<RandIt>::size_type size_type;
    merge_blocks_left
       ( (make_reverse_iterator)(key_first + needed_keys_count(n_block_a, n_block_b))
       , inverse<KeyCompare>(key_comp)
-      , (make_reverse_iterator)(first + ((n_block_a+n_block_b)*l_block+l_irreg2))
+      , (make_reverse_iterator)(first + size_type((n_block_a+n_block_b)*l_block+l_irreg2))
       , l_block
       , l_irreg2
       , n_block_b
@@ -1235,7 +1248,7 @@ void op_merge_blocks_with_buf
 
    size_type n_block_b_left = n_block_b;
    size_type n_block_a_left = n_block_a;
-   size_type n_block_left = n_block_b + n_block_a;
+   size_type n_block_left = size_type(n_block_b + n_block_a);
    RandItKeys key_mid(key_first + n_block_a);
 
    RandItBuf buffer = buf_first;
@@ -1243,9 +1256,9 @@ void op_merge_blocks_with_buf
    RandIt first1 = first;
    RandIt last1  = first1 + l_irreg1;
    RandIt first2 = last1;
-   RandIt const first_irr2 = first2 + n_block_left*l_block;
+   RandIt const first_irr2 = first2 + size_type(n_block_left*l_block);
    bool is_range1_A = true;
-   const size_type len = l_block * n_block_a + l_block * n_block_b + l_irreg1 + l_irreg2;
+   const size_type len = size_type(l_block * n_block_a + l_block * n_block_b + l_irreg1 + l_irreg2);
    boost::ignore_unused(len);
 
    RandItKeys key_range2(key_first);
@@ -1255,10 +1268,10 @@ void op_merge_blocks_with_buf
    ////////////////////////////////////////////////////////////////////////////
    size_type min_check = n_block_a == n_block_left ? 0u : n_block_a;
    size_type max_check = min_value<size_type>(min_check+size_type(1), n_block_left);
-   for (; n_block_left; --n_block_left, ++key_range2, min_check -= min_check != 0, max_check -= max_check != 0) {
+   for (; n_block_left; --n_block_left) {
       size_type const next_key_idx = find_next_block(key_range2, key_comp, first2, l_block, min_check, max_check, comp);
       max_check = min_value<size_type>(max_value<size_type>(max_check, next_key_idx+size_type(2)), n_block_left);
-      RandIt       first_min = first2 + next_key_idx*l_block;
+      RandIt       first_min = first2 + size_type(next_key_idx*l_block);
       RandIt const last_min  = first_min + l_block;
       boost::ignore_unused(last_min);
       RandIt const last2  = first2 + l_block;
@@ -1322,6 +1335,10 @@ void op_merge_blocks_with_buf
       is_range2_A ? --n_block_a_left : --n_block_b_left;
       last1 += l_block;
       first2 = last2;
+      //Update context
+      ++key_range2;
+      min_check = size_type(min_check - (min_check != 0));
+      max_check = size_type(max_check - (max_check != 0));
    }
    RandIt res = op(forward_t(), buffer, buffer_end, first1);
    boost::ignore_unused(res);
@@ -1392,7 +1409,7 @@ void op_merge_right_step_once
       , Op op)
 {
    typedef typename iterator_traits<RandIt>::size_type size_type;
-   size_type restk = elements_in_blocks%(2*l_build_buf);
+   size_type restk = size_type(elements_in_blocks%(2*l_build_buf));
    size_type p = elements_in_blocks - restk;
    BOOST_ASSERT(0 == (p%(2*l_build_buf)));
 
@@ -1403,8 +1420,10 @@ void op_merge_right_step_once
       op_merge_right(first_block+p, first_block+p+l_build_buf, first_block+p+restk, first_block+p+restk+l_build_buf, comp, op);
    }
    while(p>0){
-      p -= 2*l_build_buf;
-      op_merge_right(first_block+p, first_block+p+l_build_buf, first_block+p+2*l_build_buf, first_block+p+3*l_build_buf, comp, op);
+      p -= size_type(2*l_build_buf);
+      op_merge_right( first_block+p, first_block+size_type(p+l_build_buf)
+                    , first_block+size_type(p+2*l_build_buf)
+                    , first_block+size_type(p+3*l_build_buf), comp, op);
    }
 }
 
@@ -1463,18 +1482,22 @@ typename iterator_traits<RandIt>::size_type
       size_type p0=0;
       RandIt pos = first_block;
       while((elements_in_blocks - p0) > 2*l_merged) {
-         op_merge_left(pos-l_merged, pos, pos+l_merged, pos+2*l_merged, comp, op);
+         op_merge_left(pos-l_merged, pos, pos+l_merged, pos+size_type(2*l_merged), comp, op);
          BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(pos-l_merged, pos+l_merged, comp));
-         p0 += 2*l_merged;
+         p0 += size_type(2*l_merged);
          pos = first_block+p0;
       }
       if((elements_in_blocks-p0) > l_merged) {
          op_merge_left(pos-l_merged, pos, pos+l_merged, first_block+elements_in_blocks, comp, op);
-         BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(pos-l_merged, pos-l_merged+(first_block+elements_in_blocks-pos), comp));
+         BOOST_MOVE_ADAPTIVE_SORT_INVARIANT
+            (boost::movelib::is_sorted
+               (pos-l_merged, pos+size_type((first_block+elements_in_blocks-pos))-l_merged, comp));
       }
       else {
          op(forward_t(), pos, first_block+elements_in_blocks, pos-l_merged);
-         BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(pos-l_merged, first_block+elements_in_blocks-l_merged, comp));
+         BOOST_MOVE_ADAPTIVE_SORT_INVARIANT
+            (boost::movelib::is_sorted
+               (pos-l_merged, first_block+size_type(elements_in_blocks-l_merged), comp));
       }
       first_block -= l_merged;
       l_left_space -= l_merged;

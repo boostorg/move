@@ -30,7 +30,9 @@ using boost::move_detail::nanosecond_type;
 //#define BOOST_MOVE_ADAPTIVE_SORT_INVARIANTS
 void print_stats(const char *str, boost::ulong_long_type element_count)
 {
-   std::printf("%sCmp:%7.03f Cpy:%8.03f\n", str, double(order_perf_type::num_compare)/element_count, double(order_perf_type::num_copy)/element_count );
+   std::printf( "%sCmp:%7.03f Cpy:%8.03f\n", str
+              , double(order_perf_type::num_compare)/double(element_count)
+              , double(order_perf_type::num_copy)/double(element_count) );
 }
 
 

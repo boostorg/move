@@ -26,7 +26,7 @@ void random_shuffle( RandomIt first, RandomIt last )
    typedef typename boost::movelib::iterator_traits<RandomIt>::difference_type difference_type;
    difference_type n = last - first;
    for (difference_type i = n-1; i > 0; --i) {
-      difference_type j = ullrand() % (i+1);
+      difference_type j = static_cast<difference_type>(ullrand() % (i+1));
       if(j != i) {
          boost::adl_move_swap(first[i], first[j]);
       }

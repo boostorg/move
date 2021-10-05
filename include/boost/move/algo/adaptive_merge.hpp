@@ -138,7 +138,7 @@ inline static SizeType adaptive_merge_n_keys_with_external_keys(SizeType l_block
 {
    typedef SizeType size_type;
    //This is the minimum number of keys to implement the ideal algorithm
-   size_type n_keys = (len1-l_intbuf)/l_block + len2/l_block;
+   size_type n_keys = size_type((len1-l_intbuf)/l_block + len2/l_block);
    return n_keys;
 }
 
@@ -223,7 +223,7 @@ void adaptive_merge_impl
    typedef typename iterator_traits<RandIt>::size_type size_type;
 
    if(xbuf.capacity() >= min_value<size_type>(len1, len2)){
-      buffered_merge(first, first+len1, first+(len1+len2), comp, xbuf);
+      buffered_merge(first, first+len1, first + size_type(len1+len2), comp, xbuf);
    }
    else{
       const size_type len = len1+len2;
@@ -233,7 +233,7 @@ void adaptive_merge_impl
       //One range is not big enough to extract keys and the internal buffer so a
       //rotation-based based merge will do just fine
       if(len1 <= l_block*2 || len2 <= l_block*2){
-         merge_bufferless(first, first+len1, first+len1+len2, comp);
+         merge_bufferless(first, first+len1, first + size_type(len1+len2), comp);
          return;
       }
 
@@ -249,7 +249,7 @@ void adaptive_merge_impl
       //Not the minimum number of keys is not available on the first range, so fallback to rotations
       if(collected != to_collect && collected < 4){
          merge_bufferless(first, first+collected, first+len1, comp);
-         merge_bufferless(first, first + len1, first + len1 + len2, comp);
+         merge_bufferless(first, first + len1, first + size_type(len1 + len2), comp);
          return;
       }
 

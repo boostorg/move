@@ -82,7 +82,7 @@ inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
       }
    }
 
-   return static_cast<boost::uint64_t>((nanosecs_per_tic) * pcount.QuadPart);
+   return static_cast<boost::uint64_t>(nanosecs_per_tic * double(pcount.QuadPart));
 }
 
 }}  //namespace boost { namespace move_detail {

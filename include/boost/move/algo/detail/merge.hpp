@@ -316,11 +316,11 @@ Unsigned gcd(Unsigned x, Unsigned y)
          else if(!(y&1))
             y >>=1;
          else if(x >=y)
-            x = (x-y) >> 1;
+            x = Unsigned((x-y) >> 1u);
          else
-            y = (y-x) >> 1;
+            y = Unsigned((y-x) >> 1);
       }
-      return z*(x+y);
+      return Unsigned(z*(x+y));
    }
 }
 
@@ -351,7 +351,7 @@ RandIt rotate_gcd(RandIt first, RandIt middle, RandIt last)
             *it_j = boost::move(*it_k);
             it_j = it_k;
             size_type const left = size_type(last - it_j);
-            it_k = left > middle_pos ? it_j + middle_pos : first + (middle_pos - left);
+            it_k = left > middle_pos ? it_j + middle_pos : first + size_type(middle_pos - left);
          } while(it_k != it_i);
          *it_j = boost::move(temp);
       }
@@ -375,7 +375,7 @@ RandIt lower_bound
 
       if (comp(*middle, key)) {
          first = ++middle;
-         len -= step + 1;
+         len -= size_type(step + 1);
       }
       else{
          len = step;
@@ -400,7 +400,7 @@ RandIt upper_bound
 
       if (!comp(key, *middle)) {
          first = ++middle;
-         len -= step + 1;
+         len -= size_type(step + 1);
       }
       else{
          len = step;

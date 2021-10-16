@@ -47,6 +47,12 @@
 #endif
 
 #include <boost/move/detail/config_begin.hpp>
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
 #include <boost/move/detail/workaround.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/move/algo/detail/insertion_sort.hpp>
@@ -328,6 +334,10 @@ void pdqsort(Iter begin, Iter end, Compare comp)
 
 }  //namespace movelib {
 }  //namespace boost {
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic pop
+#endif
 
 #include <boost/move/detail/config_end.hpp>
 

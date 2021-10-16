@@ -23,6 +23,13 @@
 #endif
 
 #include <boost/move/detail/config_begin.hpp>
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
+
 #include <boost/move/detail/workaround.hpp>
 
 #include <boost/move/utility_core.hpp>
@@ -62,14 +69,14 @@ template<class RandIt, class RandIt2, class Compare>
 void merge_sort_copy( RandIt first, RandIt last
                    , RandIt2 dest, Compare comp)
 {
-   typedef typename iterator_traits<RandIt>::size_type  size_type;
-
+   typedef typename iterator_traits<RandIt>::size_type         size_type;
+   
    size_type const count = size_type(last - first);
    if(count <= MergeSortInsertionSortThreshold){
       insertion_sort_copy(first, last, dest, comp);
    }
    else{
-      size_type const half = count/2;
+      size_type const half = size_type(count/2u);
       merge_sort_copy(first + half, last        , dest+half   , comp);
       merge_sort_copy(first       , first + half, first + half, comp);
       merge_with_right_placed
@@ -84,7 +91,7 @@ void merge_sort_uninitialized_copy( RandIt first, RandIt last
                                  , RandItRaw uninitialized
                                  , Compare comp)
 {
-   typedef typename iterator_traits<RandIt>::size_type  size_type;
+   typedef typename iterator_traits<RandIt>::size_type       size_type;
    typedef typename iterator_traits<RandIt>::value_type value_type;
 
    size_type const count = size_type(last - first);
@@ -95,7 +102,7 @@ void merge_sort_uninitialized_copy( RandIt first, RandIt last
       size_type const half = count/2;
       merge_sort_uninitialized_copy(first + half, last, uninitialized + half, comp);
       destruct_n<value_type, RandItRaw> d(uninitialized+half);
-      d.incr(count-half);
+      d.incr(size_type(count-half));
       merge_sort_copy(first, first + half, first + half, comp);
       uninitialized_merge_with_right_placed
          ( first + half, first + half + half
@@ -109,16 +116,16 @@ template<class RandIt, class RandItRaw, class Compare>
 void merge_sort( RandIt first, RandIt last, Compare comp
                , RandItRaw uninitialized)
 {
-   typedef typename iterator_traits<RandIt>::size_type  size_type;
-   typedef typename iterator_traits<RandIt>::value_type value_type;
+   typedef typename iterator_traits<RandIt>::size_type       size_type;
+   typedef typename iterator_traits<RandIt>::value_type      value_type;
 
    size_type const count = size_type(last - first);
    if(count <= MergeSortInsertionSortThreshold){
       insertion_sort(first, last, comp);
    }
    else{
-      size_type const half = count/2;
-      size_type const rest = count -  half;
+      size_type const half = size_type(count/2u);
+      size_type const rest = size_type(count -  half);
       RandIt const half_it = first + half;
       RandIt const rest_it = first + rest;
 
@@ -137,15 +144,15 @@ void merge_sort( RandIt first, RandIt last, Compare comp
 template<class RandIt, class RandItRaw, class Compare>
 void merge_sort_with_constructed_buffer( RandIt first, RandIt last, Compare comp, RandItRaw buffer)
 {
-   typedef typename iterator_traits<RandIt>::size_type  size_type;
+   typedef typename iterator_traits<RandIt>::size_type       size_type;
 
    size_type const count = size_type(last - first);
    if(count <= MergeSortInsertionSortThreshold){
       insertion_sort(first, last, comp);
    }
    else{
-      size_type const half = count/2;
-      size_type const rest = count -  half;
+      size_type const half = size_type(count/2);
+      size_type const rest = size_type(count -  half);
       RandIt const half_it = first + half;
       RandIt const rest_it = first + rest;
 
@@ -166,7 +173,7 @@ void stable_sort_ONlogN_recursive(RandIt first, RandIt last, Pointer buffer, Dis
       insertion_sort(first, last, comp);
    }
    else {
-      const size_type len = (last - first) / 2;
+      const size_type len = size_type(last - first) / 2u;
       const RandIt middle = first + len;
       if (len > ((buffer_size+1)/2)){
          stable_sort_ONlogN_recursive(first, middle, buffer, buffer_size, comp);
@@ -201,6 +208,10 @@ void stable_sort_adaptive_ONlogN2(BidirectionalIterator first,
 ///@endcond
 
 }} //namespace boost {  namespace movelib{
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic pop
+#endif
 
 #include <boost/move/detail/config_end.hpp>
 

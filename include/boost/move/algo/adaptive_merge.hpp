@@ -13,6 +13,12 @@
 #define BOOST_MOVE_ADAPTIVE_MERGE_HPP
 
 #include <boost/move/detail/config_begin.hpp>
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
 #include <boost/move/algo/detail/adaptive_sort_merge.hpp>
 
 namespace boost {
@@ -34,10 +40,11 @@ inline void adaptive_merge_combine_blocks( RandIt first
                                       , XBuf & xbuf
                                       )
 {
-   typedef typename iterator_traits<RandIt>::size_type size_type;
-   size_type const len = len1+len2;
-   size_type const l_combine  = len-collected;
-   size_type const l_combine1 = len1-collected;
+   typedef typename iterator_traits<RandIt>::size_type       size_type;
+
+   size_type const len = size_type(len1+len2);
+   size_type const l_combine  = size_type(len-collected);
+   size_type const l_combine1 = size_type(len1-collected);
 
     if(n_keys){
       RandIt const first_data = first+collected;
@@ -63,7 +70,8 @@ inline void adaptive_merge_combine_blocks( RandIt first
                            , n_block_a, n_block_b, l_irreg1, l_irreg2);   //Outputs
          if(use_internal_buf){
             op_merge_blocks_with_buf
-               (keys, comp, first_data, l_block, l_irreg1, n_block_a, n_block_b, l_irreg2, comp, swap_op(), first_data-l_block);
+               ( keys, comp, first_data, l_block, l_irreg1, n_block_a, n_block_b
+               , l_irreg2, comp, swap_op(), first_data-l_block);
             BOOST_MOVE_ADAPTIVE_SORT_PRINT_L2("   A mrg buf: ", len);
          }
          else{
@@ -105,9 +113,10 @@ inline void adaptive_merge_final_merge( RandIt first
                                       , XBuf & xbuf
                                       )
 {
-   typedef typename iterator_traits<RandIt>::size_type size_type;
-   size_type n_keys = collected-l_intbuf;
-   size_type len = len1+len2;
+   typedef typename iterator_traits<RandIt>::size_type       size_type;
+
+   size_type n_keys = size_type(collected-l_intbuf);
+   size_type len = size_type(len1+len2);
    if (!xbuf_used || n_keys) {
       xbuf.clear();
       const size_type middle = xbuf_used && n_keys ? n_keys: collected;
@@ -123,9 +132,9 @@ inline static SizeType adaptive_merge_n_keys_without_external_keys(SizeType l_bl
 {
    typedef SizeType size_type;
    //This is the minimum number of keys to implement the ideal algorithm
-   size_type n_keys = len1/l_block+len2/l_block;
-   const size_type second_half_blocks = len2/l_block;
-   const size_type first_half_aux = len1-l_intbuf;
+   size_type n_keys = size_type(len1/l_block + len2/l_block);
+   const size_type second_half_blocks = size_type(len2/l_block);
+   const size_type first_half_aux = size_type(len1 - l_intbuf);
    while(n_keys >= ((first_half_aux-n_keys)/l_block + second_half_blocks)){
       --n_keys;
    }
@@ -223,17 +232,18 @@ void adaptive_merge_impl
    typedef typename iterator_traits<RandIt>::size_type size_type;
 
    if(xbuf.capacity() >= min_value<size_type>(len1, len2)){
-      buffered_merge(first, first+len1, first + size_type(len1+len2), comp, xbuf);
+      buffered_merge( first, first+len1
+                    , first + len1+len2, comp, xbuf);
    }
    else{
-      const size_type len = len1+len2;
+      const size_type len = size_type(len1+len2);
       //Calculate ideal parameters and try to collect needed unique keys
       size_type l_block = size_type(ceil_sqrt(len));
 
       //One range is not big enough to extract keys and the internal buffer so a
       //rotation-based based merge will do just fine
       if(len1 <= l_block*2 || len2 <= l_block*2){
-         merge_bufferless(first, first+len1, first + size_type(len1+len2), comp);
+         merge_bufferless(first, first+len1, first+len1+len2, comp);
          return;
       }
 
@@ -241,7 +251,7 @@ void adaptive_merge_impl
       //internal buffer is needed so l_intbuf will remain 0.
       size_type l_intbuf = 0;
       size_type n_keys = adaptive_merge_n_keys_intbuf(l_block, len1, len2, xbuf, l_intbuf);
-      size_type const to_collect = l_intbuf+n_keys;
+      size_type const to_collect = size_type(l_intbuf+n_keys);
       //Try to extract needed unique values from the first range
       size_type const collected  = collect_unique(first, first+len1, to_collect, comp, xbuf);
       BOOST_MOVE_ADAPTIVE_SORT_PRINT_L1("\n   A collect: ", len);
@@ -249,7 +259,7 @@ void adaptive_merge_impl
       //Not the minimum number of keys is not available on the first range, so fallback to rotations
       if(collected != to_collect && collected < 4){
          merge_bufferless(first, first+collected, first+len1, comp);
-         merge_bufferless(first, first + len1, first + size_type(len1 + len2), comp);
+         merge_bufferless(first, first + len1, first + len1 + len2, comp);
          return;
       }
 
@@ -344,6 +354,10 @@ void adaptive_merge( RandIt first, RandIt middle, RandIt last, Compare comp
 
 }  //namespace movelib {
 }  //namespace boost {
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic pop
+#endif
 
 #include <boost/move/detail/config_end.hpp>
 

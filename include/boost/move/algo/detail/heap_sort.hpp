@@ -23,6 +23,12 @@
 #endif
 
 #include <boost/move/detail/config_begin.hpp>
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
 #include <boost/move/detail/workaround.hpp>
 #include <boost/move/detail/iterator_traits.hpp>
 #include <boost/move/algo/detail/is_sorted.hpp>
@@ -50,7 +56,7 @@ class heap_sort_helper
       }
       if (second_child == len) {
          *(first + hole_index) = boost::move(*(first + size_type(second_child - 1u)));
-         hole_index = second_child - 1;
+         hole_index = size_type(second_child - 1);
       }
 
       {  //push_heap-like ending
@@ -105,6 +111,10 @@ BOOST_MOVE_FORCEINLINE void heap_sort(RandomAccessIterator first, RandomAccessIt
 }
 
 }} //namespace boost {  namespace movelib{
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic pop
+#endif
 
 #include <boost/move/detail/config_end.hpp>
 

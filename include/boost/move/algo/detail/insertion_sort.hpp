@@ -22,6 +22,11 @@
 #  pragma once
 #endif
 
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
 #include <boost/move/utility_core.hpp>
 #include <boost/move/algo/move.hpp>
 #include <boost/move/detail/iterator_traits.hpp>
@@ -124,5 +129,9 @@ void insertion_sort_uninitialized_copy
 }
 
 }} //namespace boost {  namespace movelib{
+
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic pop
+#endif
 
 #endif //#ifndef BOOST_MOVE_DETAIL_INSERT_SORT_HPP

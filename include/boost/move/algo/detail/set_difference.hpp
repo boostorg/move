@@ -11,6 +11,11 @@
 #ifndef BOOST_MOVE_SET_DIFFERENCE_HPP
 #define BOOST_MOVE_SET_DIFFERENCE_HPP
 
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
 #include <boost/move/algo/move.hpp>
 #include <boost/move/iterator.hpp>
 #include <boost/move/utility_core.hpp>
@@ -199,7 +204,9 @@ ForwardOutputIt1 inplace_set_unique_difference
    return first1;
 }
 
-
+#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#pragma GCC diagnostic pop
+#endif
 
 }  //namespace movelib {
 }  //namespace boost {

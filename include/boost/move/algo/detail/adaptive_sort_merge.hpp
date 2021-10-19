@@ -1023,7 +1023,6 @@ void op_merge_blocks_left
    , Compare comp, Op op)
 {
    typedef typename iterator_traits<RandIt>::size_type       size_type;
-   typedef typename iterator_traits<RandIt>::difference_type difference_type;
 
    size_type const key_count = needed_keys_count(n_block_a, n_block_b);
    boost::ignore_unused(key_count);
@@ -1079,7 +1078,7 @@ void op_merge_blocks_left
                                           (!is_buffer_middle && size_type(first1-buffer) == l_block && first2 == last1));
 
       if(is_range1_A == is_range2_A){
-         BOOST_ASSERT((first1 == last1) || !comp(*first_min, last1[difference_type(-1)]));
+         BOOST_ASSERT((first1 == last1) || !comp(*first_min, last1[typename iterator_traits<RandIt>::difference_type(-1)]));
          if(!is_buffer_middle){
             buffer = op(forward_t(), first1, last1, buffer);
          }

@@ -14,13 +14,13 @@
 
 #include <boost/move/detail/config_begin.hpp>
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#include <boost/move/algo/detail/adaptive_sort_merge.hpp>
+#include <boost/core/ignore_unused.hpp>
+
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
-
-#include <boost/move/algo/detail/adaptive_sort_merge.hpp>
-#include <boost/core/ignore_unused.hpp>
 
 namespace boost {
 namespace movelib {
@@ -647,7 +647,7 @@ void adaptive_sort( RandIt first, RandIt last, Compare comp)
 
 #include <boost/move/detail/config_end.hpp>
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic pop
 #endif
 

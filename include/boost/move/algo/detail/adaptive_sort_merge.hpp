@@ -44,11 +44,6 @@
 
 #include <boost/move/detail/config_begin.hpp>
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#endif
-
 #include <boost/move/detail/reverse_iterator.hpp>
 #include <boost/move/algo/move.hpp>
 #include <boost/move/algo/detail/merge.hpp>
@@ -62,6 +57,11 @@
 #include <boost/assert.hpp>
 #include <boost/cstdint.hpp>
 #include <limits.h>
+
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
 
 #ifndef BOOST_MOVE_ADAPTIVE_SORT_STATS_LEVEL
    #define BOOST_MOVE_ADAPTIVE_SORT_STATS_LEVEL 1
@@ -1527,7 +1527,7 @@ typename iterator_traits<RandIt>::size_type
 }  //namespace movelib {
 }  //namespace boost {
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic pop
 #endif
 

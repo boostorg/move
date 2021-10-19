@@ -121,9 +121,9 @@ inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 {
    struct timespec count;
    ::clock_gettime(BOOST_MOVE_DETAIL_CLOCK_MONOTONIC, &count);
-   boost::uint64_t r = count.tv_sec;
+   boost::uint64_t r = static_cast<boost::uint64_t>(count.tv_sec);
    r *= 1000000000U;
-   r += count.tv_nsec;
+   r += static_cast<boost::uint64_t>(count.tv_nsec);
    return r;
 }
 

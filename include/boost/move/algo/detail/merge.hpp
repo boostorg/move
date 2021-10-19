@@ -11,11 +11,6 @@
 #ifndef BOOST_MOVE_MERGE_HPP
 #define BOOST_MOVE_MERGE_HPP
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#endif
-
 #include <boost/core/ignore_unused.hpp>
 #include <boost/move/algo/move.hpp>
 #include <boost/move/adl_move_swap.hpp>
@@ -26,6 +21,11 @@
 #include <boost/move/detail/iterator_to_raw_pointer.hpp>
 #include <boost/assert.hpp>
 #include <cstddef>
+
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
 
 namespace boost {
 namespace movelib {
@@ -941,7 +941,7 @@ void merge_adaptive_ONlogN(BidirectionalIterator first,
 }  //namespace movelib {
 }  //namespace boost {
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic pop
 #endif
 

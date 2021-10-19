@@ -23,13 +23,6 @@
 #endif
 
 #include <boost/move/detail/config_begin.hpp>
-
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#endif
-
-
 #include <boost/move/detail/workaround.hpp>
 
 #include <boost/move/utility_core.hpp>
@@ -40,6 +33,11 @@
 #include <boost/move/detail/destruct_n.hpp>
 #include <boost/move/algo/detail/insertion_sort.hpp>
 #include <cassert>
+
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
 
 namespace boost {
 namespace movelib {
@@ -209,7 +207,7 @@ void stable_sort_adaptive_ONlogN2(BidirectionalIterator first,
 
 }} //namespace boost {  namespace movelib{
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic pop
 #endif
 

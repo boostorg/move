@@ -13,13 +13,12 @@
 #define BOOST_MOVE_ADAPTIVE_MERGE_HPP
 
 #include <boost/move/detail/config_begin.hpp>
+#include <boost/move/algo/detail/adaptive_sort_merge.hpp>
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
-
-#include <boost/move/algo/detail/adaptive_sort_merge.hpp>
 
 namespace boost {
 namespace movelib {
@@ -355,7 +354,7 @@ void adaptive_merge( RandIt first, RandIt middle, RandIt last, Compare comp
 }  //namespace movelib {
 }  //namespace boost {
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic pop
 #endif
 

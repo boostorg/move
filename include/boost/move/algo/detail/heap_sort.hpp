@@ -24,15 +24,15 @@
 
 #include <boost/move/detail/config_begin.hpp>
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#endif
-
 #include <boost/move/detail/workaround.hpp>
 #include <boost/move/detail/iterator_traits.hpp>
 #include <boost/move/algo/detail/is_sorted.hpp>
 #include <boost/move/utility_core.hpp>
+
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
 
 namespace boost {  namespace movelib{
 
@@ -112,7 +112,7 @@ BOOST_MOVE_FORCEINLINE void heap_sort(RandomAccessIterator first, RandomAccessIt
 
 }} //namespace boost {  namespace movelib{
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
+#if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic pop
 #endif
 

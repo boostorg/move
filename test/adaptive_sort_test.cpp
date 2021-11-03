@@ -74,9 +74,15 @@ int main()
    instantiate_smalldiff_iterators();
 
    const std::size_t NIter = 100;
-   test_random_shuffled<order_move_type>(10001, 3,   NIter);
-   test_random_shuffled<order_move_type>(10001, 65,   NIter);
-   test_random_shuffled<order_move_type>(10001, 101,  NIter);
+   //Below absolute minimal unique values
+   test_random_shuffled<order_move_type>(10001, 3,   NIter);   
+   //Above absolute minimal unique values, below internal buffer
+   test_random_shuffled<order_move_type>(10001, 65,   NIter);  
+   //Enough keys for internal buffer but below minimal keys
+   test_random_shuffled<order_move_type>(10001, 101,  NIter);  
+   //Enough keys for internal buffer and above minimal keys
+   test_random_shuffled<order_move_type>(10001, 200,  NIter);  
+   //Enough keys for internal buffer, and full keys
    test_random_shuffled<order_move_type>(10001, 1023, NIter);
    test_random_shuffled<order_move_type>(10001, 4095, NIter);
    test_random_shuffled<order_move_type>(10001, 0,    NIter);

@@ -863,49 +863,48 @@ template<typename BidirectionalIterator,
    typedef typename iterator_traits<BidirectionalIterator>::size_type size_type;
    //trivial cases
    if (!len2 || !len1) {
-      return;
+      // no-op
    }
-   else if (len1 <= buffer_size || len2 <= buffer_size)
-   {
+   else if (len1 <= buffer_size || len2 <= buffer_size) {
       range_xbuf<Pointer, size_type, move_op> rxbuf(buffer, buffer + buffer_size);
       buffered_merge(first, middle, last, comp, rxbuf);
    }
    else if (size_type(len1 + len2) == 2u) {
       if (comp(*middle, *first))
          adl_move_swap(*first, *middle);
-      return;
    }
    else if (size_type(len1 + len2) < MergeBufferlessONLogNRotationThreshold) {
       merge_bufferless_ON2(first, middle, last, comp);
-      return;
    }
-   BidirectionalIterator first_cut = first;
-   BidirectionalIterator second_cut = middle;
-   size_type len11 = 0;
-   size_type len22 = 0;
-   if (len1 > len2)  //(len1 < len2)
-   {
-      len11 = len1 / 2;
-      first_cut += len11;
-      second_cut = boost::movelib::lower_bound(middle, last, *first_cut, comp);
-      len22 = size_type(second_cut - middle);
-   }
-   else
-   {
-      len22 = len2 / 2;
-      second_cut += len22;
-      first_cut = boost::movelib::upper_bound(first, middle, *second_cut, comp);
-      len11 = size_type(first_cut - first);
-   }
+   else {
+      BidirectionalIterator first_cut = first;
+      BidirectionalIterator second_cut = middle;
+      size_type len11 = 0;
+      size_type len22 = 0;
+      if (len1 > len2)  //(len1 < len2)
+      {
+         len11 = len1 / 2;
+         first_cut += len11;
+         second_cut = boost::movelib::lower_bound(middle, last, *first_cut, comp);
+         len22 = size_type(second_cut - middle);
+      }
+      else
+      {
+         len22 = len2 / 2;
+         second_cut += len22;
+         first_cut = boost::movelib::upper_bound(first, middle, *second_cut, comp);
+         len11 = size_type(first_cut - first);
+      }
 
-   BidirectionalIterator new_middle
-      = rotate_adaptive(first_cut, middle, second_cut,
-         size_type(len1 - len11), len22, buffer,
-         buffer_size);
-   merge_adaptive_ONlogN_recursive(first, first_cut, new_middle, len11,
-      len22, buffer, buffer_size, comp);
-   merge_adaptive_ONlogN_recursive(new_middle, second_cut, last,
-      size_type(len1 - len11), size_type(len2 - len22), buffer, buffer_size, comp);
+      BidirectionalIterator new_middle
+         = rotate_adaptive(first_cut, middle, second_cut,
+            size_type(len1 - len11), len22, buffer,
+            buffer_size);
+      merge_adaptive_ONlogN_recursive(first, first_cut, new_middle, len11,
+         len22, buffer, buffer_size, comp);
+      merge_adaptive_ONlogN_recursive(new_middle, second_cut, last,
+         size_type(len1 - len11), size_type(len2 - len22), buffer, buffer_size, comp);
+   }
 }
 
 

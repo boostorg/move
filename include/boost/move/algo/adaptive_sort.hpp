@@ -453,9 +453,9 @@ bool adaptive_sort_build_params
          l_build_buf = size_type(l_intbuf*2);
          n_keys = l_intbuf;
       }
-      else if(collected == (n_min_ideal_keys+l_intbuf)){ 
+      else if(collected >= (n_min_ideal_keys+l_intbuf)){ 
          l_build_buf = l_intbuf;
-         n_keys = n_min_ideal_keys;
+         n_keys = size_type(collected - l_intbuf);
       }
       //If collected keys are not enough, try to fix n_keys and l_intbuf. If no fix
       //is possible (due to very low unique keys), then go to a slow sort based on rotations.

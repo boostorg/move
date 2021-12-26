@@ -806,6 +806,7 @@ Special thanks to:
 
 *  Fixed bugs:
    *  [@https://github.com/boostorg/move/pull/46   Git Issue #46: ['"Include <algorithm> when BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE is defined"]].
+   *  [@https://github.com/boostorg/move/issues/47 Git Issue #47: ['"MSVC C5243: 'member_function_ptr': using incomplete class can cause potential ODR violation ..."]].
    *  [@https://github.com/boostorg/move/issues/48 Git Issue #48: ['"MSVC warning C4643: Forward declaring 'nothrow_t' in namespace std is not permitted by the C++ Standard"]].
 
 [endsect]

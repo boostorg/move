@@ -10,6 +10,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 //[move_inserter_example
+#include <boost/move/iterator.hpp>
 #include <boost/container/list.hpp>
 #include "movable.hpp"
 #include <cassert>

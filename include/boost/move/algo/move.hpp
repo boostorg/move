@@ -28,6 +28,9 @@
 #include <boost/move/detail/iterator_traits.hpp>
 #include <boost/move/detail/iterator_to_raw_pointer.hpp>
 #include <boost/core/no_exceptions_support.hpp>
+#if defined(BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE)
+#include <algorithm>
+#endif
 
 namespace boost {
 

@@ -18,9 +18,9 @@ struct A
    int a, b, c;
    static int count;
    A() : a (999), b(1000), c(1001) {++count;}
-   A(int a) : a (a), b(1000), c(1001) {++count;}
-   A(int a, int b) : a (a), b(b), c(1001) {++count;}
-   A(int a, int b, int c) : a (a), b(b), c(c) {++count;}
+   A(int x) : a (x), b(1000), c(1001) {++count;}
+   A(int x, int y) : a (x), b(y), c(1001) {++count;}
+   A(int x, int y, int z) : a (x), b(y), c(z) {++count;}
    A(const A&) {++count;}
    virtual ~A() {--count;}
 };

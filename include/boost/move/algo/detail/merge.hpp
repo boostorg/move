@@ -44,12 +44,12 @@ class adaptive_xbuf
    typedef RandRawIt iterator;
    typedef SizeType  size_type;
 
-   adaptive_xbuf()
+   BOOST_MOVE_FORCEINLINE adaptive_xbuf()
       : m_ptr(), m_size(0), m_capacity(0)
    {}
 
-   adaptive_xbuf(RandRawIt raw_memory, size_type capacity)
-      : m_ptr(raw_memory), m_size(0), m_capacity(capacity)
+   BOOST_MOVE_FORCEINLINE adaptive_xbuf(RandRawIt raw_memory, size_type cap)
+      : m_ptr(raw_memory), m_size(0), m_capacity(cap)
    {}
 
    template<class RandIt>
@@ -58,9 +58,9 @@ class adaptive_xbuf
       typedef typename iterator_traits<RandIt>::difference_type rand_diff_t;
       if(n <= m_size){
          boost::move(first, first+rand_diff_t(n), m_ptr);
-         size_type size = m_size;
-         while(size-- != n){
-            m_ptr[size].~T();
+         size_type sz = m_size;
+         while(sz-- != n){
+            m_ptr[sz].~T();
          }
          m_size = n;
       }
@@ -103,30 +103,30 @@ class adaptive_xbuf
       }
    }
 
-   void set_size(size_type size)
+   BOOST_MOVE_FORCEINLINE void set_size(size_type sz)
    {
-      m_size = size;
+      m_size = sz;
    }
 
-   void shrink_to_fit(size_type const size)
+   void shrink_to_fit(size_type const sz)
    {
-      if(m_size > size){
-         for(size_type szt_i = size; szt_i != m_size; ++szt_i){
+      if(m_size > sz){
+         for(size_type szt_i = sz; szt_i != m_size; ++szt_i){
             m_ptr[szt_i].~T();
          }
-         m_size = size;
+         m_size = sz;
       }
    }
 
-   void initialize_until(size_type const size, T &t)
+   void initialize_until(size_type const sz, T &t)
    {
       BOOST_ASSERT(m_size < m_capacity);
-      if(m_size < size){
+      if(m_size < sz){
          BOOST_TRY
          {
             ::new((void*)&m_ptr[m_size]) T(::boost::move(t));
             ++m_size;
-            for(; m_size != size; ++m_size){
+            for(; m_size != sz; ++m_size){
                ::new((void*)&m_ptr[m_size]) T(::boost::move(m_ptr[m_size-1]));
             }
             t = ::boost::move(m_ptr[m_size-1]);
@@ -145,22 +145,22 @@ class adaptive_xbuf
 
    private:
    template<class RIt>
-   static bool is_raw_ptr(RIt)
+   BOOST_MOVE_FORCEINLINE static bool is_raw_ptr(RIt)
    {
       return false;
    }
 
-   static bool is_raw_ptr(T*)
+   BOOST_MOVE_FORCEINLINE static bool is_raw_ptr(T*)
    {
       return true;
    }
 
    public:
    template<class U>
-   bool supports_aligned_trailing(size_type size, size_type trail_count) const
+   bool supports_aligned_trailing(size_type sz, size_type trail_count) const
    {
       if(this->is_raw_ptr(this->data()) && m_capacity){
-         uintptr_t u_addr_sz = uintptr_t(&*(this->data()+size));
+         uintptr_t u_addr_sz = uintptr_t(&*(this->data()+sz));
          uintptr_t u_addr_cp = uintptr_t(&*(this->data()+this->capacity()));
          u_addr_sz = ((u_addr_sz + sizeof(U)-1)/sizeof(U))*sizeof(U);
          return (u_addr_cp >= u_addr_sz) && ((u_addr_cp - u_addr_sz)/sizeof(U) >= trail_count);
@@ -169,43 +169,43 @@ class adaptive_xbuf
    }
 
    template<class U>
-   U *aligned_trailing() const
+   BOOST_MOVE_FORCEINLINE U *aligned_trailing() const
    {
       return this->aligned_trailing<U>(this->size());
    }
 
    template<class U>
-   U *aligned_trailing(size_type pos) const
+   BOOST_MOVE_FORCEINLINE U *aligned_trailing(size_type pos) const
    {
       uintptr_t u_addr = uintptr_t(&*(this->data()+pos));
       u_addr = ((u_addr + sizeof(U)-1)/sizeof(U))*sizeof(U);
       return (U*)u_addr;
    }
 
-   ~adaptive_xbuf()
+   BOOST_MOVE_FORCEINLINE ~adaptive_xbuf()
    {
       this->clear();
    }
 
-   size_type capacity() const
+   BOOST_MOVE_FORCEINLINE size_type capacity() const
    {  return m_capacity;   }
 
-   iterator data() const
+   BOOST_MOVE_FORCEINLINE iterator data() const
    {  return m_ptr;   }
 
-   iterator begin() const
+   BOOST_MOVE_FORCEINLINE iterator begin() const
    {  return m_ptr;   }
 
-   iterator end() const
+   BOOST_MOVE_FORCEINLINE iterator end() const
    {  return m_ptr+m_size;   }
 
-   size_type size() const
+   BOOST_MOVE_FORCEINLINE size_type size() const
    {  return m_size;   }
 
-   bool empty() const
+   BOOST_MOVE_FORCEINLINE bool empty() const
    {  return !m_size;   }
 
-   void clear()
+   BOOST_MOVE_FORCEINLINE void clear()
    {
       this->shrink_to_fit(0u);
    }
@@ -269,10 +269,10 @@ class range_xbuf
       return pos;
    }
 
-   void set_size(size_type size)
+   void set_size(size_type sz)
    {
       m_last  = m_first;
-      m_last += size;
+      m_last += sz;
    }
 
    private:

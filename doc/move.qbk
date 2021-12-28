@@ -804,6 +804,7 @@ Special thanks to:
 
 [section:release_notes_boost_1_79 Boost 1.79 Release]
 
+*  The library now compiles without warnings with GCC's -Wcast-align=strict
 *  Fixed bugs:
    *  [@https://github.com/boostorg/move/pull/46   Git Issue #46: ['"Include <algorithm> when BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE is defined"]].
    *  [@https://github.com/boostorg/move/issues/47 Git Issue #47: ['"MSVC C5243: 'member_function_ptr': using incomplete class can cause potential ODR violation ..."]].

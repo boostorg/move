@@ -22,6 +22,7 @@
 
 #include <boost/move/unique_ptr.hpp>
 #include <boost/move/detail/nsec_clock.hpp>
+#include <boost/move/detail/force_ptr.hpp>
 
 #include "order_type.hpp"
 #include "random_shuffle.hpp"
@@ -70,14 +71,14 @@ template<class T, class Compare>
 void adaptive_merge_buffered(T *elements, T *mid, T *last, Compare comp, std::size_t BufLen)
 {
    boost::movelib::unique_ptr<char[]> mem(new char[sizeof(T)*BufLen]);
-   boost::movelib::adaptive_merge(elements, mid, last, comp, reinterpret_cast<T*>(mem.get()), BufLen);
+   boost::movelib::adaptive_merge(elements, mid, last, comp, boost::move_detail::force_ptr<T*>(mem.get()), BufLen);
 }
 
 template<class T, class Compare>
 void std_like_adaptive_merge_buffered(T *elements, T *mid, T *last, Compare comp, std::size_t BufLen)
 {
    boost::movelib::unique_ptr<char[]> mem(new char[sizeof(T)*BufLen]);
-   boost::movelib::merge_adaptive_ONlogN(elements, mid, last, comp, reinterpret_cast<T*>(mem.get()), BufLen);
+   boost::movelib::merge_adaptive_ONlogN(elements, mid, last, comp, boost::move_detail::force_ptr<T*>(mem.get()), BufLen);
 }
 
 enum AlgoType

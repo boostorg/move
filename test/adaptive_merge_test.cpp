@@ -16,6 +16,7 @@
 
 #include <boost/move/unique_ptr.hpp>
 #include <boost/move/algo/detail/merge_sort.hpp>
+#include <boost/move/detail/force_ptr.hpp>
 
 #include "order_type.hpp"
 #include "random_shuffle.hpp"
@@ -53,8 +54,8 @@ bool test_random_shuffled(std::size_t const element_count, std::size_t const num
       boost::movelib::unique_ptr<char[]> buf(new char [sizeof(T)*(element_count-element_count/2)]);
 
       std::size_t const split = std::size_t(std::rand()) % element_count;
-      boost::movelib::merge_sort(elements.get(), elements.get()+split, order_type_less(), (T*)buf.get());
-      boost::movelib::merge_sort(elements.get()+split, elements.get()+element_count, order_type_less(), (T*)buf.get());
+      boost::movelib::merge_sort(elements.get(), elements.get()+split, order_type_less(), boost::move_detail::force_ptr<T*>(buf.get()));
+      boost::movelib::merge_sort(elements.get()+split, elements.get()+element_count, order_type_less(), boost::move_detail::force_ptr<T*>(buf.get()));
       
       boost::movelib::adaptive_merge(elements.get(), elements.get()+split, elements.get()+element_count, order_type_less());
 

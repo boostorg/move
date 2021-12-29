@@ -25,6 +25,7 @@ struct order_perf_type
    std::size_t val;
 
    order_perf_type()
+      : key(), val()
    {
       ++num_elements;
    }

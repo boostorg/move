@@ -18,7 +18,7 @@
 #  pragma once
 #endif
 
-#include <cstddef>
+#include <boost/move/detail/workaround.hpp>
 
 namespace boost {
 namespace move_detail {

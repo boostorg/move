@@ -33,7 +33,16 @@ struct forward_iterator_tag;
 struct bidirectional_iterator_tag;
 struct random_access_iterator_tag;
 struct output_iterator_tag;
+
+#if (  (defined(BOOST_GNU_STDLIB) && (__cplusplus > 201703L))\
+    || (defined(_LIBCPP_VERSION) && (_LIBCPP_STD_VER > 17))\
+    || (defined(_YVALS) && defined(_CPPLIB_VER) && defined(__cpp_lib_concepts))\
+    || (__cplusplus >= 202002L)\
+    )
+#  define BOOST_MOVE_CONTIGUOUS_ITERATOR_TAG
 struct contiguous_iterator_tag;
+
+#endif
 
 BOOST_MOVE_STD_NS_END
 #include <boost/move/detail/std_ns_end.hpp>

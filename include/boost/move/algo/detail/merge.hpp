@@ -30,7 +30,7 @@
 namespace boost {
 namespace movelib {
 
-template<class T, class RandRawIt = T*, class SizeType = typename iterator_traits<RandRawIt>::size_type>
+template<class T, class RandRawIt = T*, class SizeType = typename iter_size<RandRawIt>::type>
 class adaptive_xbuf
 {
    adaptive_xbuf(const adaptive_xbuf &);
@@ -234,7 +234,8 @@ class range_xbuf
    void move_assign(RandIt first, size_type n)
    {
       BOOST_ASSERT(size_type(n) <= size_type(m_cap-m_first));
-      m_last = Op()(forward_t(), first, first+n, m_first);
+      typedef typename iter_difference<RandIt>::type d_type;
+      m_last = Op()(forward_t(), first, first+d_type(n), m_first);
    }
 
    ~range_xbuf()
@@ -335,7 +336,7 @@ Unsigned gcd(Unsigned x, Unsigned y)
 template<typename RandIt>
 RandIt rotate_gcd(RandIt first, RandIt middle, RandIt last)
 {
-   typedef typename iterator_traits<RandIt>::size_type size_type;
+   typedef typename iter_size<RandIt>::type size_type;
    typedef typename iterator_traits<RandIt>::value_type value_type;
 
    if(first == middle)
@@ -371,8 +372,7 @@ template <class RandIt, class T, class Compare>
 RandIt lower_bound
    (RandIt first, const RandIt last, const T& key, Compare comp)
 {
-   typedef typename iterator_traits
-      <RandIt>::size_type size_type;
+   typedef typename iter_size<RandIt>::type size_type;
    size_type len = size_type(last - first);
    RandIt middle;
 
@@ -396,8 +396,7 @@ template <class RandIt, class T, class Compare>
 RandIt upper_bound
    (RandIt first, const RandIt last, const T& key, Compare comp)
 {
-   typedef typename iterator_traits
-      <RandIt>::size_type size_type;
+   typedef typename iter_size<RandIt>::type size_type;
    size_type len = size_type(last - first);
    RandIt middle;
 
@@ -530,7 +529,7 @@ void op_buffered_merge
       , Buf &xbuf)
 {
    if(first != middle && middle != last && comp(*middle, middle[-1])){
-      typedef typename iterator_traits<RandIt>::size_type   size_type;
+      typedef typename iter_size<RandIt>::type   size_type;
       size_type const len1 = size_type(middle-first);
       size_type const len2 = size_type(last-middle);
       if(len1 <= len2){
@@ -595,11 +594,11 @@ static const std::size_t MergeBufferlessONLogNRotationThreshold = 16u;
 template <class RandIt, class Compare>
 void merge_bufferless_ONlogN_recursive
    ( RandIt first, RandIt middle, RandIt last
-   , typename iterator_traits<RandIt>::size_type len1
-   , typename iterator_traits<RandIt>::size_type len2
+   , typename iter_size<RandIt>::type len1
+   , typename iter_size<RandIt>::type len2
    , Compare comp)
 {
-   typedef typename iterator_traits<RandIt>::size_type size_type;
+   typedef typename iter_size<RandIt>::type size_type;
 
    while(1) {
       //trivial cases
@@ -662,7 +661,7 @@ void merge_bufferless_ONlogN_recursive
 template<class RandIt, class Compare>
 void merge_bufferless_ONlogN(RandIt first, RandIt middle, RandIt last, Compare comp)
 {
-   typedef typename iterator_traits<RandIt>::size_type size_type;
+   typedef typename iter_size<RandIt>::type size_type;
    merge_bufferless_ONlogN_recursive
       (first, middle, last, size_type(middle - first), size_type(last - middle), comp);
 }
@@ -816,10 +815,10 @@ template<typename BidirectionalIterator1, typename BidirectionalIterator2>
    rotate_adaptive(BidirectionalIterator1 first,
       BidirectionalIterator1 middle,
       BidirectionalIterator1 last,
-      typename iterator_traits<BidirectionalIterator1>::size_type len1,
-      typename iterator_traits<BidirectionalIterator1>::size_type len2,
+      typename iter_size<BidirectionalIterator1>::type len1,
+      typename iter_size<BidirectionalIterator1>::type len2,
       BidirectionalIterator2 buffer,
-      typename iterator_traits<BidirectionalIterator1>::size_type buffer_size)
+      typename iter_size<BidirectionalIterator1>::type buffer_size)
 {
    if (len1 > len2 && len2 <= buffer_size)
    {
@@ -854,13 +853,13 @@ template<typename BidirectionalIterator,
    (BidirectionalIterator first,
       BidirectionalIterator middle,
       BidirectionalIterator last,
-      typename iterator_traits<BidirectionalIterator>::size_type len1,
-      typename iterator_traits<BidirectionalIterator>::size_type len2,
+      typename  iter_size<BidirectionalIterator>::type len1,
+      typename  iter_size<BidirectionalIterator>::type len2,
       Pointer buffer,
-      typename iterator_traits<BidirectionalIterator>::size_type buffer_size,
+      typename  iter_size<BidirectionalIterator>::type buffer_size,
       Compare comp)
 {
-   typedef typename iterator_traits<BidirectionalIterator>::size_type size_type;
+   typedef typename  iter_size<BidirectionalIterator>::type size_type;
    //trivial cases
    if (!len2 || !len1) {
       // no-op
@@ -914,10 +913,10 @@ void merge_adaptive_ONlogN(BidirectionalIterator first,
 		                     BidirectionalIterator last,
 		                     Compare comp,
                            RandRawIt uninitialized,
-                           typename iterator_traits<BidirectionalIterator>::size_type uninitialized_len)
+                           typename  iter_size<BidirectionalIterator>::type uninitialized_len)
 {
    typedef typename iterator_traits<BidirectionalIterator>::value_type  value_type;
-   typedef typename iterator_traits<BidirectionalIterator>::size_type   size_type;
+   typedef typename  iter_size<BidirectionalIterator>::type   size_type;
 
    if (first == middle || middle == last)
       return;

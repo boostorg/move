@@ -71,6 +71,10 @@ struct nat{};
 struct nat2{};
 struct nat3{};
 
+template <unsigned N>
+struct natN
+{};
+
 //////////////////////////////////////
 //          yes_type/no_type
 //////////////////////////////////////

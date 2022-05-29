@@ -225,7 +225,7 @@ struct identity
 {
    typedef T type;
    typedef typename add_const_lvalue_reference<T>::type reference;
-   BOOST_MOVE_FORCEINLINE reference operator()(reference t)
+   BOOST_MOVE_FORCEINLINE reference operator()(reference t) const
    {  return t;   }
 };
 

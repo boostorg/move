@@ -15,7 +15,6 @@
 #include <boost/move/detail/config_begin.hpp>
 
 #include <boost/move/algo/detail/adaptive_sort_merge.hpp>
-#include <boost/core/ignore_unused.hpp>
 
 #if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic push
@@ -172,7 +171,7 @@ void adaptive_sort_combine_blocks
    , Compare comp
    , bool merge_left)
 {
-   boost::ignore_unused(xbuf);
+   boost::movelib::ignore(xbuf);
    typedef typename iter_size<RandIt>::type         size_type;
 
    size_type const l_reg_combined   = size_type(2u*l_prev_merged);
@@ -181,7 +180,7 @@ void adaptive_sort_combine_blocks
    size_type const n_reg_combined = len/l_reg_combined;
    RandIt combined_first = first;
 
-   boost::ignore_unused(l_total_combined);
+   boost::movelib::ignore(l_total_combined);
    BOOST_ASSERT(l_total_combined <= len);
 
    size_type const max_i = size_type(n_reg_combined + (l_irreg_combined != 0));

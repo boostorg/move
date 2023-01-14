@@ -44,7 +44,6 @@
 #include <boost/winapi/get_last_error.hpp>
 #include <boost/winapi/error_codes.hpp>
 #include <boost/assert.hpp>
-#include <boost/core/ignore_unused.hpp>
 
 namespace boost { namespace move_detail {
 
@@ -55,7 +54,7 @@ struct QPFHolder
    {
       boost::winapi::LARGE_INTEGER_ freq;
       boost::winapi::BOOL_ r = boost::winapi::QueryPerformanceFrequency( &freq );
-      boost::ignore_unused(r);
+      boost::movelib::ignore(r);
       BOOST_ASSERT(r != 0 && "Boost::Move - get_nanosecs_per_tic Internal Error");
 
       return double(1000000000.0L / freq.QuadPart);

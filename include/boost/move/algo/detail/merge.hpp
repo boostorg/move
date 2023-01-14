@@ -11,8 +11,6 @@
 #ifndef BOOST_MOVE_MERGE_HPP
 #define BOOST_MOVE_MERGE_HPP
 
-#include <boost/core/ignore_unused.hpp>
-#include <boost/move/algo/move.hpp>
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/move/algo/detail/basic_op.hpp>
 #include <boost/move/detail/iterator_traits.hpp>
@@ -641,7 +639,7 @@ void op_merge_with_right_placed
       if (r_first == r_last) {
          InputOutIterator end = op(forward_t(), first, last, dest_first);
          BOOST_ASSERT(end == r_last);
-         boost::ignore_unused(end);
+         boost::movelib::ignore(end);
          return;
       }
       else if (comp(*r_first, *first)) {
@@ -678,7 +676,7 @@ void op_merge_with_left_placed
       if(first == last) {
          BidirOutIterator res = op(backward_t(), r_first, r_last, dest_last);
          BOOST_ASSERT(last == res);
-         boost::ignore_unused(res);
+         boost::movelib::ignore(res);
          return;
       }
       --r_last;
@@ -742,7 +740,7 @@ void uninitialized_merge_with_right_placed
          d.release();
          InputOutIterator end = ::boost::move(first, last, original_r_first);
          BOOST_ASSERT(end == r_last);
-         boost::ignore_unused(end);
+         boost::movelib::ignore(end);
          return;
       }
       else if (comp(*r_first, *first)) {

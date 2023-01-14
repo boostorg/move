@@ -68,4 +68,14 @@
    #define BOOST_MOVE_FORCEINLINE BOOST_FORCEINLINE
 #endif
 
+namespace boost {
+namespace movelib {
+
+template <typename T1>
+BOOST_FORCEINLINE BOOST_CXX14_CONSTEXPR void ignore(T1 const&)
+{}
+
+}} //namespace boost::movelib {
+
 #endif   //#ifndef BOOST_MOVE_DETAIL_WORKAROUND_HPP
+

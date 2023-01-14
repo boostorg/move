@@ -16,8 +16,8 @@ target_link_libraries(boost_move
   INTERFACE
     Boost::assert
     Boost::config
-    Boost::core
     Boost::static_assert
+    Boost::winapi
 )
 
 if(BUILD_TESTING)

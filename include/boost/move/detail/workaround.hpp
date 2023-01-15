@@ -77,5 +77,31 @@ BOOST_FORCEINLINE BOOST_CXX14_CONSTEXPR void ignore(T1 const&)
 
 }} //namespace boost::movelib {
 
+#if !(defined BOOST_NO_EXCEPTIONS)
+#    define BOOST_MOVE_TRY { try
+#    define BOOST_MOVE_CATCH(x) catch(x)
+#    define BOOST_MOVE_RETHROW throw;
+#    define BOOST_MOVE_CATCH_END }
+#else
+#    if !defined(BOOST_MSVC) || BOOST_MSVC >= 1900
+#        define BOOST_MOVE_TRY { if (true)
+#        define BOOST_MOVE_CATCH(x) else if (false)
+#    else
+// warning C4127: conditional expression is constant
+#        define BOOST_MOVE_TRY { \
+             __pragma(warning(push)) \
+             __pragma(warning(disable: 4127)) \
+             if (true) \
+             __pragma(warning(pop))
+#        define BOOST_MOVE_CATCH(x) else \
+             __pragma(warning(push)) \
+             __pragma(warning(disable: 4127)) \
+             if (false) \
+             __pragma(warning(pop))
+#    endif
+#    define BOOST_MOVE_RETHROW
+#    define BOOST_MOVE_CATCH_END }
+#endif
+
 #endif   //#ifndef BOOST_MOVE_DETAIL_WORKAROUND_HPP
 

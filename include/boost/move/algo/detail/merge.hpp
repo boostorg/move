@@ -121,7 +121,7 @@ class adaptive_xbuf
    {
       BOOST_ASSERT(m_size < m_capacity);
       if(m_size < sz){
-         BOOST_TRY
+         BOOST_MOVE_TRY
          {
             ::new((void*)&m_ptr[m_size]) T(::boost::move(t));
             ++m_size;
@@ -130,7 +130,7 @@ class adaptive_xbuf
             }
             t = ::boost::move(m_ptr[m_size-1]);
          }
-         BOOST_CATCH(...)
+         BOOST_MOVE_CATCH(...)
          {
             while(m_size)
             {
@@ -138,7 +138,7 @@ class adaptive_xbuf
                m_ptr[m_size].~T();
             }
          }
-         BOOST_CATCH_END
+         BOOST_MOVE_CATCH_END
       }
    }
 

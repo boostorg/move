@@ -110,7 +110,7 @@ const char *AlgoNames [] = { "StdMerge           "
                            , "StdQuartAdaptMerge "
                            };
 
-BOOST_STATIC_ASSERT((sizeof(AlgoNames)/sizeof(*AlgoNames)) == MaxMerge);
+BOOST_MOVE_STATIC_ASSERT((sizeof(AlgoNames)/sizeof(*AlgoNames)) == MaxMerge);
 
 template<class T>
 bool measure_algo(T *elements, std::size_t element_count, std::size_t split_pos, std::size_t alg, nanosecond_type &prev_clock)

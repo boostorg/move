@@ -125,7 +125,7 @@ const char *AlgoNames [] = { "MergeSort      "
                            , "HeapSort       "
                            };
 
-BOOST_STATIC_ASSERT((sizeof(AlgoNames)/sizeof(*AlgoNames)) == MaxSort);
+BOOST_MOVE_STATIC_ASSERT((sizeof(AlgoNames)/sizeof(*AlgoNames)) == MaxSort);
 
 template<class T>
 bool measure_algo(T *elements, std::size_t element_count, std::size_t alg, nanosecond_type &prev_clock)

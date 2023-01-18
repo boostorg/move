@@ -103,5 +103,32 @@ BOOST_FORCEINLINE BOOST_CXX14_CONSTEXPR void ignore(T1 const&)
 #    define BOOST_MOVE_CATCH_END }
 #endif
 
+#ifndef BOOST_NO_CXX11_STATIC_ASSERT
+#  ifndef BOOST_NO_CXX11_VARIADIC_MACROS
+#     define BOOST_MOVE_STATIC_ASSERT( ... ) static_assert(__VA_ARGS__, #__VA_ARGS__)
+#  else
+#     define BOOST_MOVE_STATIC_ASSERT( B ) static_assert(B, #B)
+#  endif
+#else
+namespace boost {
+namespace move_detail {
+
+template<bool B>
+struct STATIC_ASSERTION_FAILURE;
+
+template<>
+struct STATIC_ASSERTION_FAILURE<true>{};
+
+template<std::size_t> struct static_assert_test {};
+
+}}
+
+#define BOOST_MOVE_STATIC_ASSERT(B) \
+         typedef ::boost::move_detail::static_assert_test<\
+            sizeof(::boost::move_detail::STATIC_ASSERTION_FAILURE<bool(B)>)>\
+               BOOST_JOIN(boost_static_assert_typedef_, __LINE__) BOOST_ATTRIBUTE_UNUSED
+
+#endif
+
 #endif   //#ifndef BOOST_MOVE_DETAIL_WORKAROUND_HPP
 

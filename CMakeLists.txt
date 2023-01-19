@@ -1,5 +1,6 @@
 # Copyright 2018 Mike Dev
 # Copyright 2019 Peter Dimov
+# Copyright 2023 Ion Gaztanaga
 # Distributed under the Boost Software License, Version 1.0.
 # See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
@@ -14,10 +15,7 @@ target_include_directories(boost_move INTERFACE include)
 
 target_link_libraries(boost_move
   INTERFACE
-    Boost::assert
     Boost::config
-    Boost::static_assert
-    Boost::winapi
 )
 
 if(BUILD_TESTING)

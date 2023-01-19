@@ -119,13 +119,13 @@ struct STATIC_ASSERTION_FAILURE;
 template<>
 struct STATIC_ASSERTION_FAILURE<true>{};
 
-template<std::size_t> struct static_assert_test {};
+template<unsigned> struct static_assert_test {};
 
 }}
 
 #define BOOST_MOVE_STATIC_ASSERT(B) \
          typedef ::boost::move_detail::static_assert_test<\
-            sizeof(::boost::move_detail::STATIC_ASSERTION_FAILURE<bool(B)>)>\
+            (unsigned)sizeof(::boost::move_detail::STATIC_ASSERTION_FAILURE<bool(B)>)>\
                BOOST_JOIN(boost_static_assert_typedef_, __LINE__) BOOST_ATTRIBUTE_UNUSED
 
 #endif

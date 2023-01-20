@@ -103,10 +103,9 @@ struct QPFHolder
    static inline double get_nsec_per_tic()
    {
       long long freq;
-      int r = boost::move_detail::QueryPerformanceFrequency( &freq );
-      boost::movelib::ignore(r);
-      assert(r != 0 && "Boost::Move - get_nanosecs_per_tic Internal Error");
-
+      //According to MS documentation:
+      //"On systems that run Windows XP or later, the function will always succeed and will thus never return zero"
+      (void)boost::move_detail::QueryPerformanceFrequency(&freq);
       return double(1000000000.0L / double(freq));
    }
 
@@ -121,16 +120,9 @@ inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
    double nanosecs_per_tic = QPFHolder<0>::nanosecs_per_tic;
    
    long long pcount;
-   unsigned times=0;
-   while ( !boost::move_detail::QueryPerformanceCounter( &pcount ) )
-   {
-      if ( ++times > 3 )
-      {
-         assert("Boost::Move - QueryPerformanceCounter Internal Error");
-         return 0u;
-      }
-   }
-
+   //According to MS documentation:
+   //"On systems that run Windows XP or later, the function will always succeed and will thus never return zero"
+   (void)boost::move_detail::QueryPerformanceCounter( &pcount );
    return static_cast<boost::uint64_t>(nanosecs_per_tic * double(pcount));
 }
 

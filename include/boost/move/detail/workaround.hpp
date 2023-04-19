@@ -66,6 +66,7 @@
    //Clang can have code bloat issues with forceinline, see
    //https://lists.boost.org/boost-users/2023/04/91445.php and
    //https://github.com/llvm/llvm-project/issues/62202
+   #define BOOST_MOVE_FORCEINLINE inline
 #else
    #define BOOST_MOVE_FORCEINLINE BOOST_FORCEINLINE
 #endif

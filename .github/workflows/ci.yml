@@ -19,7 +19,10 @@ jobs:
         include:
           - toolset: gcc-9
             cxxstd: "03,11,14,17,2a"
+            address-model: 32,64
             os: ubuntu-20.04
+            install:
+              - g++-9-multilib
           - toolset: gcc-10
             cxxstd: "03,11,14,17,2a"
             os: ubuntu-20.04

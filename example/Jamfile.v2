@@ -9,6 +9,11 @@
 #
 import testing ;
 
+project : requirements
+    <source>/boost/container//boost_container
+    <source>/boost/type_traits//boost_type_traits
+    ;
+
 rule test_all
 {
    local all_rules = ;

@@ -9,6 +9,11 @@
 
 import testing ;
 
+project : requirements
+    <source>/boost/core//boost_core
+    <source>/boost/container//boost_container
+    ;
+
 rule test_all
 {
    local all_rules = ;

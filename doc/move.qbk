@@ -463,7 +463,7 @@ provided with this library. With regular iterator classes,
 
    while (first != last) *result++ = *first++;
 
-causes a range [first,last) to be copied into a range starting with result. The same code with
+causes a range `[first,last)` to be copied into a range starting with result. The same code with
 result being a move insert iterator will move insert corresponding elements into the container.
 This device allows all of the copying algorithms in the library to work in the move insert mode
 instead of the regular overwrite mode. This library offers 3 move insert iterators and their

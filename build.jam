@@ -5,16 +5,19 @@
 
 require-b2 5.2 ;
 
+constant boost_dependencies :
+    /boost/config//boost_config ;
+
 project /boost/move
     : common-requirements
-        <library>/boost/config//boost_config
         <include>include
     ;
 
 explicit
-    [ alias boost_move ]
+    [ alias boost_move : : : : <library>$(boost_dependencies) ]
     [ alias all : boost_move example test ]
     ;
 
 call-if : boost-library move
     ;
+

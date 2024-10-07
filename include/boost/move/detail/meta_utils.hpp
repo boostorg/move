@@ -201,22 +201,6 @@ struct add_const_lvalue_reference
 };
 
 //////////////////////////////////////
-//             is_lvalue_reference
-//////////////////////////////////////
-template<class T>
-struct is_lvalue_reference
-{
-    static const bool value = false;
-};
-
-template<class T>
-struct is_lvalue_reference<T&>
-{
-    static const bool value = true;
-};
-
-
-//////////////////////////////////////
 //             identity
 //////////////////////////////////////
 template <class T>

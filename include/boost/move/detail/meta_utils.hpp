@@ -208,7 +208,25 @@ struct identity
 {
    typedef T type;
    typedef typename add_const_lvalue_reference<T>::type reference;
+
    BOOST_MOVE_FORCEINLINE reference operator()(reference t) const
+   {  return t;   }
+
+   //For transparent types
+   template<class K>
+   BOOST_MOVE_FORCEINLINE const K & operator()(const K &t) const
+   {  return t;   }
+};
+
+//////////////////////////////////////
+//             identity
+//////////////////////////////////////
+template <>
+struct identity<void>
+{
+   template <class U>
+   BOOST_MOVE_FORCEINLINE typename add_const_lvalue_reference<U>::type
+      operator()(typename add_const_lvalue_reference<U>::type t) const
    {  return t;   }
 };
 

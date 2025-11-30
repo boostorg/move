@@ -18,6 +18,7 @@
 #  pragma once
 #endif
 
+#include <cstddef>
 #include <boost/move/detail/workaround.hpp>  //forceinline
 #include <boost/move/detail/meta_utils_core.hpp>
 #include <boost/move/detail/addressof.hpp>
@@ -526,6 +527,10 @@ struct add_rvalue_reference
 template< class T >
 struct add_rvalue_reference<T &>
 {  typedef T & type; };
+
+template< class T, std::size_t N >
+struct add_rvalue_reference<T[N]>
+{  typedef T (&type)[N]; };
 
 #endif // #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 

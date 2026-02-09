@@ -33,6 +33,7 @@
 #include <cassert>
 // std
 #include <cstddef>
+#include <utility>
 
 //Use of Boost.TypeTraits leads to long preprocessed source code due to
 //MPL dependencies. We'll use intrinsics directly and make or own
@@ -1032,6 +1033,11 @@ template<class T>
 struct is_trivially_destructible
 {  static const bool value = BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T); };
 
+template<class A, class B>
+struct is_trivially_destructible<std::pair<A,B> >
+{  static const bool value = is_trivially_destructible<A>::value &&
+                             is_trivially_destructible<B>::value; };
+
 //////////////////////////////////////
 //       is_trivially_default_constructible
 //////////////////////////////////////
@@ -1048,12 +1054,22 @@ struct is_trivially_copy_constructible
    static const bool value = BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T);
 };
 
+template<class A, class B>
+struct is_trivially_copy_constructible<std::pair<A,B> >
+{  static const bool value = is_trivially_copy_constructible<A>::value &&
+                             is_trivially_copy_constructible<B>::value; };
+
 //////////////////////////////////////
 //       is_trivially_move_constructible
 //////////////////////////////////////
 template<class T>
 struct is_trivially_move_constructible
 { static const bool value = BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T); };
+
+template<class A, class B>
+struct is_trivially_move_constructible<std::pair<A,B> >
+{  static const bool value = is_trivially_move_constructible<A>::value &&
+                             is_trivially_move_constructible<B>::value; };
 
 //////////////////////////////////////
 //       is_trivially_copy_assignable
@@ -1062,7 +1078,12 @@ template<class T>
 struct is_trivially_copy_assignable
 {
    static const bool value = BOOST_MOVE_IS_TRIVIALLY_COPY_ASSIGNABLE(T);
-};                             
+};
+
+template<class A, class B>
+struct is_trivially_copy_assignable<std::pair<A,B> >
+{  static const bool value = is_trivially_copy_assignable<A>::value &&
+                             is_trivially_copy_assignable<B>::value; };
 
 //////////////////////////////////////
 //       is_trivially_move_assignable
@@ -1070,6 +1091,11 @@ struct is_trivially_copy_assignable
 template<class T>
 struct is_trivially_move_assignable
 {  static const bool value = BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T);  };
+
+template<class A, class B>
+struct is_trivially_move_assignable<std::pair<A,B> >
+{  static const bool value = is_trivially_move_assignable<A>::value &&
+                             is_trivially_move_assignable<B>::value; };
 
 //////////////////////////////////////
 //       is_nothrow_default_constructible

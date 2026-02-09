@@ -29,6 +29,7 @@
 #endif
 #include <boost/move/detail/meta_utils.hpp>
 #include <boost/move/detail/type_traits.hpp>
+#include <utility>
 
 namespace boost {
 
@@ -45,6 +46,11 @@ template <class T>
 struct has_trivial_destructor_after_move
    : ::boost::move_detail::is_trivially_destructible<T>
 {};
+
+template<class A, class B>
+struct has_trivial_destructor_after_move<std::pair<A,B> >
+{  static const bool value = has_trivial_destructor_after_move<A>::value &&
+                             has_trivial_destructor_after_move<B>::value; };
 
 //! By default this traits returns
 //! <pre>boost::is_nothrow_move_constructible<T>::value && boost::is_nothrow_move_assignable<T>::value </pre>.

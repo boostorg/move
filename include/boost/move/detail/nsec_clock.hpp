@@ -198,7 +198,7 @@ class cpu_timer
    public:
 
       //  constructor
-      cpu_timer() BOOST_NOEXCEPT                                   { start(); }
+      cpu_timer() BOOST_NOEXCEPT : m_is_stopped(true) {}
 
       //  observers
       bool          is_stopped() const BOOST_NOEXCEPT              { return m_is_stopped; }

@@ -132,6 +132,8 @@ inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 
 #include <mach/mach_time.h>  // mach_absolute_time, mach_timebase_info_data_t
 
+namespace boost { namespace move_detail {
+
 inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 {
    boost::uint64_t count = ::mach_absolute_time();
@@ -141,6 +143,8 @@ inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
    return static_cast<boost::uint64_t>
       ( static_cast<double>(count)*(static_cast<double>(info.numer) / info.denom) );
 }
+
+}}  //namespace boost { namespace move_detail {
 
 #elif defined(BOOST_MOVE_DETAIL_POSIX_API)
 
@@ -158,6 +162,8 @@ inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 #     error "No high resolution steady clock in your system, please provide a patch"
 #  endif
 
+namespace boost { namespace move_detail {
+
 inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 {
    struct timespec count;
@@ -167,6 +173,8 @@ inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
    r += static_cast<boost::uint64_t>(count.tv_nsec);
    return r;
 }
+
+}}  //namespace boost { namespace move_detail {
 
 #endif  // POSIX
 

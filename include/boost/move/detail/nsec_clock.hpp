@@ -115,7 +115,7 @@ struct QPFHolder
 template<int Dummy>
 const double QPFHolder<Dummy>::nanosecs_per_tic = get_nsec_per_tic();
 
-inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
+BOOST_MOVE_FORCEINLINE boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 {
    double nanosecs_per_tic = QPFHolder<0>::nanosecs_per_tic;
    
@@ -134,7 +134,7 @@ inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 
 namespace boost { namespace move_detail {
 
-inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
+BOOST_MOVE_FORCEINLINE boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 {
    boost::uint64_t count = ::mach_absolute_time();
 
@@ -164,7 +164,7 @@ inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 
 namespace boost { namespace move_detail {
 
-inline boost::uint64_t nsec_clock() BOOST_NOEXCEPT
+BOOST_MOVE_FORCEINLINE boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 {
    struct timespec count;
    ::clock_gettime(BOOST_MOVE_DETAIL_CLOCK_MONOTONIC, &count);

@@ -35,13 +35,13 @@
 //!
 //! Main differences from std::unique_ptr to avoid heavy dependencies,
 //! specially in C++03 compilers:
-//!   - <tt>operator < </tt> uses pointer <tt>operator < </tt>instead of <tt>std::less<common_type></tt>. 
+//!   - <tt>operator &lt;</tt> uses pointer <tt>operator &lt;</tt>instead of <tt>std::less&lt;common_type&gt;</tt>. 
 //!      This avoids dependencies on <tt>std::common_type</tt> and <tt>std::less</tt>
-//!      (<tt><type_traits>/<functional></tt> headers). In C++03 this avoid pulling Boost.Typeof and other
-//!      cascading dependencies. As in all Boost platforms <tt>operator <</tt> on raw pointers and
+//!      (<tt>&lt;type_traits&gt;/&lt;functional&gt;</tt> headers). In C++03 this avoid pulling Boost.Typeof and other
+//!      cascading dependencies. As in all Boost platforms <tt>operator &lt;</tt> on raw pointers and
 //!      other smart pointers provides strict weak ordering in practice this should not be a problem for users.
 //!   - assignable from literal 0 for compilers without nullptr
-//!   - <tt>unique_ptr<T[]></tt> is constructible and assignable from <tt>unique_ptr<U[]></tt> if
+//!   - <tt>unique_ptr&lt;T[]&gt;</tt> is constructible and assignable from <tt>unique_ptr&lt;U[]&gt;</tt> if
 //!      cv-less T and cv-less U are the same type and T is more CV qualified than U.
 
 namespace boost{
@@ -336,7 +336,7 @@ namespace movelib {
 //! ownership of dynamically allocated memory to a function, and returning dynamically allocated memory from
 //! a function.
 //!
-//! If T is an array type (e.g. unique_ptr<MyType[]>) the interface is slightly altered:
+//! If T is an array type (e.g. unique_ptr&lt;MyType[]&gt;) the interface is slightly altered:
 //!   - Pointers to types derived from T are rejected by the constructors, and by reset.
 //!   - The observers <tt>operator*</tt> and <tt>operator-></tt> are not provided.
 //!   - The indexing observer <tt>operator[]</tt> is provided.
@@ -345,10 +345,10 @@ namespace movelib {
 //! \tparam D The deleter type:
 //!   -  The default type for the template parameter D is default_delete. A client-supplied template argument
 //!      D shall be a function object type, lvalue-reference to function, or lvalue-reference to function object type
-//!      for which, given a value d of type D and a value ptr of type unique_ptr<T, D>::pointer, the expression
+//!      for which, given a value d of type D and a value ptr of type unique_ptr&lt;T, D&gt;::pointer, the expression
 //!      d(ptr) is valid and has the effect of disposing of the pointer as appropriate for that deleter.
 //!   -  If the deleter's type D is not a reference type, D shall satisfy the requirements of Destructible.
-//!   -  If the type <tt>remove_reference<D>::type::pointer</tt> exists, it shall satisfy the requirements of NullablePointer.
+//!   -  If the type <tt>remove_reference&lt;D&gt;::type::pointer</tt> exists, it shall satisfy the requirements of NullablePointer.
 template <class T, class D = default_delete<T> >
 class unique_ptr
 {
@@ -369,8 +369,8 @@ class unique_ptr
    #endif
 
    public:
-   //! If the type <tt>remove_reference<D>::type::pointer</tt> exists, then it shall be a
-   //! synonym for <tt>remove_reference<D>::type::pointer</tt>. Otherwise it shall be a
+   //! If the type <tt>remove_reference&lt;D&gt;::type::pointer</tt> exists, then it shall be a
+   //! synonym for <tt>remove_reference&lt;D&gt;::type::pointer</tt>. Otherwise it shall be a
    //! synonym for T*.
    typedef typename BOOST_MOVE_SEEDOC(pointer_type_obtainer::type) pointer;
    //! If T is an array type, then element_type is equal to T. Otherwise, if T is a type
@@ -471,7 +471,7 @@ class unique_ptr
                             <D, typename bmupd::get_element_type<Pointer>::type>::value ));
    }
 
-   //! <b>Effects</b>: Same effects as <tt>template<class Pointer> unique_ptr(Pointer p, deleter_arg_type1 d1)</tt>
+   //! <b>Effects</b>: Same effects as <tt>template&lt;class Pointer&gt; unique_ptr(Pointer p, deleter_arg_type1 d1)</tt>
    //!   and additionally <tt>get() == nullptr</tt>
    inline unique_ptr(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), BOOST_MOVE_SEEDOC(deleter_arg_type1) d1) BOOST_NOEXCEPT
       : m_data(pointer(), d1)
@@ -509,7 +509,7 @@ class unique_ptr
                             <D, typename bmupd::get_element_type<Pointer>::type>::value ));
    }
 
-   //! <b>Effects</b>: Same effects as <tt>template<class Pointer> unique_ptr(Pointer p, deleter_arg_type2 d2)</tt>
+   //! <b>Effects</b>: Same effects as <tt>template&lt;class Pointer&gt; unique_ptr(Pointer p, deleter_arg_type2 d2)</tt>
    //!   and additionally <tt>get() == nullptr</tt>
    inline unique_ptr(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), BOOST_MOVE_SEEDOC(deleter_arg_type2) d2) BOOST_NOEXCEPT
       : m_data(pointer(), ::boost::move(d2))
@@ -534,7 +534,7 @@ class unique_ptr
    //!   deleter from an lvalue of type E shall be well formed and shall not throw an exception.
    //!
    //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless:
-   //!   - <tt>unique_ptr<U, E>::pointer</tt> is implicitly convertible to pointer,
+   //!   - <tt>unique_ptr&lt;U, E&gt;::pointer</tt> is implicitly convertible to pointer,
    //!   - U is not an array type, and
    //!   - either D is a reference type and E is the same type as D, or D is not a reference type and E is
    //!      implicitly convertible to D.
@@ -567,11 +567,11 @@ class unique_ptr
 
    //! <b>Requires</b>: If D is not a reference type, D shall satisfy the requirements of MoveAssignable
    //!   and assignment of the deleter from an rvalue of type D shall not throw an exception. Otherwise, D
-   //!   is a reference type; <tt>remove_reference<D>::type</tt> shall satisfy the CopyAssignable requirements and
+   //!   is a reference type; <tt>remove_reference&lt;D&gt;::type</tt> shall satisfy the CopyAssignable requirements and
    //!   assignment of the deleter from an lvalue of type D shall not throw an exception.
    //!
    //! <b>Effects</b>: Transfers ownership from u to *this as if by calling <tt>reset(u.release())</tt> followed
-   //!   by <tt>get_deleter() = std::forward<D>(u.get_deleter())</tt>.
+   //!   by <tt>get_deleter() = std::forward&lt;D&gt;(u.get_deleter())</tt>.
    //!
    //! <b>Returns</b>: *this.
    unique_ptr& operator=(BOOST_RV_REF(unique_ptr) u) BOOST_NOEXCEPT
@@ -586,11 +586,11 @@ class unique_ptr
    //!   deleter from an lvalue of type E shall be well-formed and shall not throw an exception.
    //!
    //! <b>Remarks</b>: This operator shall not participate in overload resolution unless:
-   //!   - <tt>unique_ptr<U, E>::pointer</tt> is implicitly convertible to pointer and
+   //!   - <tt>unique_ptr&lt;U, E&gt;::pointer</tt> is implicitly convertible to pointer and
    //!   - U is not an array type.
    //!
    //! <b>Effects</b>: Transfers ownership from u to *this as if by calling <tt>reset(u.release())</tt> followed by
-   //!   <tt>get_deleter() = std::forward<E>(u.get_deleter())</tt>.
+   //!   <tt>get_deleter() = std::forward&lt;E&gt;(u.get_deleter())</tt>.
    //!
    //! <b>Returns</b>: *this.
    template <class U, class E>
@@ -615,7 +615,7 @@ class unique_ptr
    //!
    //! <b>Returns</b>: <tt>*get()</tt>.
    //!
-   //! <b>Remarks</b: If T is an array type, the program is ill-formed.
+   //! <b>Remarks</b>: If T is an array type, the program is ill-formed.
    BOOST_MOVE_DOC1ST(element_type&, typename bmupmu::add_lvalue_reference<element_type>::type)
       operator*() const BOOST_NOEXCEPT
    {
@@ -623,11 +623,11 @@ class unique_ptr
       return *m_data.m_p;
    }
 
-   //! <b>Requires</b>: i < the number of elements in the array to which the stored pointer points.
+   //! <b>Requires</b>: i &lt; the number of elements in the array to which the stored pointer points.
    //!
    //! <b>Returns</b>: <tt>get()[i]</tt>.
    //!
-   //! <b>Remarks</b: If T is not an array type, the program is ill-formed.
+   //! <b>Remarks</b>: If T is not an array type, the program is ill-formed.
    inline BOOST_MOVE_DOC1ST(element_type&, typename bmupmu::add_lvalue_reference<element_type>::type)
       operator[](std::size_t i) const BOOST_NOEXCEPT
    {
@@ -642,7 +642,7 @@ class unique_ptr
    //!
    //! <b>Note</b>: use typically requires that T be a complete type.
    //!
-   //! <b>Remarks</b: If T is an array type, the program is ill-formed.
+   //! <b>Remarks</b>: If T is an array type, the program is ill-formed.
    inline pointer operator->() const BOOST_NOEXCEPT
    {
       BOOST_MOVE_STATIC_ASSERT((!bmupmu::is_array<T>::value));
@@ -762,7 +762,7 @@ template <class T1, class D1, class T2, class D2>
 inline bool operator!=(const unique_ptr<T1, D1> &x, const unique_ptr<T2, D2> &y)
 {  return x.get() != y.get(); }
 
-//! <b>Returns</b>: x.get() < y.get().
+//! <b>Returns</b>: x.get() &lt; y.get().
 //!
 //! <b>Remarks</b>: This comparison shall induce a
 //!   strict weak ordering betwen pointers.
@@ -770,19 +770,19 @@ template <class T1, class D1, class T2, class D2>
 inline bool operator<(const unique_ptr<T1, D1> &x, const unique_ptr<T2, D2> &y)
 {  return x.get() < y.get();  }
 
-//! <b>Returns</b>: !(y < x).
+//! <b>Returns</b>: !(y &lt; x).
 //!
 template <class T1, class D1, class T2, class D2>
 inline bool operator<=(const unique_ptr<T1, D1> &x, const unique_ptr<T2, D2> &y)
 {  return !(y < x);  }
 
-//! <b>Returns</b>: y < x.
+//! <b>Returns</b>: y &lt; x.
 //!
 template <class T1, class D1, class T2, class D2>
 inline bool operator>(const unique_ptr<T1, D1> &x, const unique_ptr<T2, D2> &y)
 {  return y < x;  }
 
-//! <b>Returns</b>:!(x < y).
+//! <b>Returns</b>:!(x &lt; y).
 //!
 template <class T1, class D1, class T2, class D2>
 inline bool operator>=(const unique_ptr<T1, D1> &x, const unique_ptr<T2, D2> &y)
@@ -812,51 +812,51 @@ template <class T, class D>
 inline bool operator!=(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), const unique_ptr<T, D> &x) BOOST_NOEXCEPT
 {  return !!x;  }
 
-//! <b>Requires</b>: <tt>operator </tt> shall induce a strict weak ordering on unique_ptr<T, D>::pointer values.
+//! <b>Requires</b>: <tt>operator &lt;</tt> shall induce a strict weak ordering on unique_ptr&lt;T, D&gt;::pointer values.
 //!
-//! <b>Returns</b>: Returns <tt>x.get() < pointer()</tt>.
+//! <b>Returns</b>: Returns <tt>x.get() &lt; pointer()</tt>.
 template <class T, class D>
 inline bool operator<(const unique_ptr<T, D> &x, BOOST_MOVE_DOC0PTR(bmupd::nullptr_type))
 {  return x.get() < typename unique_ptr<T, D>::pointer();  }
 
-//! <b>Requires</b>: <tt>operator </tt> shall induce a strict weak ordering on unique_ptr<T, D>::pointer values.
+//! <b>Requires</b>: <tt>operator &lt;</tt> shall induce a strict weak ordering on unique_ptr&lt;T, D&gt;::pointer values.
 //!
-//! <b>Returns</b>: Returns <tt>pointer() < x.get()</tt>.
+//! <b>Returns</b>: Returns <tt>pointer() &lt; x.get()</tt>.
 template <class T, class D>
 inline bool operator<(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), const unique_ptr<T, D> &x)
 {  return typename unique_ptr<T, D>::pointer() < x.get();  }
 
-//! <b>Returns</b>: <tt>nullptr < x</tt>.
+//! <b>Returns</b>: <tt>nullptr &lt; x</tt>.
 //!
 template <class T, class D>
 inline bool operator>(const unique_ptr<T, D> &x, BOOST_MOVE_DOC0PTR(bmupd::nullptr_type))
 {  return x.get() > typename unique_ptr<T, D>::pointer();  }
 
-//! <b>Returns</b>: <tt>x < nullptr</tt>.
+//! <b>Returns</b>: <tt>x &lt; nullptr</tt>.
 //!
 template <class T, class D>
 inline bool operator>(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), const unique_ptr<T, D> &x)
 {  return typename unique_ptr<T, D>::pointer() > x.get();  }
 
-//! <b>Returns</b>: <tt>!(nullptr < x)</tt>.
+//! <b>Returns</b>: <tt>!(nullptr &lt; x)</tt>.
 //!
 template <class T, class D>
 inline bool operator<=(const unique_ptr<T, D> &x, BOOST_MOVE_DOC0PTR(bmupd::nullptr_type))
 {  return !(bmupd::nullptr_type() < x);  }
 
-//! <b>Returns</b>: <tt>!(x < nullptr)</tt>.
+//! <b>Returns</b>: <tt>!(x &lt; nullptr)</tt>.
 //!
 template <class T, class D>
 inline bool operator<=(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), const unique_ptr<T, D> &x)
 {  return !(x < bmupd::nullptr_type());  }
 
-//! <b>Returns</b>: <tt>!(x < nullptr)</tt>.
+//! <b>Returns</b>: <tt>!(x &lt; nullptr)</tt>.
 //!
 template <class T, class D>
 inline bool operator>=(const unique_ptr<T, D> &x, BOOST_MOVE_DOC0PTR(bmupd::nullptr_type))
 {  return !(x < bmupd::nullptr_type());  }
 
-//! <b>Returns</b>: <tt>!(nullptr < x)</tt>.
+//! <b>Returns</b>: <tt>!(nullptr &lt; x)</tt>.
 //!
 template <class T, class D>
 inline bool operator>=(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), const unique_ptr<T, D> &x)

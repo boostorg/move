@@ -100,7 +100,7 @@ namespace movelib {
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is not an array.
 //!
-//! <b>Returns</b>: <tt>unique_ptr<T>(new T(std::forward<Args>(args)...))</tt>.
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new T(std::forward&lt;Args&gt;(args)...))</tt>.
 template<class T, class... Args>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_upmu::unique_ptr_if<T>::t_is_not_array)
@@ -109,7 +109,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is not an array.
 //!
-//! <b>Returns</b>: <tt>unique_ptr<T>(new T(std::nothrow)(std::forward<Args>(args)...))</tt>.
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new T(std::nothrow)(std::forward&lt;Args&gt;(args)...))</tt>.
 template<class T, class... Args>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_upmu::unique_ptr_if<T>::t_is_not_array)
@@ -135,7 +135,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is not an array.
 //!
-//! <b>Returns</b>: <tt>unique_ptr<T>(new T)</tt> (default initialization)
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new T)</tt> (default initialization)
 template<class T>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_upmu::unique_ptr_if<T>::t_is_not_array)
@@ -146,7 +146,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is not an array.
 //!
-//! <b>Returns</b>: <tt>unique_ptr<T>(new T(std::nothrow)</tt> (default initialization)
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new T(std::nothrow)</tt> (default initialization)
 template<class T>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_upmu::unique_ptr_if<T>::t_is_not_array)
@@ -158,7 +158,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of 
 //!   unknown bound.
 //!
-//! <b>Returns</b>: <tt>unique_ptr<T>(new remove_extent_t<T>[n]())</tt> (value initialization)
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new remove_extent_t&lt;T&gt;[n]())</tt> (value initialization)
 template<class T>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_upmu::unique_ptr_if<T>::t_is_array_of_unknown_bound)
@@ -171,7 +171,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of 
 //!   unknown bound.
 //!
-//! <b>Returns</b>: <tt>unique_ptr<T>(new (std::nothrow)remove_extent_t<T>[n]())</tt> (value initialization)
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new (std::nothrow)remove_extent_t&lt;T&gt;[n]())</tt> (value initialization)
 template<class T>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_upmu::unique_ptr_if<T>::t_is_array_of_unknown_bound)
@@ -184,7 +184,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of 
 //!   unknown bound.
 //!
-//! <b>Returns</b>: <tt>unique_ptr<T>(new remove_extent_t<T>[n])</tt> (default initialization)
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new remove_extent_t&lt;T&gt;[n])</tt> (default initialization)
 template<class T>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_upmu::unique_ptr_if<T>::t_is_array_of_unknown_bound)
@@ -197,7 +197,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of 
 //!   unknown bound.
 //!
-//! <b>Returns</b>: <tt>unique_ptr<T>(new (std::nothrow)remove_extent_t<T>[n])</tt> (default initialization)
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new (std::nothrow)remove_extent_t&lt;T&gt;[n])</tt> (default initialization)
 template<class T>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_upmu::unique_ptr_if<T>::t_is_array_of_unknown_bound)

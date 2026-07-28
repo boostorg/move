@@ -193,7 +193,7 @@
       #if defined(BOOST_MOVE_DOXYGEN_INVOKED)
          //! This function provides a way to convert a reference into a rvalue reference
          //! in compilers with rvalue references. For other compilers if `T` is Boost.Move
-         //! enabled type then it converts `T&` into <tt>::boost::rv<T> &</tt> so that
+         //! enabled type then it converts `T&` into <tt>::boost::rv&lt;T&gt; &</tt> so that
          //! move emulation is activated, else it returns `T &`.
          template <class T>
          rvalue_reference move(input_reference) noexcept;
@@ -229,8 +229,8 @@
          //! For compilers with rvalue references this function provides perfect forwarding.
          //!
          //! Otherwise:
-         //! * If input_reference binds to const ::boost::rv<T> & then it output_reference is
-         //!   ::boost::rv<T> &
+         //! * If input_reference binds to const ::boost::rv&lt;T&gt; & then it output_reference is
+         //!   ::boost::rv&lt;T&gt; &
          //!
          //! * Else, output_reference is equal to input_reference.
          template <class T> output_reference forward(input_reference) noexcept;

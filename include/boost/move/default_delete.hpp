@@ -177,11 +177,11 @@ struct default_delete
    typedef typename bmupmu::remove_extent<T>::type element_type;
    #endif
 
-   //! <b>Effects</b>: Constructs a default_delete object from another <tt>default_delete<U></tt> object.
+   //! <b>Effects</b>: Constructs a default_delete object from another <tt>default_delete&lt;U&gt;</tt> object.
    //!
    //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless:
    //!   - If T is not an array type and U* is implicitly convertible to T*.
-   //!   - If T is an array type and U* is a more CV qualified pointer to remove_extent<T>::type.
+   //!   - If T is an array type and U* is a more CV qualified pointer to remove_extent&lt;T&gt;::type.
    template <class U>
    default_delete(const default_delete<U>&
       BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_def_del<U BOOST_MOVE_I T>::type* =0)
@@ -192,11 +192,11 @@ struct default_delete
       BOOST_MOVE_STATIC_ASSERT(( !bmupd::missing_virtual_destructor<default_delete, U>::value ));
    }
 
-   //! <b>Effects</b>: Constructs a default_delete object from another <tt>default_delete<U></tt> object.
+   //! <b>Effects</b>: Constructs a default_delete object from another <tt>default_delete&lt;U&gt;</tt> object.
    //!
    //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless:
    //!   - If T is not an array type and U* is implicitly convertible to T*.
-   //!   - If T is an array type and U* is a more CV qualified pointer to remove_extent<T>::type.
+   //!   - If T is an array type and U* is a more CV qualified pointer to remove_extent&lt;T&gt;::type.
    template <class U>
    BOOST_MOVE_DOC1ST(default_delete&, 
       typename bmupd::enable_def_del<U BOOST_MOVE_I T BOOST_MOVE_I default_delete &>::type)
@@ -208,14 +208,14 @@ struct default_delete
       return *this;
    }
 
-   //! <b>Effects</b>: if T is not an array type, calls <tt>delete</tt> on static_cast<T*>(ptr),
-   //!   otherwise calls <tt>delete[]</tt> on static_cast<remove_extent<T>::type*>(ptr).
+   //! <b>Effects</b>: if T is not an array type, calls <tt>delete</tt> on static_cast&lt;T*&gt;(ptr),
+   //!   otherwise calls <tt>delete[]</tt> on static_cast&lt;remove_extent&lt;T&gt;::type*&gt;(ptr).
    //!
    //! <b>Remarks</b>: If U is an incomplete type, the program is ill-formed.
    //!   This operator shall not participate in overload resolution unless:
    //!      - T is not an array type and U* is convertible to T*, OR
-   //!      - T is an array type, and remove_cv<U>::type is the same type as
-   //!         remove_cv<remove_extent<T>::type>::type and U* is convertible to remove_extent<T>::type*.
+   //!      - T is an array type, and remove_cv&lt;U&gt;::type is the same type as
+   //!         remove_cv&lt;remove_extent&lt;T&gt;::type&gt;::type and U* is convertible to remove_extent&lt;T&gt;::type*.
    template <class U>
    BOOST_MOVE_DOC1ST(void, typename bmupd::enable_defdel_call<U BOOST_MOVE_I T BOOST_MOVE_I void>::type)
       operator()(U* ptr) const BOOST_NOEXCEPT
@@ -229,7 +229,7 @@ struct default_delete
       move_upd::call_delete(p, move_upd::is_array_del<bmupmu::is_array<T>::value>());
    }
 
-   //! <b>Effects</b>: Same as <tt>(*this)(static_cast<element_type*>(nullptr))</tt>.
+   //! <b>Effects</b>: Same as <tt>(*this)(static_cast&lt;element_type*&gt;(nullptr))</tt>.
    //!
    void operator()(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type)) const BOOST_NOEXCEPT
    {  BOOST_MOVE_STATIC_ASSERT(sizeof(element_type) > 0);  }

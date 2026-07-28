@@ -101,6 +101,8 @@ F move_move_iterator(I f, I l, F r,
 
 }  //namespace move_detail {
 
+/// @cond
+
 template
 <typename I,   // I models InputIterator
 typename F>   // F models ForwardIterator

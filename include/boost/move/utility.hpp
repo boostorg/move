@@ -10,7 +10,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 //! \file
-//! This header includes core utilities from <tt><boost/move/utility_core.hpp></tt> and defines
+//! This header includes core utilities from <tt>&lt;boost/move/utility_core.hpp&gt;</tt> and defines
 //! some more advanced utilities such as:
 
 #ifndef BOOST_MOVE_MOVE_UTILITY_HPP
@@ -116,7 +116,7 @@
       #if defined(BOOST_MOVE_DOXYGEN_INVOKED)
          //! This function provides a way to convert a reference into a rvalue reference
          //! in compilers with rvalue references. For other compilers converts T & into
-         //! <i>::boost::rv<T> &</i> so that move emulation is activated. Reference
+         //! <i>::boost::rv&lt;T&gt; &</i> so that move emulation is activated. Reference
          //! would be converted to rvalue reference only if input type is nothrow move
          //! constructible or if it has no copy constructor. In all other cases const
          //! reference would be returned

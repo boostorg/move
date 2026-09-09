@@ -314,7 +314,9 @@ bool measure_all(std::size_t L, std::size_t NK)
 }
 
 //Undef it to run the long test
+#ifndef LONG_BENCH
 #define BENCH_SORT_SHORT
+#endif
 #define BENCH_SORT_UNIQUE_VALUES
 
 int main()

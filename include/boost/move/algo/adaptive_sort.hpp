@@ -358,7 +358,8 @@ void adaptive_sort_final_merge( bool buffer_right
                               , typename iter_size<RandIt>::type const n_keys
                               , typename iter_size<RandIt>::type const len
                               , XBuf & xbuf
-                              , Compare comp)
+                              , Compare comp
+                              , bool unique_keys)
 {
    //assert(n_keys || xbuf.size() == l_intbuf);
    xbuf.clear();
@@ -370,7 +371,12 @@ void adaptive_sort_final_merge( bool buffer_right
       //Use stable sort as some buffer elements might not be unique (see non_unique_buf)
       stable_sort(first+len-l_intbuf, first+len, comp, xbuf);
       stable_merge( first+n_keys, first+len-l_intbuf, first+len,    antistable<Compare>(comp), xbuf);
-      unstable_sort(first, first+n_keys, comp, xbuf);
+      if(unique_keys){
+         unstable_sort(first, first+n_keys, comp, xbuf);
+      }
+      else{
+         stable_sort(first, first+n_keys, comp, xbuf);
+      }
       stable_merge(first, first+n_keys, first+len, comp, xbuf);
    }
    else{
@@ -395,6 +401,7 @@ template<class RandIt, class Compare, class Unsigned, class XBuf>
 bool adaptive_sort_build_params
    (RandIt first, Unsigned const len, Compare comp
    , Unsigned &n_keys, Unsigned &l_intbuf, Unsigned &l_base, Unsigned &l_build_buf
+   , bool &non_unique_buf
    , XBuf & xbuf
    )
 {
@@ -402,6 +409,7 @@ bool adaptive_sort_build_params
 
    //Calculate ideal parameters and try to collect needed unique keys
    l_base = 0u;
+   non_unique_buf = false;
 
    //Try to find a value near sqrt(len) that is 2^N*l_base where
    //l_base <= AdaptiveSortInsertionSortThreshold. This property is important
@@ -430,6 +438,10 @@ bool adaptive_sort_build_params
          (l_intbuf, size_type((size_type(len-l_intbuf)-1u)/l_intbuf+1u))){
       n_keys = 0u;
       l_build_buf = l_intbuf;
+      //The keys are integers stored in the external buffer, so no unique
+      //element is collected and the internal buffer is made of arbitrary
+      //elements whose relative order must be preserved
+      non_unique_buf = true;
    }
    else{
       //Try to achieve a l_build_buf of length l_intbuf*2, so that we can merge with that
@@ -439,7 +451,7 @@ bool adaptive_sort_build_params
       //If available memory is 2*sqrt(l), then only sqrt(l) unique keys are needed,
       //(to be used for keys in combine_all_blocks) as the whole l_build_buf
       //will be backuped in the buffer during build_blocks.
-      bool const non_unique_buf = xbuf.capacity() >= l_intbuf;
+      non_unique_buf = xbuf.capacity() >= l_intbuf;
       size_type const to_collect = non_unique_buf ? n_min_ideal_keys : size_type(l_intbuf*2u);
       size_type collected = collect_unique(first, first+len, to_collect, comp, xbuf);
 
@@ -453,10 +465,12 @@ bool adaptive_sort_build_params
          //l_intbuf*2 elements found. Use all of them in the build phase 
          l_build_buf = size_type(l_intbuf*2);
          n_keys = l_intbuf;
+         non_unique_buf = false;
       }
       else if(collected >= (n_min_ideal_keys+l_intbuf)){ 
          l_build_buf = l_intbuf;
          n_keys = size_type(collected - l_intbuf);
+         non_unique_buf = false;
       }
       //If collected keys are not enough, try to fix n_keys and l_intbuf. If no fix
       //is possible (due to very low unique keys), then go to a slow sort based on rotations.
@@ -476,6 +490,7 @@ bool adaptive_sort_build_params
          l_base = min_value<Unsigned>(n_keys, AdaptiveSortInsertionSortThreshold);
          l_intbuf = 0;
          l_build_buf = n_keys;
+         non_unique_buf = false;
       }
       assert((n_keys+l_intbuf) >= l_build_buf);
    }
@@ -564,10 +579,13 @@ void adaptive_sort_impl
       size_type l_intbuf = 0;
       size_type n_keys = 0;
       size_type l_build_buf = 0;
+      //True if the internal buffer is made of elements that are not necessarily
+      //unique, which means their relative order must be preserved
+      bool non_unique_buf = false;
 
       //Calculate and extract needed unique elements. If a minimum is not achieved
       //fallback to a slow stable sort
-      if(!adaptive_sort_build_params(first, len, comp, n_keys, l_intbuf, l_base, l_build_buf, xbuf)){
+      if(!adaptive_sort_build_params(first, len, comp, n_keys, l_intbuf, l_base, l_build_buf, non_unique_buf, xbuf)){
          stable_sort(first, first+len, comp, xbuf);
       }
       else{
@@ -586,11 +604,16 @@ void adaptive_sort_impl
          BOOST_MOVE_ADAPTIVE_SORT_PRINT_L1("   After build_blocks:   ", len);
 
          //Non-trivial merge
+         size_type const n_keys_before_combine = n_keys;
          bool const buffer_right = adaptive_sort_combine_all_blocks
             (first, n_keys, first+n_keys, size_type(len-n_keys), l_merged, l_intbuf, xbuf, comp);
 
+         //If the internal buffer was absorbed by the keys, the key range holds
+         //the buffer elements too, which are not unique if non_unique_buf
+         bool const unique_keys = !non_unique_buf || n_keys <= n_keys_before_combine;
+
          //Sort keys and buffer and merge the whole sequence
-         adaptive_sort_final_merge(buffer_right, first, l_intbuf, n_keys, len, xbuf, comp);
+         adaptive_sort_final_merge(buffer_right, first, l_intbuf, n_keys, len, xbuf, comp, unique_keys);
       }
    }
 }

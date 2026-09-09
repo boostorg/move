@@ -111,6 +111,19 @@ typename iter_size<RandIt>::type
    size_type kbuf = min_value<size_type>(l_build_buf, size_type(xbuf.capacity()));
    kbuf = kbuf < l_base ? 0 : kbuf;
 
+   //op_merge_left_step_multiple below doubles the merged length starting from
+   //l_base, so it consumes exactly l_base*2^k elements of the saved buffer, and
+   //only the consumed elements are restored. A bigger kbuf would leave the
+   //surplus elements moved-from, so round kbuf down to a power of two multiple
+   //of l_base. l_build_buf already is such a multiple (see the assert above).
+   if(kbuf && kbuf != l_build_buf){
+      size_type l_rounded = l_base;
+      while(size_type(l_rounded*2u) <= kbuf){
+         l_rounded = size_type(l_rounded*2u);
+      }
+      kbuf = l_rounded;
+   }
+
    if(kbuf){
       //Backup internal buffer values in external buffer so they can be overwritten
       xbuf.move_assign(first+l_build_buf-kbuf, kbuf);

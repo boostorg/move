@@ -90,24 +90,24 @@ enum AlgoType
    Sqrt2AdaptMerge,
    QuartAdaptMerge,
    StdInplaceMerge,
-   StdSqrtHAdaptMerge,
-   StdSqrtAdaptMerge,
-   StdSqrt2AdaptMerge,
-   StdQuartAdaptMerge,
+   StdLkSqrtHAdaptMerge,
+   StdLkSqrtAdaptMerge,
+   StdLkSqrt2AdaptMerge,
+   StdLkQuartAdaptMerge,
    MaxMerge
 };
 
-const char *AlgoNames [] = { "StdMerge           "
-                           , "AdaptMerge         "
-                           , "SqrtHAdaptMerge    "
-                           , "SqrtAdaptMerge     "
-                           , "Sqrt2AdaptMerge    "
-                           , "QuartAdaptMerge    "
-                           , "StdInplaceMerge    "
-                           , "StdSqrtHAdaptMerge "
-                           , "StdSqrtAdaptMerge  "
-                           , "StdSqrt2AdaptMerge "
-                           , "StdQuartAdaptMerge "
+const char *AlgoNames [] = { "StdMerge             "
+                           , "AdaptMerge           "
+                           , "SqrtHAdaptMerge      "
+                           , "SqrtAdaptMerge       "
+                           , "Sqrt2AdaptMerge      "
+                           , "QuartAdaptMerge      "
+                           , "StdInplaceMerge      "
+                           , "StdLkSqrtHAdaptMerge "
+                           , "StdLkSqrtAdaptMerge  "
+                           , "StdLkSqrt2AdaptMerge "
+                           , "StdLkQuartAdaptMerge "
                            };
 
 BOOST_MOVE_STATIC_ASSERT((sizeof(AlgoNames)/sizeof(*AlgoNames)) == MaxMerge);
@@ -148,19 +148,19 @@ bool measure_algo(T *elements, std::size_t element_count, std::size_t split_pos,
       case StdInplaceMerge:
          boost::movelib::merge_bufferless_ONlogN(elements, elements+split_pos, elements+element_count, order_type_less());
       break;
-      case StdSqrtHAdaptMerge:
+      case StdLkSqrtHAdaptMerge:
          std_like_adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
                             , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count)/2+1);
       break;
-      case StdSqrtAdaptMerge:
+      case StdLkSqrtAdaptMerge:
          std_like_adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
                             , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
       break;
-      case StdSqrt2AdaptMerge:
+      case StdLkSqrt2AdaptMerge:
          std_like_adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
                             , 2*boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
       break;
-      case StdQuartAdaptMerge:
+      case StdLkQuartAdaptMerge:
          std_like_adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
                             , (element_count)/4+1);
       break;
@@ -224,7 +224,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, StdQuartAdaptMerge, prev_clock);
+   res = res && measure_algo(elements.data(), L, split_pos, StdLkQuartAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
@@ -232,7 +232,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, StdSqrt2AdaptMerge, prev_clock);
+   res = res && measure_algo(elements.data(), L, split_pos, StdLkSqrt2AdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
@@ -240,7 +240,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, StdSqrtAdaptMerge, prev_clock);
+   res = res && measure_algo(elements.data(), L, split_pos, StdLkSqrtAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
@@ -248,7 +248,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, StdSqrtHAdaptMerge, prev_clock);
+   res = res && measure_algo(elements.data(), L, split_pos, StdLkSqrtHAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;

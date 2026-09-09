@@ -89,7 +89,7 @@ void merge_sort_buffered(T *elements, std::size_t element_count, Compare comp)
 enum AlgoType
 {
    MergeSort,
-   StableSort,
+   StdStableSort,
    PdQsort,
    StdSort,
    AdaptiveSort,
@@ -98,31 +98,31 @@ enum AlgoType
    Sqrt2AdaptiveSort,
    QuartAdaptiveSort,
    InplaceStableSort,
-   StdSqrtHAdpSort,
-   StdSqrtAdpSort,
-   StdSqrt2AdpSort,
-   StdQuartAdpSort,
+   StdLkSqrtHAdpSort,
+   StdLkSqrtAdpSort,
+   StdLkSqrt2AdpSort,
+   StdLkQuartAdpSort,
    SlowStableSort,
    HeapSort,
    MaxSort
 };
 
-const char *AlgoNames [] = { "MergeSort      "
-                           , "StableSort     "
-                           , "PdQsort        "
-                           , "StdSort        "
-                           , "AdaptSort      "
-                           , "SqrtHAdaptSort "
-                           , "SqrtAdaptSort  "
-                           , "Sqrt2AdaptSort "
-                           , "QuartAdaptSort "
-                           , "InplStableSort "
-                           , "StdSqrtHAdpSort"
-                           , "StdSqrtAdpSort "
-                           , "StdSqrt2AdpSort"
-                           , "StdQuartAdpSort"
-                           , "SlowSort       "
-                           , "HeapSort       "
+const char *AlgoNames [] = { "MergeSort           "
+                           , "StdStableSort       "
+                           , "PdQsort             "
+                           , "StdSort             "
+                           , "AdaptSort           "
+                           , "SqrtHAdaptSort      "
+                           , "SqrtAdaptSort       "
+                           , "Sqrt2AdaptSort      "
+                           , "QuartAdaptSort      "
+                           , "InplStableSort      "
+                           , "StdLkSqrtHAdpSort   "
+                           , "StdLkSqrtAdpSort    "
+                           , "StdLkSqrt2AdpSort   "
+                           , "StdLkQuartAdpSort   "
+                           , "SlowSort            "
+                           , "HeapSort            "
                            };
 
 BOOST_MOVE_STATIC_ASSERT((sizeof(AlgoNames)/sizeof(*AlgoNames)) == MaxSort);
@@ -141,7 +141,7 @@ bool measure_algo(T *elements, std::size_t element_count, std::size_t alg, nanos
       case MergeSort:
          merge_sort_buffered(elements, element_count, order_type_less());
       break;
-      case StableSort:
+      case StdStableSort:
          std::stable_sort(elements,elements+element_count,order_type_less());
       break;
       case PdQsort:
@@ -172,19 +172,19 @@ bool measure_algo(T *elements, std::size_t element_count, std::size_t alg, nanos
       case InplaceStableSort:
          boost::movelib::inplace_stable_sort(elements, elements+element_count, order_type_less());
       break;
-      case StdSqrtHAdpSort:
+      case StdLkSqrtHAdpSort:
          std_like_adaptive_stable_sort_buffered( elements, element_count, order_type_less()
                                               , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count)/2+1);
       break;
-      case StdSqrtAdpSort:
+      case StdLkSqrtAdpSort:
          std_like_adaptive_stable_sort_buffered( elements, element_count, order_type_less()
                                                , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
       break;
-      case StdSqrt2AdpSort:
+      case StdLkSqrt2AdpSort:
          std_like_adaptive_stable_sort_buffered( elements, element_count, order_type_less()
                                                , 2*boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
       break;
-      case StdQuartAdpSort:
+      case StdLkQuartAdpSort:
          std_like_adaptive_stable_sort_buffered( elements, element_count, order_type_less()
                                                , (element_count-1)/4+1);
       break;
@@ -250,7 +250,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
-   res = res && measure_algo(elements.data(), L,StableSort, prev_clock);
+   res = res && measure_algo(elements.data(), L,StdStableSort, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
@@ -270,7 +270,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
-   res = res && measure_algo(elements.data(), L, StdQuartAdpSort, prev_clock);
+   res = res && measure_algo(elements.data(), L, StdLkQuartAdpSort, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
@@ -278,7 +278,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
-   res = res && measure_algo(elements.data(), L, StdSqrt2AdpSort, prev_clock);
+   res = res && measure_algo(elements.data(), L, StdLkSqrt2AdpSort, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
@@ -286,7 +286,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
-   res = res && measure_algo(elements.data(), L, StdSqrtAdpSort, prev_clock);
+   res = res && measure_algo(elements.data(), L, StdLkSqrtAdpSort, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
@@ -294,7 +294,7 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
-   res = res && measure_algo(elements.data(), L, StdSqrtHAdpSort, prev_clock);
+   res = res && measure_algo(elements.data(), L, StdLkSqrtHAdpSort, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
@@ -372,7 +372,7 @@ int main()
    measure_all<order_perf_type>(10000001, 1048576);
    measure_all<order_perf_type>(10000001, 4194304);
    #endif
-   measure_all<order_perf_type>(1000001,0);
+   measure_all<order_perf_type>(10000001,0);
    #endif   //#ifndef BENCH_SORT_SHORT
    #endif   //NDEBUG
 

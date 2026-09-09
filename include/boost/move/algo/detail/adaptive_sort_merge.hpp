@@ -616,6 +616,106 @@ void unstable_sort( RandIt first, RandIt last
    ::boost::movelib::ignore(xbuf);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+//                    MERGE SMALL RUN INTO LARGE RUN (GROUP ROTATIONS)
+//
+///////////////////////////////////////////////////////////////////////////////
+
+// Stable in-place merge of a small sorted run [first, middle) (m elements)
+// into a large sorted run [middle, last) (n elements) using O(1) extra memory.
+//
+// Keys are processed in groups of g ~ sqrt(m) elements, from the smallest to
+// the largest. For each group:
+//   - the data elements smaller than the largest key of the group are located
+//     with a binary search (they must be interleaved with this group),
+//   - the remaining keys are rotated past those data elements (one move per
+//     element, so each data element is moved once here),
+//   - the group is merged into that data segment with single-key rotations
+//     (each data element of the segment is moved once more).
+//
+// Cost: ~2*n + m*sqrt(m) moves and O(m*log(n)) comparisons, instead of the
+// ~n*log(m)/2 moves of the recursive rotation merge (merge_bufferless_ONlogN).
+// Use only when m*sqrt(m) is small compared to n (see use_small_run_merge).
+//
+// If a (too small for a buffered merge) external buffer of constructed elements
+// [buffer, buffer + buffer_size) is available, it is used to speed up the
+// rotations and the group merges once the remaining keys fit in it.
+template<class RandIt, class Compare, class RandItBuf>
+void merge_small_run_rotations
+   ( RandIt const first, RandIt const middle, RandIt const last, Compare comp
+   , RandItBuf const buffer, typename iter_size<RandIt>::type const buffer_size)
+{
+   typedef typename iter_size<RandIt>::type size_type;
+
+   size_type n_keys_left = size_type(middle - first);
+   if(!n_keys_left || middle == last){
+      return;
+   }
+   size_type const l_group = ceil_sqrt(n_keys_left);
+
+   RandIt keys = first;    //remaining keys: [keys, keys + n_keys_left)
+   while(n_keys_left){
+      size_type const l_cur = min_value<size_type>(l_group, n_keys_left);
+      size_type const l_rest = size_type(n_keys_left - l_cur);
+      RandIt const group_end = keys + l_cur;
+      RandIt const keys_end  = keys + n_keys_left;
+      RandIt group_last = group_end;
+      --group_last;
+      //Data elements that must be placed before the largest key of the group
+      RandIt const data_end  = boost::movelib::lower_bound(keys_end, last, *group_last, comp);
+      //Move the remaining keys after those data elements: [group][data][rest keys]
+      RandIt const rest_keys = rotate_adaptive
+         (group_end, keys_end, data_end, l_rest, size_type(data_end - keys_end), buffer, buffer_size);
+      //Merge the group with its data segment
+      if(l_cur <= buffer_size){
+         range_xbuf<RandItBuf, size_type, move_op> rxbuf(buffer, buffer + buffer_size);
+         buffered_merge(keys, group_end, rest_keys, comp, rxbuf);
+      }
+      else{
+         merge_bufferless_ON2(keys, group_end, rest_keys, comp);
+      }
+      keys = rest_keys;
+      n_keys_left = l_rest;
+   }
+}
+
+// True if merging two consecutive runs of "len1" and "len2" elements with
+// merge_small_run_rotations is cheaper than the recursive rotation merge.
+//
+// merge_small_run_rotations moves ~2*l_large + 2*l_small^1.5 elements, while
+// the recursive rotation merge moves ~l_large*log2(l_small)/2. The group
+// rotations win while l_small^1.5 stays small compared to l_large, that is
+//
+//    l_small^3 <= l_large^2 / 4
+//
+// Note that the exponents matter: comparing l_small^2 with l_large would place
+// the limit at sqrt(l_large), which does not follow the crossover. The
+// crossover was measured (MSVC and GCC, l_large from 1e5 to 1e7) at
+// l_small ~ 1.0 to 3.9 * l_large^(2/3), always above the limit above, which
+// keeps a safety factor of 1.5 for the smallest range and more for the rest.
+//
+// Dividing both sides by l_small^2 and writing "ratio" for l_large/l_small,
+// the condition becomes l_small/ratio <= ratio/4, which needs divisions only:
+// no intermediate value can overflow (both lengths may be close to the maximum
+// of SizeType) and no cube or square has to be computed.
+//
+// Note that l_small/l_large may not be used as the left hand side, even though
+// the real-arithmetic condition is also l_small/l_large <= l_large/l_small^2/4:
+// l_small is the smaller length, so that quotient always truncates to zero and
+// the test would degenerate into "always true".
+template<class SizeType>
+inline bool use_small_run_merge(SizeType const len1, SizeType const len2)
+{
+   SizeType const l_small = min_value<SizeType>(len1, len2);
+   SizeType const l_large = max_value<SizeType>(len1, len2);
+   if(!l_small){
+      return true;
+   }
+   SizeType const ratio = SizeType(l_large/l_small);   //Always >= 1
+   return SizeType(l_small/ratio) <= SizeType(ratio/4u);
+}
+
 template<class RandIt, class Compare, class XBuf>
 void stable_merge
       ( RandIt first, RandIt const middle, RandIt last
@@ -624,11 +724,49 @@ void stable_merge
 {
    assert(xbuf.empty());
    typedef typename iter_size<RandIt>::type   size_type;
+
+   //Both ranges sorted. Skip the elements that are already in their final position.
+   //
+   //This speeds up merge when the ranges barely interleave.
+   if(BOOST_UNLIKELY(first == middle || middle == last)){
+      return;
+   }
+   {
+      RandIt first_high(middle);
+      --first_high;
+      if(BOOST_UNLIKELY(!comp(*middle, *first_high))){   //Already sorted
+         return;
+      }
+      //Both searches leave a non-empty range, as *middle < *first_high
+      first = boost::movelib::upper_bound(first, middle, *middle, comp);
+      last  = boost::movelib::lower_bound(middle, last, *first_high, comp);
+   }
+
+
    size_type const len1  = size_type(middle-first);
    size_type const len2  = size_type(last-middle);
    size_type const l_min = min_value<size_type>(len1, len2);
    if(xbuf.capacity() >= l_min){
       buffered_merge(first, middle, last, comp, xbuf);
+      xbuf.clear();
+   }
+   else if(use_small_run_merge(len1, len2)){
+      //The external buffer (if any) is too small for a buffered merge, but it
+      //can speed up rotations. Construct its elements so that they can be assigned.
+      size_type const buffer_size = size_type(xbuf.capacity());
+      if(buffer_size){
+         xbuf.initialize_until(buffer_size, *first);
+      }
+      if(len1 <= len2){
+         merge_small_run_rotations(first, middle, last, comp, xbuf.begin(), buffer_size);
+      }
+      else{
+         //Mirror the problem: the small run is at the end. Merging the reversed
+         //sequences with the inverse comparison yields the reversed stable merge.
+         merge_small_run_rotations
+            ( (make_reverse_iterator)(last), (make_reverse_iterator)(middle)
+            , (make_reverse_iterator)(first), inverse<Compare>(comp), xbuf.begin(), buffer_size);
+      }
       xbuf.clear();
    }
    else{

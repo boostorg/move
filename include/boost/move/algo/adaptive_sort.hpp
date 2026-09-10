@@ -15,6 +15,7 @@
 #include <boost/move/detail/config_begin.hpp>
 
 #include <boost/move/algo/detail/adaptive_sort_merge.hpp>
+#include <boost/move/detail/type_traits.hpp>
 #include <cassert>
 
 #if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
@@ -631,6 +632,46 @@ void adaptive_sort_impl
    }
 }
 
+//Runs the sort with an internal buffer of StackBytes bytes held on the stack.
+//It is a separate function so that the storage only exists in this frame.
+template<std::size_t StackBytes, class RandIt, class Compare>
+void adaptive_sort_with_stack_buffer
+   (RandIt first, typename iter_size<RandIt>::type const len, Compare comp)
+{
+   typedef typename iterator_traits<RandIt>::value_type value_type;
+   typedef typename iter_size<RandIt>::type             size_type;
+
+   typename ::boost::move_detail::aligned_storage
+      < StackBytes
+      , ::boost::move_detail::alignment_of<value_type>::value>::type storage;
+
+   //The xbuf destructor destroys whatever is left in the storage
+   adaptive_xbuf<value_type, value_type*, size_type> xbuf
+      ( static_cast<value_type*>(static_cast<void*>(&storage))
+      , (stack_buffer_capacity<StackBytes, size_type, value_type>()));
+   adaptive_sort_impl(first, len, comp, xbuf);
+}
+
+//Runs the sort with the stack buffer if it is bigger than the supplied
+//storage, and with the supplied storage otherwise.
+template<std::size_t StackBytes, class RandIt, class RandRawIt, class Compare>
+void adaptive_sort_dispatch
+   ( RandIt first, typename iter_size<RandIt>::type const len, Compare comp
+   , RandRawIt uninitialized, typename iter_size<RandIt>::type uninitialized_len)
+{
+   typedef typename iter_size<RandIt>::type             size_type;
+   typedef typename iterator_traits<RandIt>::value_type value_type;
+
+   if( StackBytes && sizeof(value_type) <= StackBytes
+    && uninitialized_len < (stack_buffer_capacity<StackBytes, size_type, value_type>()) ){
+      adaptive_sort_with_stack_buffer<StackBytes>(first, len, comp);
+   }
+   else{
+      adaptive_xbuf<value_type, RandRawIt, size_type> xbuf(uninitialized, uninitialized_len);
+      adaptive_sort_impl(first, len, comp, xbuf);
+   }
+}
+
 }  //namespace detail_adaptive {
 
 ///@endcond
@@ -659,6 +700,11 @@ void adaptive_sort_impl
 //!   when uninitialized_len is ceil(std::distance(first, last)/2). Pretty good enough performance is achieved when
 //!   ceil(sqrt(std::distance(first, last)))*2.
 //!
+//! <b>Note</b>: A constant amount of stack (see AdaptiveDefaultStackBytes) is
+//!   also used as an internal buffer when it is bigger than "uninitialized_len",
+//!   which keeps the O(1) extra memory guarantee. Use the overload that takes
+//!   an explicit "StackBytes" to change or disable that buffer.
+//!
 //! <b>Caution</b>: Experimental implementation, not production-ready.
 template<class RandIt, class RandRawIt, class Compare>
 void adaptive_sort( RandIt first, RandIt last, Compare comp
@@ -666,10 +712,9 @@ void adaptive_sort( RandIt first, RandIt last, Compare comp
                , typename iter_size<RandIt>::type uninitialized_len)
 {
    typedef typename iter_size<RandIt>::type  size_type;
-   typedef typename iterator_traits<RandIt>::value_type value_type;
-
-   ::boost::movelib::adaptive_xbuf<value_type, RandRawIt, size_type> xbuf(uninitialized, uninitialized_len);
-   ::boost::movelib::detail_adaptive::adaptive_sort_impl(first, size_type(last - first), comp, xbuf);
+   ::boost::movelib::detail_adaptive::adaptive_sort_dispatch
+      < ::boost::movelib::detail_adaptive::AdaptiveDefaultStackBytes>
+         (first, size_type(last - first), comp, uninitialized, uninitialized_len);
 }
 
 template<class RandIt, class Compare>
@@ -677,6 +722,35 @@ void adaptive_sort( RandIt first, RandIt last, Compare comp)
 {
    typedef typename iterator_traits<RandIt>::value_type value_type;
    adaptive_sort(first, last, comp, (value_type*)0, 0u);
+}
+
+//! <b>Effects</b>: Same as the overloads above, but "StackBytes" bytes of stack
+//!   are used as the internal buffer whenever that is bigger than the supplied
+//!   storage. Since it is a constant amount of memory, the O(1) extra memory
+//!   guarantee is preserved. Small sorts are several times faster with it,
+//!   because they can avoid the block based algorithm altogether.
+//!
+//! <b>Parameters</b>:
+//!   - StackBytes: size in bytes of the stack buffer. It must be given
+//!      explicitly. Zero disables the stack buffer, and so does a
+//!      value_type bigger than "StackBytes".
+//!
+//! <b>Caution</b>: Experimental implementation, not production-ready.
+template<std::size_t StackBytes, class RandIt, class RandRawIt, class Compare>
+void adaptive_sort( RandIt first, RandIt last, Compare comp
+               , RandRawIt uninitialized
+               , typename iter_size<RandIt>::type uninitialized_len)
+{
+   typedef typename iter_size<RandIt>::type  size_type;
+   ::boost::movelib::detail_adaptive::adaptive_sort_dispatch<StackBytes>
+      (first, size_type(last - first), comp, uninitialized, uninitialized_len);
+}
+
+template<std::size_t StackBytes, class RandIt, class Compare>
+void adaptive_sort( RandIt first, RandIt last, Compare comp)
+{
+   typedef typename iterator_traits<RandIt>::value_type value_type;
+   adaptive_sort<StackBytes>(first, last, comp, (value_type*)0, 0u);
 }
 
 }  //namespace movelib {

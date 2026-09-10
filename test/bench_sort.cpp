@@ -72,6 +72,14 @@ void adaptive_sort_buffered(T *elements, std::size_t element_count, Compare comp
    boost::movelib::adaptive_sort(elements, elements + element_count, comp, boost::move_detail::force_ptr<T*>(mem.get()), BufLen);
 }
 
+//Same as above but with no stack buffer, to measure what the stack buffer is worth
+template<class T, class Compare>
+void adaptive_sort_buffered_nostack(T *elements, std::size_t element_count, Compare comp, std::size_t BufLen)
+{
+   boost::movelib::unique_ptr<char[]> mem(new char[sizeof(T)*BufLen]);
+   boost::movelib::adaptive_sort<0>(elements, elements + element_count, comp, boost::move_detail::force_ptr<T*>(mem.get()), BufLen);
+}
+
 template<class T, class Compare>
 void std_like_adaptive_stable_sort_buffered(T *elements, std::size_t element_count, Compare comp, std::size_t BufLen)
 {
@@ -93,10 +101,15 @@ enum AlgoType
    PdQsort,
    StdSort,
    AdaptiveSort,
+   AdaptiveSortNoStk,
    SqrtHAdaptiveSort,
+   SqrtHAdaptiveSortNoStk,
    SqrtAdaptiveSort,
+   SqrtAdaptiveSortNoStk,
    Sqrt2AdaptiveSort,
+   Sqrt2AdaptiveSortNoStk,
    QuartAdaptiveSort,
+   QuartAdaptiveSortNoStk,
    InplaceStableSort,
    StdLkSqrtHAdpSort,
    StdLkSqrtAdpSort,
@@ -112,10 +125,15 @@ const char *AlgoNames [] = { "MergeSort           "
                            , "PdQsort             "
                            , "StdSort             "
                            , "AdaptSort           "
+                           , "AdaptSortNoStk      "
                            , "SqrtHAdaptSort      "
+                           , "SqrtHAdaptSortNoStk "
                            , "SqrtAdaptSort       "
+                           , "SqrtAdaptSortNoStk  "
                            , "Sqrt2AdaptSort      "
+                           , "Sqrt2AdaptSortNoStk "
                            , "QuartAdaptSort      "
+                           , "QuartAdaptSortNoStk "
                            , "InplStableSort      "
                            , "StdLkSqrtHAdpSort   "
                            , "StdLkSqrtAdpSort    "
@@ -153,20 +171,39 @@ bool measure_algo(T *elements, std::size_t element_count, std::size_t alg, nanos
       case AdaptiveSort:
          boost::movelib::adaptive_sort(elements, elements+element_count, order_type_less());
       break;
+      case AdaptiveSortNoStk:
+         boost::movelib::adaptive_sort<0>(elements, elements+element_count, order_type_less());
+      break;
       case SqrtHAdaptiveSort:
          adaptive_sort_buffered( elements, element_count, order_type_less()
+                            , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count)/2+1);
+      break;
+      case SqrtHAdaptiveSortNoStk:
+         adaptive_sort_buffered_nostack( elements, element_count, order_type_less()
                             , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count)/2+1);
       break;
       case SqrtAdaptiveSort:
          adaptive_sort_buffered( elements, element_count, order_type_less()
                             , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
       break;
+      case SqrtAdaptiveSortNoStk:
+         adaptive_sort_buffered_nostack( elements, element_count, order_type_less()
+                            , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
+      break;
       case Sqrt2AdaptiveSort:
          adaptive_sort_buffered( elements, element_count, order_type_less()
                             , 2*boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
       break;
+      case Sqrt2AdaptiveSortNoStk:
+         adaptive_sort_buffered_nostack( elements, element_count, order_type_less()
+                            , 2*boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
+      break;
       case QuartAdaptiveSort:
          adaptive_sort_buffered( elements, element_count, order_type_less()
+                            , (element_count-1)/4+1);
+      break;
+      case QuartAdaptiveSortNoStk:
+         adaptive_sort_buffered_nostack( elements, element_count, order_type_less()
                             , (element_count-1)/4+1);
       break;
       case InplaceStableSort:
@@ -270,11 +307,19 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
+   res = res && measure_algo(elements.data(), L,QuartAdaptiveSortNoStk, prev_clock);
+   //
+   prev_clock = back_clock;
+   elements = original_elements;
    res = res && measure_algo(elements.data(), L, StdLkQuartAdpSort, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
    res = res && measure_algo(elements.data(), L,Sqrt2AdaptiveSort, prev_clock);
+   //
+   prev_clock = back_clock;
+   elements = original_elements;
+   res = res && measure_algo(elements.data(), L,Sqrt2AdaptiveSortNoStk, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
@@ -286,6 +331,10 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
+   res = res && measure_algo(elements.data(), L,SqrtAdaptiveSortNoStk, prev_clock);
+   //
+   prev_clock = back_clock;
+   elements = original_elements;
    res = res && measure_algo(elements.data(), L, StdLkSqrtAdpSort, prev_clock);
    //
    prev_clock = back_clock;
@@ -294,11 +343,19 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
+   res = res && measure_algo(elements.data(), L,SqrtHAdaptiveSortNoStk, prev_clock);
+   //
+   prev_clock = back_clock;
+   elements = original_elements;
    res = res && measure_algo(elements.data(), L, StdLkSqrtHAdpSort, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
    res = res && measure_algo(elements.data(), L,AdaptiveSort, prev_clock);
+   //
+   prev_clock = back_clock;
+   elements = original_elements;
+   res = res && measure_algo(elements.data(), L,AdaptiveSortNoStk, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;

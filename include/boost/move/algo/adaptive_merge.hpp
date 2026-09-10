@@ -14,6 +14,7 @@
 
 #include <boost/move/detail/config_begin.hpp>
 #include <boost/move/algo/detail/adaptive_sort_merge.hpp>
+#include <boost/move/detail/type_traits.hpp>
 #include <cassert>
 
 #if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
@@ -282,6 +283,73 @@ void adaptive_merge_impl
    }
 }
 
+//Runs the merge with an internal buffer of StackBytes bytes held on the stack.
+//It is a separate function so that the storage only exists in this frame.
+template<std::size_t StackBytes, class RandIt, class Compare>
+void adaptive_merge_with_stack_buffer
+   ( RandIt first, typename iter_size<RandIt>::type len1
+   , typename iter_size<RandIt>::type len2, Compare comp)
+{
+   typedef typename iterator_traits<RandIt>::value_type   value_type;
+   typedef typename iter_size<RandIt>::type                size_type;
+
+   typename ::boost::move_detail::aligned_storage
+      < StackBytes
+      , ::boost::move_detail::alignment_of<value_type>::value>::type storage;
+
+   //The xbuf destructor destroys whatever is left in the storage
+   adaptive_xbuf<value_type, value_type*, size_type> xbuf
+      ( static_cast<value_type*>(static_cast<void*>(&storage))
+      , (stack_buffer_capacity<StackBytes, size_type, value_type>()));
+   adaptive_merge_impl(first, len1, len2, comp, xbuf);
+}
+
+//Reduces the ranges to merge and then runs the merge with the stack buffer if
+//it is bigger than the supplied storage, and with the supplied storage otherwise.
+template<std::size_t StackBytes, class RandIt, class Compare>
+void adaptive_merge_dispatch
+   ( RandIt first, RandIt middle, RandIt last, Compare comp
+   , typename iterator_traits<RandIt>::value_type* uninitialized
+   , typename iter_size<RandIt>::type uninitialized_len)
+{
+   typedef typename iter_size<RandIt>::type             size_type;
+   typedef typename iterator_traits<RandIt>::value_type value_type;
+
+   if (first == middle || middle == last){
+      return;
+   }
+
+   //Reduce the ranges to merge if possible. Binary searches are used instead of
+   //linear scans because the whole point of the trim is to exploit ranges that
+   //are already (nearly) in place, and those are exactly the ranges a linear
+   //scan traverses completely.
+   RandIt first_high(middle);
+   --first_high;
+   if (!comp(*middle, *first_high)){
+      return;   //Both ranges are already in order
+   }
+   //Leading elements of the first range below the first element of the second
+   //one are already in place. upper_bound keeps equal elements of the first
+   //range before those of the second one, preserving stability.
+   first = boost::movelib::upper_bound(first, middle, *middle, comp);
+   //Trailing elements of the second range above the last element of the first
+   //one are already in place too. lower_bound keeps equal elements of the
+   //second range after those of the first one.
+   last  = boost::movelib::lower_bound(middle, last, *first_high, comp);
+
+   size_type const len1 = size_type(middle - first);
+   size_type const len2 = size_type(last - middle);
+
+   if( StackBytes && sizeof(value_type) <= StackBytes
+    && uninitialized_len < (stack_buffer_capacity<StackBytes, size_type, value_type>()) ){
+      adaptive_merge_with_stack_buffer<StackBytes>(first, len1, len2, comp);
+   }
+   else{
+      adaptive_xbuf<value_type, value_type*, size_type> xbuf(uninitialized, size_type(uninitialized_len));
+      adaptive_merge_impl(first, len1, len2, comp, xbuf);
+   }
+}
+
 }  //namespace detail_adaptive {
 
 ///@endcond
@@ -314,43 +382,41 @@ void adaptive_merge_impl
 //!   Pretty good enough performance is achieved when uninitialized_len is
 //!   ceil(sqrt(std::distance(first, last)))*2.
 //!
+//! <b>Note</b>: A constant amount of stack (see AdaptiveDefaultStackBytes) is
+//!   also used as an internal buffer when it is bigger than "uninitialized_len",
+//!   which keeps the O(1) extra memory guarantee. Use the overload that takes
+//!   an explicit "StackBytes" to change or disable that buffer.
+//!
 //! <b>Caution</b>: Experimental implementation, not production-ready.
 template<class RandIt, class Compare>
 void adaptive_merge( RandIt first, RandIt middle, RandIt last, Compare comp
                 , typename iterator_traits<RandIt>::value_type* uninitialized = 0
                 , typename iter_size<RandIt>::type uninitialized_len = 0)
 {
-   typedef typename iter_size<RandIt>::type  size_type;
-   typedef typename iterator_traits<RandIt>::value_type value_type;
+   ::boost::movelib::detail_adaptive::adaptive_merge_dispatch
+      < ::boost::movelib::detail_adaptive::AdaptiveDefaultStackBytes>
+         (first, middle, last, comp, uninitialized, uninitialized_len);
+}
 
-   if (first == middle || middle == last){
-      return;
-   }
-
-   //Reduce ranges to merge if possible
-   do {
-      if (comp(*middle, *first)){
-         break;
-      }
-      ++first;
-      if (first == middle)
-         return;
-   } while(1);
-
-   RandIt first_high(middle);
-   --first_high;
-   do {
-      --last;
-      if (comp(*last, *first_high)){
-         ++last;
-         break;
-      }
-      if (last == middle)
-         return;
-   } while(1);
-
-   ::boost::movelib::adaptive_xbuf<value_type, value_type*, size_type> xbuf(uninitialized, size_type(uninitialized_len));
-   ::boost::movelib::detail_adaptive::adaptive_merge_impl(first, size_type(middle - first), size_type(last - middle), comp, xbuf);
+//! <b>Effects</b>: Same as the overload above, but "StackBytes" bytes of stack
+//!   are used as the internal buffer whenever that is bigger than the supplied
+//!   storage. Since it is a constant amount of memory, the O(1) extra memory
+//!   guarantee is preserved. Small merges are several times faster with it,
+//!   because they can avoid the block based algorithm altogether.
+//!
+//! <b>Parameters</b>:
+//!   - StackBytes: size in bytes of the stack buffer. It must be given
+//!      explicitly. Zero disables the stack buffer, and so does a
+//!      value_type bigger than "StackBytes".
+//!
+//! <b>Caution</b>: Experimental implementation, not production-ready.
+template<std::size_t StackBytes, class RandIt, class Compare>
+void adaptive_merge( RandIt first, RandIt middle, RandIt last, Compare comp
+                , typename iterator_traits<RandIt>::value_type* uninitialized = 0
+                , typename iter_size<RandIt>::type uninitialized_len = 0)
+{
+   ::boost::movelib::detail_adaptive::adaptive_merge_dispatch<StackBytes>
+      (first, middle, last, comp, uninitialized, uninitialized_len);
 }
 
 }  //namespace movelib {

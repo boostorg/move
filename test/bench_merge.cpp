@@ -74,6 +74,14 @@ void adaptive_merge_buffered(T *elements, T *mid, T *last, Compare comp, std::si
    boost::movelib::adaptive_merge(elements, mid, last, comp, boost::move_detail::force_ptr<T*>(mem.get()), BufLen);
 }
 
+//Same as above but with no stack buffer, to measure what the stack buffer is worth
+template<class T, class Compare>
+void adaptive_merge_buffered_nostack(T *elements, T *mid, T *last, Compare comp, std::size_t BufLen)
+{
+   boost::movelib::unique_ptr<char[]> mem(new char[sizeof(T)*BufLen]);
+   boost::movelib::adaptive_merge<0>(elements, mid, last, comp, boost::move_detail::force_ptr<T*>(mem.get()), BufLen);
+}
+
 template<class T, class Compare>
 void std_like_adaptive_merge_buffered(T *elements, T *mid, T *last, Compare comp, std::size_t BufLen)
 {
@@ -85,10 +93,15 @@ enum AlgoType
 {
    StdMerge,
    AdaptMerge,
+   AdaptMergeNoStk,
    SqrtHAdaptMerge,
+   SqrtHAdaptMergeNoStk,
    SqrtAdaptMerge,
+   SqrtAdaptMergeNoStk,
    Sqrt2AdaptMerge,
+   Sqrt2AdaptMergeNoStk,
    QuartAdaptMerge,
+   QuartAdaptMergeNoStk,
    StdInplaceMerge,
    StdLkSqrtHAdaptMerge,
    StdLkSqrtAdaptMerge,
@@ -99,10 +112,15 @@ enum AlgoType
 
 const char *AlgoNames [] = { "StdMerge             "
                            , "AdaptMerge           "
+                           , "AdaptMergeNoStk      "
                            , "SqrtHAdaptMerge      "
+                           , "SqrtHAdaptMergeNoStk "
                            , "SqrtAdaptMerge       "
+                           , "SqrtAdaptMergeNoStk  "
                            , "Sqrt2AdaptMerge      "
+                           , "Sqrt2AdaptMergeNoStk "
                            , "QuartAdaptMerge      "
+                           , "QuartAdaptMergeNoStk "
                            , "StdInplaceMerge      "
                            , "StdLkSqrtHAdaptMerge "
                            , "StdLkSqrtAdaptMerge  "
@@ -129,20 +147,39 @@ bool measure_algo(T *elements, std::size_t element_count, std::size_t split_pos,
       case AdaptMerge:
          boost::movelib::adaptive_merge(elements, elements+split_pos, elements+element_count, order_type_less());
       break;
+      case AdaptMergeNoStk:
+         boost::movelib::adaptive_merge<0>(elements, elements+split_pos, elements+element_count, order_type_less());
+      break;
       case SqrtHAdaptMerge:
          adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
+                            , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count)/2+1);
+      break;
+      case SqrtHAdaptMergeNoStk:
+         adaptive_merge_buffered_nostack( elements, elements+split_pos, elements+element_count, order_type_less()
                             , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count)/2+1);
       break;
       case SqrtAdaptMerge:
          adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
                             , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
       break;
+      case SqrtAdaptMergeNoStk:
+         adaptive_merge_buffered_nostack( elements, elements+split_pos, elements+element_count, order_type_less()
+                            , boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
+      break;
       case Sqrt2AdaptMerge:
          adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
                             , 2*boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
       break;
+      case Sqrt2AdaptMergeNoStk:
+         adaptive_merge_buffered_nostack( elements, elements+split_pos, elements+element_count, order_type_less()
+                            , 2*boost::movelib::detail_adaptive::ceil_sqrt_multiple(element_count));
+      break;
       case QuartAdaptMerge:
          adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
+                            , (element_count)/4+1);
+      break;
+      case QuartAdaptMergeNoStk:
+         adaptive_merge_buffered_nostack( elements, elements+split_pos, elements+element_count, order_type_less()
                             , (element_count)/4+1);
       break;
       case StdInplaceMerge:
@@ -224,11 +261,19 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
+   res = res && measure_algo(elements.data(), L, split_pos, QuartAdaptMergeNoStk, prev_clock);
+   //
+   prev_clock = back_clock;
+   elements = original_elements;
    res = res && measure_algo(elements.data(), L, split_pos, StdLkQuartAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
    res = res && measure_algo(elements.data(), L, split_pos, Sqrt2AdaptMerge, prev_clock);
+   //
+   prev_clock = back_clock;
+   elements = original_elements;
+   res = res && measure_algo(elements.data(), L, split_pos, Sqrt2AdaptMergeNoStk, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
@@ -240,6 +285,10 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
+   res = res && measure_algo(elements.data(), L, split_pos, SqrtAdaptMergeNoStk, prev_clock);
+   //
+   prev_clock = back_clock;
+   elements = original_elements;
    res = res && measure_algo(elements.data(), L, split_pos, StdLkSqrtAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
@@ -248,11 +297,19 @@ bool measure_all(std::size_t L, std::size_t NK)
    //
    prev_clock = back_clock;
    elements = original_elements;
+   res = res && measure_algo(elements.data(), L, split_pos, SqrtHAdaptMergeNoStk, prev_clock);
+   //
+   prev_clock = back_clock;
+   elements = original_elements;
    res = res && measure_algo(elements.data(), L, split_pos, StdLkSqrtHAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;
    res = res && measure_algo(elements.data(), L, split_pos, AdaptMerge, prev_clock);
+   //
+   prev_clock = back_clock;
+   elements = original_elements;
+   res = res && measure_algo(elements.data(), L, split_pos, AdaptMergeNoStk, prev_clock);
    //
    prev_clock = back_clock;
    elements = original_elements;

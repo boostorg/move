@@ -519,6 +519,35 @@ struct less
    {  return l < r;  }
 };
 
+//////////////////////////////////
+//////////////////////////////////
+//////////////////////////////////
+//
+//    insertion_sort_step
+//
+//////////////////////////////////
+//////////////////////////////////
+//////////////////////////////////
+template<class RandIt, class Compare>
+typename iter_size<RandIt>::type
+   insertion_sort_step
+      ( RandIt const first
+      , typename iter_size<RandIt>::type const length
+      , typename iter_size<RandIt>::type const step
+      , Compare comp)
+{
+   typedef typename iter_size<RandIt>::type size_type;
+   size_type const s = min_value<size_type>(step, AdaptiveSortInsertionSortThreshold);
+   size_type m = 0;
+
+   while((length - m) > s){
+      insertion_sort(first+m, first+m+s, comp);
+      m = size_type(m + s);
+   }
+   insertion_sort(first+m, first+length, comp);
+   return s;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 //                            MERGE BLOCKS
@@ -544,16 +573,11 @@ void slow_stable_sort
    typedef typename iter_size<RandIt>::type       size_type;
 
    size_type L = size_type(last - first);
-   {  //Use insertion sort to merge first elements
-      size_type m = 0;
-      while((L - m) > size_type(AdaptiveSortInsertionSortThreshold)){
-         insertion_sort(first+m, first+m+size_type(AdaptiveSortInsertionSortThreshold), comp);
-         m = size_type(m + AdaptiveSortInsertionSortThreshold);
-      }
-      insertion_sort(first+m, last, comp);
-   }
 
-   size_type h = AdaptiveSortInsertionSortThreshold;
+   //Sort runs of AdaptiveSortInsertionSortThreshold elements, the step returns
+   //the length of those runs, which is the first merge level below
+   size_type h = insertion_sort_step(first, L, size_type(AdaptiveSortInsertionSortThreshold), comp);
+
    for(bool do_merge = L > h; do_merge; h = size_type(h*2)){
       do_merge = (L - h) > h;
       size_type p0 = 0;
@@ -1584,35 +1608,6 @@ void op_merge_right_step_once
    }
 }
 
-
-//////////////////////////////////
-//////////////////////////////////
-//////////////////////////////////
-//
-//    insertion_sort_step
-//
-//////////////////////////////////
-//////////////////////////////////
-//////////////////////////////////
-template<class RandIt, class Compare>
-typename iter_size<RandIt>::type
-   insertion_sort_step
-      ( RandIt const first
-      , typename iter_size<RandIt>::type const length
-      , typename iter_size<RandIt>::type const step
-      , Compare comp)
-{
-   typedef typename iter_size<RandIt>::type size_type;
-   size_type const s = min_value<size_type>(step, AdaptiveSortInsertionSortThreshold);
-   size_type m = 0;
-
-   while((length - m) > s){
-      insertion_sort(first+m, first+m+s, comp);
-      m = size_type(m + s);
-   }
-   insertion_sort(first+m, first+length, comp);
-   return s;
-}
 
 //////////////////////////////////
 //////////////////////////////////

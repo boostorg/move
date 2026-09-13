@@ -380,7 +380,7 @@ void op_merge_left( RandIt buf_first
    //When this macro is 1 the choice selects an iterator, which the compiler can turn
    //into a conditional move on a pointer.
    #ifndef BOOST_MOVE_BRANCHLESS_MERGE
-      #define BOOST_MOVE_BRANCHLESS_MERGE 1
+      #define BOOST_MOVE_BRANCHLESS_MERGE 0
    #endif
 
    #if BOOST_MOVE_BRANCHLESS_MERGE

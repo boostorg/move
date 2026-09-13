@@ -165,28 +165,6 @@ RandIt skip_until_merge
 }
 
 
-template<class RandItKeys, class RandIt>
-void swap_and_update_key
-   ( RandItKeys const key_next
-   , RandItKeys const key_range2
-   , RandItKeys &key_mid
-   , RandIt const begin
-   , RandIt const end
-   , RandIt const with)
-{
-   if(begin != with){
-      ::boost::adl_move_swap_ranges(begin, end, with);
-      if(key_next != key_range2)  //Avoid potential self-swapping
-         ::boost::adl_move_swap(*key_next, *key_range2);
-      if(key_next == key_mid){
-         key_mid = key_range2;
-      }
-      else if(key_mid == key_range2){
-         key_mid = key_next;
-      }
-   }
-}
-
 template<class RandItKeys>
 void update_key
 (RandItKeys const key_next
@@ -201,6 +179,21 @@ void update_key
       else if (key_mid == key_range2) {
          key_mid = key_next;
       }
+   }
+}
+
+template<class RandItKeys, class RandIt>
+void swap_and_update_key
+   ( RandItKeys const key_next
+   , RandItKeys const key_range2
+   , RandItKeys &key_mid
+   , RandIt const begin
+   , RandIt const end
+   , RandIt const with)
+{
+   if(begin != with){
+      ::boost::adl_move_swap_ranges(begin, end, with);
+      update_key(key_next, key_range2, key_mid);
    }
 }
 
@@ -1153,8 +1146,10 @@ OutputIt op_merge_blocks_with_irreg
                              : op(forward_t(), first_reg, last_reg, dest);
       }
 
+      //The block of "first_min" now holds the block of "first_reg", so their keys must
+      //be exchanged.
       RandItKeys const key_next(key_first + next_key_idx);
-      swap_and_update_key(key_next, key_first, key_mid, last_reg, last_reg, first_min);
+      update_key(key_next, key_first, key_mid);
 
       BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(orig_dest, dest, comp));
       first_reg = last_reg;

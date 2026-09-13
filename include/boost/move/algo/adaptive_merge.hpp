@@ -48,7 +48,7 @@ inline void adaptive_merge_combine_blocks( RandIt first
    size_type const l_combine  = size_type(len-collected);
    size_type const l_combine1 = size_type(len1-collected);
 
-    if(n_keys){
+   if(n_keys){
       RandIt const first_data = first+collected;
       RandIt const keys = first;
       BOOST_MOVE_ADAPTIVE_SORT_PRINT_L2("   A combine: ", len);
@@ -84,6 +84,8 @@ inline void adaptive_merge_combine_blocks( RandIt first
       }
    }
    else{
+      //No value was collected, the keys are integers stored in the additional
+      //memory, just after the block buffer (see adaptive_merge_n_keys_intbuf)
       xbuf.shrink_to_fit(l_block);
       if(xbuf.size() < l_block){
          xbuf.initialize_until(l_block, *first);
@@ -119,6 +121,7 @@ inline void adaptive_merge_final_merge( RandIt first
 
    size_type n_keys = size_type(collected-l_intbuf);
    size_type len = size_type(len1+len2);
+   //If integral keys were used, nothing was collected and there is nothing to merge back
    if (!xbuf_used || n_keys) {
       xbuf.clear();
       const size_type middle = xbuf_used && n_keys ? n_keys: collected;
@@ -144,13 +147,22 @@ inline static SizeType adaptive_merge_n_keys_without_external_keys(SizeType l_bl
    return n_keys;
 }
 
+//Number of blocks, that is, the number of keys the ideal algorithm needs when the
+//keys are not collected from the first range
 template<class SizeType>
 inline static SizeType adaptive_merge_n_keys_with_external_keys(SizeType l_block, SizeType len1, SizeType len2, SizeType l_intbuf)
 {
    typedef SizeType size_type;
-   //This is the minimum number of keys to implement the ideal algorithm
-   size_type n_keys = size_type((len1-l_intbuf)/l_block + len2/l_block);
-   return n_keys;
+   return size_type((len1-l_intbuf)/l_block + len2/l_block);
+}
+
+//True if the additional memory can hold a buffer of "l_block" elements and, in the
+//space that is left after it, one integral key per block
+template<class SizeType, class Xbuf>
+inline bool adaptive_merge_xbuf_holds_keys(SizeType l_block, SizeType len1, SizeType len2, Xbuf & xbuf)
+{
+   return xbuf.template supports_aligned_trailing<SizeType>
+      (l_block, adaptive_merge_n_keys_with_external_keys(l_block, len1, len2, SizeType(0u)));
 }
 
 template<class SizeType, class Xbuf>
@@ -159,21 +171,28 @@ inline SizeType adaptive_merge_n_keys_intbuf(SizeType &rl_block, SizeType len1, 
    typedef SizeType size_type;
    size_type l_block = rl_block;
    size_type l_intbuf = xbuf.capacity() >= l_block ? 0u : l_block;
+   size_type n_keys = 0u;
 
-   if (xbuf.capacity() > l_block){
-      l_block = xbuf.capacity();
+   //If the additional memory holds the block buffer and the integral keys of all the
+   //blocks, no unique value has to be collected from the first range.
+   if(adaptive_merge_xbuf_holds_keys(l_block, len1, len2, xbuf)){
+      while( xbuf.capacity() >= size_type(l_block*2u)
+          && adaptive_merge_xbuf_holds_keys(size_type(l_block*2u), len1, len2, xbuf)){
+         l_block = size_type(l_block*2u);
+      }
+   }
+   else{
+      //The whole additional memory is used as block buffer and the keys are unique
+      //values collected from the first range
+      if (xbuf.capacity() > l_block){
+         l_block = xbuf.capacity();
+      }
+
+      //This is the minimum number of keys to implement the ideal algorithm
+      n_keys = adaptive_merge_n_keys_without_external_keys(l_block, len1, len2, l_intbuf);
+      assert(n_keys >= ((len1-l_intbuf-n_keys)/l_block + len2/l_block));
    }
 
-   //This is the minimum number of keys to implement the ideal algorithm
-   size_type n_keys = adaptive_merge_n_keys_without_external_keys(l_block, len1, len2, l_intbuf);
-   assert(n_keys >= ((len1-l_intbuf-n_keys)/l_block + len2/l_block));
-
-   if(xbuf.template supports_aligned_trailing<size_type>
-      ( l_block
-      , adaptive_merge_n_keys_with_external_keys(l_block, len1, len2, l_intbuf)))
-   {
-      n_keys = 0u;
-   }
    l_intbuf_inout = l_intbuf;
    rl_block = l_block;
    return n_keys;
@@ -219,9 +238,11 @@ inline SizeType adaptive_merge_n_keys_intbuf(SizeType &rl_block, SizeType len1, 
 //
 // * If the len1 or len2 are less than 2*csqrtlen then a rotation-based merge is performed.
 //
-// * If auxiliary memory is more than csqrtlen+n_keys*sizeof(std::size_t),
-//   then no csqrtlen need to be extracted and "combine_blocks" will use integral
-//   keys to combine blocks.
+// * If auxiliary memory is available, it replaces the csqrtlen buffer and "combine_blocks"
+//   uses blocks as long as that memory. Only the keys are extracted from the range.
+//
+// * If auxiliary memory can also hold one integral key per block, then no element is
+//   extracted at all and "combine_blocks" uses those integral keys.
 template<class RandIt, class Compare, class XBuf>
 void adaptive_merge_impl
    ( RandIt first

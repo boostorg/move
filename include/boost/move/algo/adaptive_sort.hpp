@@ -322,13 +322,13 @@ bool adaptive_sort_combine_all_blocks
       //Combine to form l_merged*2 segments
       if(n_keys){
          size_type upper_n_keys_this_iter = size_type(2u*l_merged/l_block);
-         if(upper_n_keys_this_iter > 256){
+         if(upper_n_keys_this_iter > AdaptiveLocalKeyCount){
             adaptive_sort_combine_blocks
                ( keys, comp, !use_internal_buf || is_merge_left ? first : first-l_block
                , l_data, l_merged, l_block, use_internal_buf, common_xbuf, xbuf, comp, is_merge_left);
          }
          else{
-            unsigned char uint_keys[256];
+            unsigned char uint_keys[AdaptiveLocalKeyCount];
             adaptive_sort_combine_blocks
                ( uint_keys, less(), !use_internal_buf || is_merge_left ? first : first-l_block
                , l_data, l_merged, l_block, use_internal_buf, common_xbuf, xbuf, comp, is_merge_left);

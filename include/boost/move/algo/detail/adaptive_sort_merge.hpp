@@ -108,6 +108,11 @@ static const std::size_t AdaptiveSortInsertionSortThreshold = 16;
 //as an internal buffer when the caller supplies a smaller one (or none).
 static const std::size_t AdaptiveDefaultStackBytes = 1024u*sizeof(void*)/8u;
 
+//Combination step can tag with integers instead of the collected keys
+//making key comparison trivial. Tags are held in a array of unsigned char
+//so the number of tags is limited to CHAR_BIT
+static const std::size_t AdaptiveLocalKeyCount = std::size_t(1) << CHAR_BIT;
+
 //Number of T elements that fit in a buffer of StackBytes bytes, clamped so
 //that the count is representable in SizeType: some iterators use a tiny size
 //type (e.g. a signed char difference type) in which the count would overflow.

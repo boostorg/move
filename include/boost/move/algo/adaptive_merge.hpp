@@ -29,6 +29,50 @@ namespace movelib {
 ///@cond
 namespace detail_adaptive {
 
+//Combines the blocks tagging them with "keys" compared with "key_comp", which are
+//either the values collected from the range compared with "comp", or integers
+//compared with less()
+template<class RandItKeys, class KeyCompare, class RandIt, class Compare, class XBuf>
+inline void adaptive_merge_combine_blocks_with_keys
+   ( RandItKeys const keys
+   , KeyCompare key_comp
+   , RandIt const first_data
+   , typename iter_size<RandIt>::type const len
+   , typename iter_size<RandIt>::type const l_combine
+   , typename iter_size<RandIt>::type const l_combine1
+   , typename iter_size<RandIt>::type const l_block
+   , bool use_internal_buf
+   , bool xbuf_used
+   , Compare comp
+   , XBuf & xbuf
+   )
+{
+   typedef typename iter_size<RandIt>::type       size_type;
+   boost::movelib::ignore(len);
+
+   size_type n_block_a, n_block_b, l_irreg1, l_irreg2;
+   combine_params( keys, key_comp, l_combine
+                 , l_combine1, l_block, xbuf
+                 , n_block_a, n_block_b, l_irreg1, l_irreg2);   //Outputs
+   if(xbuf_used){
+      op_merge_blocks_with_buf
+         ( keys, key_comp, first_data, l_block, l_irreg1, n_block_a, n_block_b
+         , l_irreg2, comp, move_op(), xbuf.data());
+      BOOST_MOVE_ADAPTIVE_SORT_PRINT_L1("   A mrg xbf: ", len);
+   }
+   else if(use_internal_buf){
+      op_merge_blocks_with_buf
+         ( keys, key_comp, first_data, l_block, l_irreg1, n_block_a, n_block_b
+         , l_irreg2, comp, swap_op(), first_data-l_block);
+      BOOST_MOVE_ADAPTIVE_SORT_PRINT_L2("   A mrg buf: ", len);
+   }
+   else{
+      merge_blocks_bufferless
+         (keys, key_comp, first_data, l_block, l_irreg1, n_block_a, n_block_b, l_irreg2, comp);
+      BOOST_MOVE_ADAPTIVE_SORT_PRINT_L1("   A mrg nbf: ", len);
+   }
+}
+
 template<class RandIt, class Compare, class XBuf>
 inline void adaptive_merge_combine_blocks( RandIt first
                                       , typename iter_size<RandIt>::type len1
@@ -57,30 +101,20 @@ inline void adaptive_merge_combine_blocks( RandIt first
             xbuf.initialize_until(l_block, *first);
          }
          assert(xbuf.size() >= l_block);
-         size_type n_block_a, n_block_b, l_irreg1, l_irreg2;
-         combine_params( keys, comp, l_combine
-                           , l_combine1, l_block, xbuf
-                           , n_block_a, n_block_b, l_irreg1, l_irreg2);   //Outputs
-         op_merge_blocks_with_buf
-            (keys, comp, first_data, l_block, l_irreg1, n_block_a, n_block_b, l_irreg2, comp, move_op(), xbuf.data());
-         BOOST_MOVE_ADAPTIVE_SORT_PRINT_L1("   A mrg xbf: ", len);
+      }
+      //Tag with integers held in a local array instead of collected values,
+      //makes comparisons trivial and avoids additional collecting.
+      size_type const upper_n_keys = size_type(l_combine/l_block + 1u);
+      if(upper_n_keys <= AdaptiveLocalKeyCount){
+         unsigned char uint_keys[AdaptiveLocalKeyCount];
+         adaptive_merge_combine_blocks_with_keys
+            ( uint_keys, less(), first_data, len, l_combine, l_combine1, l_block
+            , use_internal_buf, xbuf_used, comp, xbuf);
       }
       else{
-         size_type n_block_a, n_block_b, l_irreg1, l_irreg2;
-         combine_params( keys, comp, l_combine
-                           , l_combine1, l_block, xbuf
-                           , n_block_a, n_block_b, l_irreg1, l_irreg2);   //Outputs
-         if(use_internal_buf){
-            op_merge_blocks_with_buf
-               ( keys, comp, first_data, l_block, l_irreg1, n_block_a, n_block_b
-               , l_irreg2, comp, swap_op(), first_data-l_block);
-            BOOST_MOVE_ADAPTIVE_SORT_PRINT_L2("   A mrg buf: ", len);
-         }
-         else{
-            merge_blocks_bufferless
-               (keys, comp, first_data, l_block, l_irreg1, n_block_a, n_block_b, l_irreg2, comp);
-            BOOST_MOVE_ADAPTIVE_SORT_PRINT_L1("   A mrg nbf: ", len);
-         }
+         adaptive_merge_combine_blocks_with_keys
+            ( keys, comp, first_data, len, l_combine, l_combine1, l_block
+            , use_internal_buf, xbuf_used, comp, xbuf);
       }
    }
    else{

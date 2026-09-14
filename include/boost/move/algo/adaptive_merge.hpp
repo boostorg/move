@@ -210,10 +210,16 @@ inline SizeType adaptive_merge_n_keys_intbuf(SizeType &rl_block, SizeType len1, 
    //If the additional memory holds the block buffer and the integral keys of all the
    //blocks, no unique value has to be collected from the first range.
    if(adaptive_merge_xbuf_holds_keys(l_block, len1, len2, xbuf)){
-      while( xbuf.capacity() >= size_type(l_block*2u)
-          && adaptive_merge_xbuf_holds_keys(size_type(l_block*2u), len1, len2, xbuf)){
-         l_block = size_type(l_block*2u);
+      //Binary search the biggest block that has room for integral keys.
+      size_type lo = l_block, hi = xbuf.capacity();
+      while(lo < hi){
+         size_type const mid = size_type(lo + size_type(hi - lo + 1)/2u);
+         if(adaptive_merge_xbuf_holds_keys(mid, len1, len2, xbuf))
+            lo = mid;
+         else
+            hi = size_type(mid - 1u);
       }
+      l_block = lo;
    }
    else{
       //The whole additional memory is used as block buffer and the keys are unique

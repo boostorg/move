@@ -802,6 +802,13 @@ Special thanks to:
 
 [section:release_notes Release Notes]
 
+[section:release_notes_boost_1_93 Boost 1.93 Release]
+
+*  Fixed stability bugs both in adaptive_merge and adaptive_sort.
+*  Significantly improved adaptive_merge performance reducing needed comparisons and moves. Up to 2x faster in some corner cases.
+
+[endsect]
+
 [section:release_notes_boost_1_91 Boost 1.91 Release]
 
 *  Fixed bugs:

@@ -69,6 +69,28 @@ RandIt upper_bound
    return first;
 }
 
+
+//First element of [first, last) that is greater than "key". Tries exponential
+//probe to limit the range and a binary search to find the right key position.
+//Useful when the element is expected to be close to "first".
+template <class RandIt, class T, class Compare>
+RandIt gallop_upper_bound
+   (RandIt first, const RandIt last, const T& key, Compare comp)
+{
+   typedef typename iter_size<RandIt>::type size_type;
+   size_type const len = size_type(last - first);
+   size_type prev = 0u, step = 1u;
+
+   while(step < len && !comp(key, first[step])){
+      prev = step;
+      step = size_type(step*2u);
+   }
+   if(step > len){
+      step = len;
+   }
+   return boost::movelib::upper_bound(first+prev, first+step, key, comp);
+}
+
 }  //namespace movelib {
 }  //namespace boost {
 

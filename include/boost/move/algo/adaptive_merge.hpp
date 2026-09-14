@@ -335,7 +335,7 @@ void adaptive_merge_impl
       size_type n_keys = adaptive_merge_n_keys_intbuf(l_block, len1, len2, xbuf, l_intbuf);
       size_type const to_collect = size_type(l_intbuf+n_keys);
       //Try to extract needed unique values from the first range
-      size_type const collected  = collect_unique(first, first+len1, to_collect, comp, xbuf);
+      size_type const collected  = collect_unique(first, first+len1, to_collect, comp, xbuf, collect_sorted_t());
       BOOST_MOVE_ADAPTIVE_SORT_PRINT_L1("\n   A collect: ", len);
 
       //Not the minimum number of keys is not available on the first range, so fallback to rotations.

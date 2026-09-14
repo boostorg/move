@@ -467,7 +467,7 @@ bool adaptive_sort_build_params
       //will be backuped in the buffer during build_blocks.
       non_unique_buf = xbuf.capacity() >= l_intbuf;
       size_type const to_collect = non_unique_buf ? n_min_ideal_keys : size_type(l_intbuf*2u);
-      size_type collected = collect_unique(first, first+len, to_collect, comp, xbuf);
+      size_type collected = collect_unique(first, first+len, to_collect, comp, xbuf, collect_unsorted_t());
 
       //If available memory is 2*sqrt(l), then for "build_params" 
       //the situation is the same as if 2*l_intbuf were collected.

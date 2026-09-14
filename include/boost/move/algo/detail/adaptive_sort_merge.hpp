@@ -384,60 +384,129 @@ void merge_blocks_bufferless
    BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(first, last_irr2, comp));
 }
 
-// Complexity: 2*distance(first, last)+max_collected^2/2
+//Tags telling collect_unique whether the input range is already ordered
+struct collect_unsorted_t {};
+struct collect_sorted_t   {};
+
+//Position where "*u" would be inserted in the sorted key range [kfirst, klast).
+//"*u" is a new distinct value if the result is klast or compares greater.
+template<class RandItKeys, class RandIt, class Compare>
+BOOST_MOVE_FORCEINLINE RandItKeys collect_unique_find
+   (RandItKeys kfirst, RandItKeys klast, RandIt u, Compare comp, collect_unsorted_t)
+{
+   return boost::movelib::lower_bound(kfirst, klast, *u, comp);
+}
+
+//For an ordered range a new value can only be greater than the last one
+template<class RandItKeys, class RandIt, class Compare>
+BOOST_MOVE_FORCEINLINE RandItKeys collect_unique_find
+   (RandItKeys, RandItKeys klast, RandIt u, Compare comp, collect_sorted_t)
+{
+   RandItKeys klast_bef = klast;
+   --klast_bef;
+   return comp(*klast_bef, *u) ? klast : klast_bef;
+}
+
+//Advance to the next candidate. Without order there is nothing to skip
+template<class RandIt, class RandItKeys, class Compare>
+BOOST_MOVE_FORCEINLINE void collect_unique_next
+   (RandIt &u, RandIt, RandItKeys, Compare, collect_unsorted_t)
+{
+   ++u;
+}
+
+//In an ordered range every element up to the first one greater than the biggest
+//collected key repeats an already collected value, so the whole run is skipped at
+//once. That visits one element per distinct value instead of the whole range
+template<class RandIt, class RandItKeys, class Compare>
+BOOST_MOVE_FORCEINLINE void collect_unique_next
+   (RandIt &u, RandIt last, RandItKeys klast, Compare comp, collect_sorted_t)
+{
+   //The element at "u" was already processed so start after it.
+   ++u;
+   u = boost::movelib::gallop_upper_bound(u, last, *(klast-1), comp);
+}
+
+// Complexity: 2*distance(first, last)+max_collected^2/2, or
+//             max_collected*log(distance(first, last)) if the input is ordered
 //
 // Tries to collect at most n_keys unique elements from [first, last),
 // in the begining of the range, and ordered according to comp
 // 
 // Returns the number of collected keys
-template<class RandIt, class Compare, class XBuf>
+//
+// While the range is scanned it is seen as four consecutive pieces:
+//
+//   [first, h0)        non-key elements already scanned, in their original order
+//   [h0, search_end)   the "h" keys collected so far, ordered according to comp
+//   [search_end, u)    non-key elements scanned after the last collected key
+//   [u, last)          not scanned yet
+//
+// so h0+h == search_end holds all the time. Collecting a key moves the key block
+// past the non-key elements found since the previous one, which keeps those in
+// their original relative order, and a final step brings the key block to the
+// front of the range.
+template<class RandIt, class Compare, class XBuf, class CollectTag>
 typename iter_size<RandIt>::type
    collect_unique
       ( RandIt const first, RandIt const last
       , typename iter_size<RandIt>::type const max_collected, Compare comp
-      , XBuf & xbuf)
+      , XBuf & xbuf, CollectTag tag)
 {
    typedef typename iter_size<RandIt>::type       size_type;
    size_type h = 0;
 
    if(max_collected){
-      ++h;  // first key is always here
-      RandIt h0 = first;
-      RandIt u = first; ++u;
-      RandIt search_end = u;
+      ++h;                       //*first is always a key, no comparison is needed
+      RandIt h0 = first;         //beginning of the key block
+      RandIt u = first; ++u;     //candidate
+      RandIt search_end = u;     //end of the key block
 
+      //If the additional memory can hold every key, the key block is kept there.
+      //The keys are then contiguous and adding one leaves a hole in the range
       if(xbuf.capacity() >= max_collected){
          typename XBuf::iterator const ph0 = xbuf.add(first);
          while(u != last && h < max_collected){
-            typename XBuf::iterator const r = boost::movelib::lower_bound(ph0, xbuf.end(), *u, comp);
-            //If key not found add it to [h, h+h0)
+            //*u belongs in the key block. It is a new value if that position
+            //is the end of the block or the key is greater
+            typename XBuf::iterator const r = collect_unique_find(ph0, xbuf.end(), u, comp, tag);
             if(r == xbuf.end() || comp(*u, *r) ){
+               //Slide the non-keys found since the previous key
                RandIt const new_h0 = boost::move(search_end, u, h0);
                search_end = u;
                ++search_end;
                ++h;
-               xbuf.insert(r, u);
+               xbuf.insert(r, u);   //Move *u to the buffer and leave a hole
                h0 = new_h0;
             }
-            ++u;
+            //Next candidate, skipping what can not be a new value
+            collect_unique_next(u, last, xbuf.end(), comp, tag);
          }
+         //Move front data to make room for keys
          boost::move_backward(first, h0, h0+h);
          boost::move(xbuf.data(), xbuf.end(), first);
       }
       else{
+         //Not enough memory, put key block inside the range
          while(u != last && h < max_collected){
-            RandIt const r = boost::movelib::lower_bound(h0, search_end, *u, comp);
-            //If key not found add it to [h, h+h0)
+            //*u belongs in the key block. It is a new value if that position
+            //is the end of the block or the key that sits there is greater
+            RandIt const r = collect_unique_find(h0, search_end, u, comp, tag);
             if(r == search_end || comp(*u, *r) ){
+               //Move the key block after the non-keys found since the previous key
                RandIt const new_h0 = rotate_gcd(h0, search_end, u);
                search_end = u;
                ++search_end;
                ++h;
+               //*u is now the last element of the key block, rotate it to the
+               //correct position. A no-op for an ordered input
                rotate_gcd(r+(new_h0-h0), u, search_end);
                h0 = new_h0;
             }
-            ++u;
+            //Next candidate, skipping what can not be a new value
+            collect_unique_next(u, last, search_end, comp, tag);
          }
+         //Move the key block to the front of the range
          rotate_gcd(first, h0, h0+h);
       }
    }

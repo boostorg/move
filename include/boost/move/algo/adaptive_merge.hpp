@@ -251,7 +251,13 @@ inline void adaptive_merge_rotation_merge
    size_type const cap = xbuf.capacity();
    if (len1 && len2) {
       if (!cap) {
-         merge_bufferless(first, middle, last, comp);
+         //merge_bufferless_ON2 is rotation-based. The squared term is paid only
+         //on the short range, so once min(len1,len2) <= 2*ceil_sqrt(len) ON2 beats
+         //ONlogN.
+         if (min_value<size_type>(len1, len2) <= size_type(2u*ceil_sqrt(size_type(len1+len2))))
+            merge_bufferless_ON2(first, middle, last, comp);
+         else
+            merge_bufferless(first, middle, last, comp);
       }
       else {
          //The buffer might hold values from a previous step

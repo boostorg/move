@@ -41,8 +41,12 @@ void print_stats(const char *str, boost::ulong_long_type element_count)
 #include <boost/move/algo/detail/merge.hpp>
 #include <boost/move/core.hpp>
 
+//split_count == 0 means an even split. Any other value is used as the length of the
+//first range, so that lopsided inputs can be benchmarked: adaptive_merge switches to
+//a rotation-based merge once min(len1,len2) <= 2*ceil_sqrt(len), and that regime is
+//invisible to an even split.
 template<class T, class Compare>
-std::size_t generate_elements(boost::container::vector<T> &elements, std::size_t L, std::size_t NK, Compare comp)
+std::size_t generate_elements(boost::container::vector<T> &elements, std::size_t L, std::size_t NK, Compare comp, std::size_t split_count = 0)
 {
    elements.resize(L);
    boost::movelib::unique_ptr<std::size_t[]> key_reps(new std::size_t[NK ? NK : L]);
@@ -61,7 +65,9 @@ std::size_t generate_elements(boost::container::vector<T> &elements, std::size_t
    for (std::size_t i = 0; i < L; ++i) {
       elements[i].val = key_reps[elements[i].key]++;
    }
-   std::size_t split_count = L / 2;
+   if (!split_count || split_count >= L) {
+      split_count = L / 2;
+   }
    std::stable_sort(elements.data(), elements.data() + split_count, comp);
    std::stable_sort(elements.data() + split_count, elements.data() + L, comp);
    return split_count;
@@ -240,11 +246,11 @@ bool measure_algo(T *elements, std::size_t element_count, std::size_t split_pos,
 }
 
 template<class T>
-bool measure_all(std::size_t L, std::size_t NK)
+bool measure_all(std::size_t L, std::size_t NK, std::size_t split = 0)
 {
    boost::container::vector<T> original_elements, elements;
-   std::size_t split_pos = generate_elements(original_elements, L, NK, order_type_less());
-   std::printf("\n - - N: %u, NK: %u - -\n", (unsigned)L, (unsigned)NK);
+   std::size_t split_pos = generate_elements(original_elements, L, NK, order_type_less(), split);
+   std::printf("\n - - N: %u, NK: %u, Len1: %u - -\n", (unsigned)L, (unsigned)NK, (unsigned)split_pos);
 
    nanosecond_type prev_clock = 0;
    nanosecond_type back_clock;
@@ -327,6 +333,25 @@ bool measure_all(std::size_t L, std::size_t NK)
 
 #define BENCH_SORT_UNIQUE_VALUES
 
+//Benchmarks around the threshold at which adaptive_merge gives up
+//on block merging and rotates instead --> is min(len1,len2) <= 2*ceil_sqrt(len).
+template<class T>
+bool measure_all_lopsided(std::size_t L, std::size_t NK)
+{
+   const std::size_t csqrt = boost::movelib::detail_adaptive::ceil_sqrt(L);
+   bool res = true;
+   //A quarter of the threshold, the threshold itself, and just past it, so that a
+   //change of the rotation-based merge shows up on both sides of the switch.
+   const std::size_t len1[] = { csqrt, 2u*csqrt };
+   for (std::size_t i = 0; i != sizeof(len1)/sizeof(*len1); ++i) {
+      if (!len1[i] || len1[i] >= L/2u) {
+         continue;
+      }
+      res = res && measure_all<T>(L, NK, len1[i]);
+   }
+   return res;
+}
+
 int main()
 {
    #ifndef BENCH_SORT_UNIQUE_VALUES
@@ -355,9 +380,10 @@ int main()
    measure_all<order_perf_type>(10001,4095);
    #endif
    measure_all<order_perf_type>(10001,0);
+   measure_all_lopsided<order_perf_type>(10001,0);
 
    //
-   #if defined(NDEBUG)
+   #if defined(NDEBUG) && !defined(BENCH_MERGE_SHORT)
    #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_perf_type>(100001,511);
    measure_all<order_perf_type>(100001,2047);
@@ -365,9 +391,9 @@ int main()
    measure_all<order_perf_type>(100001,32767);
    #endif
    measure_all<order_perf_type>(100001,0);
+   measure_all_lopsided<order_perf_type>(100001,0);
 
    //
-   #if !defined(BENCH_MERGE_SHORT)
    #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_perf_type>(1000001, 8192);
    measure_all<order_perf_type>(1000001, 32768);
@@ -375,6 +401,7 @@ int main()
    measure_all<order_perf_type>(1000001, 524288);
    #endif
    measure_all<order_perf_type>(1000001,0);
+   measure_all_lopsided<order_perf_type>(1000001,0);
 
    #ifndef BENCH_SORT_UNIQUE_VALUES
    measure_all<order_perf_type>(10000001, 65536);
@@ -383,8 +410,7 @@ int main()
    measure_all<order_perf_type>(10000001, 4194304);
    #endif
    measure_all<order_perf_type>(10000001,0);
-   #endif   //#ifndef BENCH_MERGE_SHORT
-   #endif   //#ifdef NDEBUG
+   #endif   //#ifdef NDEBUG && !BENCH_MERGE_SHORT
 
    return 0;
 }

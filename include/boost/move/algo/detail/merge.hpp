@@ -375,30 +375,6 @@ void op_merge_left( RandIt buf_first
                     , Compare comp
                     , Op op)
 {
-   //The merge loops below must choose between the heads of both ranges. That choice
-   //is data dependent, so on interleaved data a branch mispredicts about half the time.
-   //When this macro is 1 the choice selects an iterator, which the compiler can turn
-   //into a conditional move on a pointer.
-   #ifndef BOOST_MOVE_BRANCHLESS_MERGE
-      #define BOOST_MOVE_BRANCHLESS_MERGE 0
-   #endif
-
-   #if BOOST_MOVE_BRANCHLESS_MERGE
-   RandIt first2 = last1;
-   //Both loop tests are well predicted, each of them fails just once. Only the
-   //comparison is data dependent and it selects an iterator instead of branching.
-   while(first1 != last1 && first2 != last2){
-      bool const take2 = comp(*first2, *first1);
-      op(take2 ? first2 : first1, buf_first);
-      ++buf_first;
-      first1 += !take2;
-      first2 += take2;
-   }
-   if(first1 == last1){
-      op(forward_t(), first2, last2, buf_first);
-      return;
-   }
-   #else
    bool is_range_1_left;
    RandIt first2 = last1;
    for( 
@@ -417,7 +393,6 @@ void op_merge_left( RandIt buf_first
       op(forward_t(), first2, last2, buf_first);
       return;
    }
-   #endif
    if(buf_first != first1){//In case all remaining elements are in the same place
                            //(e.g. buffer is exactly the size of the second half
                            //and all elements from the second half are less)
@@ -452,22 +427,6 @@ void op_merge_right
    (RandIt const first1, RandIt last1, RandIt last2, RandIt buf_last, Compare comp, Op op)
 {
    RandIt const first2 = last1;
-   #if BOOST_MOVE_BRANCHLESS_MERGE
-   while(first1 != last1 && last2 != first2){
-      --last2;
-      --last1;
-      --buf_last;
-      bool const take1 = comp(*last2, *last1);
-      op(take1 ? last1 : last2, buf_last);
-      //Undo the decrement of the range that was not consumed
-      last2 += take1;
-      last1 += !take1;
-   }
-   if(last2 == first2){
-      op(backward_t(), first1, last1, buf_last);
-      return;
-   }
-   #else
    bool is_range_2_left;
    while((is_range_2_left = (last2 != first2)) && first1 != last1){
       --last2;
@@ -486,7 +445,6 @@ void op_merge_right
       op(backward_t(), first1, last1, buf_last);
       return;
    }
-   #endif
    if(last2 != buf_last){  //In case all remaining elements are in the same place
                            //(e.g. buffer is exactly the size of the first half
                            //and all elements from the second half are less)

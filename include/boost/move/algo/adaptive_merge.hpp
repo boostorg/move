@@ -249,23 +249,49 @@ inline void adaptive_merge_rotation_merge
 {
    typedef typename iter_size<RandIt>::type size_type;
    size_type const cap = xbuf.capacity();
-   if (len1 && len2) {
-      if (!cap) {
-         //merge_bufferless_ON2 is rotation-based. The squared term is paid only
-         //on the short range, so once min(len1,len2) <= 2*ceil_sqrt(len) ON2 beats
-         //ONlogN.
-         if (min_value<size_type>(len1, len2) <= size_type(2u*ceil_sqrt(size_type(len1+len2))))
-            merge_bufferless_ON2(first, middle, last, comp);
-         else
-            merge_bufferless(first, middle, last, comp);
-      }
-      else {
-         //The buffer might hold values from a previous step
+   if (!len1 || !len2) {
+      return;
+   }
+   size_type const len   = size_type(len1+len2);
+   size_type const l_min = min_value<size_type>(len1, len2);
+   size_type const csqrt = ceil_sqrt(len);
+
+   //The additional memory is smaller than the short range here.
+   //merge_adaptive_ONlogN_recursive halves ranges until they fit in that
+   //memory, so a buffer that holds less than half of the short range would
+   //lead to too many recursive calls
+   if (cap && cap >= size_type(l_min/2u)) {
+      //The buffer might hold values from a previous step
+      xbuf.clear();
+      xbuf.initialize_until(cap, *first);
+      merge_adaptive_ONlogN_recursive(first, middle, last, len1, len2, xbuf.data(), cap, comp);
+      xbuf.clear();
+   }
+   else if (l_min <= size_type(csqrt + csqrt/4u)) {
+      //merge_bufferless_ON2 places the elements of the short range one by one
+      //with a rotation. The squared term is paid for the short range, so
+      //while that range stays near sqrt(len) it's efficient
+      merge_bufferless_ON2(first, middle, last, comp);
+   }
+   else {
+      //A longer short range makes the squared term too expensive.
+      //merge_small_run_rotations trades it for more rotations by merging the
+      //short range in groups of sqrt(l_min), and it uses the additional memory,
+      if (cap) {
          xbuf.clear();
          xbuf.initialize_until(cap, *first);
-         merge_adaptive_ONlogN_recursive(first, middle, last, len1, len2, xbuf.data(), cap, comp);
-         xbuf.clear();
       }
+      if (len1 <= len2) {
+         merge_small_run_rotations(first, middle, last, comp, xbuf.begin(), cap);
+      }
+      else {
+         //Mirror the problem: the short run is at the end. Merging the reversed
+         //sequences with the inverse comparison yields the reversed stable merge.
+         merge_small_run_rotations
+            ( (make_reverse_iterator)(last), (make_reverse_iterator)(middle)
+            , (make_reverse_iterator)(first), inverse<Compare>(comp), xbuf.begin(), cap);
+      }
+      xbuf.clear();
    }
 }
 

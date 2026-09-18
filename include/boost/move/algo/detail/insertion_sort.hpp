@@ -62,12 +62,6 @@ void insertion_sort_op(ForwardIterator first1, ForwardIterator last1, Birdirecti
    }
 }
 
-template <class Compare, class ForwardIterator, class BirdirectionalIterator>
-void insertion_sort_swap(ForwardIterator first1, ForwardIterator last1, BirdirectionalIterator first2, Compare comp)
-{
-   insertion_sort_op(first1, last1, first2, comp, swap_op());
-}
-
 
 template <class Compare, class ForwardIterator, class BirdirectionalIterator>
 void insertion_sort_copy(ForwardIterator first1, ForwardIterator last1, BirdirectionalIterator first2, Compare comp)

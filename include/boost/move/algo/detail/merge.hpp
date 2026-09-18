@@ -18,6 +18,7 @@
 #include <boost/move/algo/predicate.hpp>
 #include <boost/move/algo/detail/search.hpp>
 #include <boost/move/detail/iterator_to_raw_pointer.hpp>
+#include <boost/move/detail/reverse_iterator.hpp>
 #include <cassert>
 #include <cstddef>
 
@@ -281,29 +282,6 @@ class range_xbuf
    Iterator const m_cap;
 };
 
-
-
-// @cond
-
-/*
-template<typename Unsigned>
-inline Unsigned gcd(Unsigned x, Unsigned y)
-{
-   if(0 == ((x &(x-1)) | (y & (y-1)))){
-      return x < y ? x : y;
-   }
-   else{
-      do
-      {
-         Unsigned t = x % y;
-         x = y;
-         y = t;
-      } while (y);
-      return x;
-   }
-}
-*/
-
 //Modified version from "An Optimal In-Place Array Rotation Algorithm", Ching-Kuang Shene
 template<typename Unsigned>
 Unsigned gcd(Unsigned x, Unsigned y)
@@ -367,6 +345,142 @@ RandIt rotate_gcd(RandIt first, RandIt middle, RandIt last)
    return ret;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+//                        MERGE LEFT / MERGE RIGHT
+//
+///////////////////////////////////////////////////////////////////////////////
+
+// op_merge_left and op_merge_right merge the two adjacent sorted ranges
+//
+//    range 1 = [first1, last1)   and   range 2 = [last1, last2)
+//
+// into a run of free elements next to them, which the adaptive algorithms call
+// the buffer: in front of range 1 for op_merge_left and behind range 2 for
+// op_merge_right. Those are the only elements the merge writes outside the two
+// ranges, and it does not care what they hold.
+//
+//    op_merge_left
+//       buf_first   first1     last1      last2
+//       [  buffer  ][ range 1 ][ range 2 ]
+//    -> [       merged       ][  buffer  ]
+//
+//    op_merge_right
+//       first1     last1      last2       buf_last
+//       [ range 1 ][ range 2 ][  buffer  ]
+//    -> [  buffer  ][       merged       ]
+//
+// So the merged range comes out where the buffer used to start (op_merge_left)
+// or where it used to end (op_merge_right), and the buffer ends up on the other
+// side of it. The merge is stable: of two equivalent elements the one of
+// range 1 comes first.
+//
+// "op" says what to do with each element that is placed. move_op moves it, so
+// the buffer is overwritten and what is left of it is a run of moved-from
+// elements. swap_op swaps it, so no value is lost: the elements of the buffer
+// are carried to the other side of the merged range, in an order the caller
+// must not rely on.
+//
+// Both need the buffer to be at least as long as the range that has to travel
+// across it, that is
+//
+//    op_merge_left    (first1 - buf_first) >= (last2 - last1)
+//    op_merge_right   (buf_last - last2)   >= (last1 - first1)
+//
+// because the output only gains on that range when one of its elements is
+// placed. With a shorter buffer the output would catch up with the other range
+// and overwrite elements that are not consumed yet.
+
+///////////////////////////////////////////////////////////////////////////////
+//
+//                       MERGE LEFT WITH A ROTATING HOLE
+//
+///////////////////////////////////////////////////////////////////////////////
+
+// Moves [first, last) to [hole, hole+(last-first)), refilling each slot it
+// vacates with the element next to the hole. [hole, first) must hold free
+// elements, so that the hole ends up just before the elements moved there.
+// Returns the new position of the hole.
+template<class RandIt>
+RandIt op_shift_hole(RandIt hole, RandIt first, RandIt const last)
+{
+   for(; first != last; ++first){
+      *hole = boost::move(*first);
+      RandIt const next_hole = hole+1;
+      if(next_hole != first){    //A free element follows the hole, put it in the slot just vacated
+         *first = boost::move(*next_hole);
+      }
+      hole = next_hole;
+   }
+   return hole;
+}
+
+// Same result as op_merge_left with swap_op, and chosen for it because this
+// overload is the more specialized one, but each element costs two moves
+// instead of the three a swap needs (Katajainen, Pasanen and Teuhola, "Practical
+// in-place mergesort", Nordic Journal of Computing 3(1), 1996, Section 2).
+//
+// One buffer element is extracted, leaving a hole at the output position. The
+// selected element is moved into the hole and the buffer element next to the
+// hole is moved into the slot just vacated, which recreates the hole at the next
+// output position. Buffer elements end up rotated by one place with respect to
+// the swapping version, which is harmless because the buffer holds the collected
+// unique elements and the caller does not preserve their order either
+// (adaptive_sort sorts them in the final merge).
+//
+// Needs the same buffer length as the general version, and for the same reason:
+// the buffer in front of range 1 must only run out once range 2 is exhausted.
+
+template<class RandIt, class Compare>
+inline void op_merge_left( RandIt buf_first
+                         , RandIt first1
+                         , RandIt const last1
+                         , RandIt const last2
+                         , Compare comp
+                         , swap_op)
+{
+   typedef typename iterator_traits<RandIt>::value_type value_type;
+   RandIt first2 = last1;
+   assert(buf_first != first1);
+   assert(std::size_t(first1 - buf_first) >= std::size_t(last2 - last1));
+
+   RandIt hole = buf_first;
+   value_type tmp(boost::move(*hole));   //Opens the hole
+   bool buf_exhausted = false;
+
+   while(first1 != last1 && first2 != last2){
+      RandIt const src = comp(*first2, *first1) ? first2++ : first1++;
+      *hole = boost::move(*src);
+      RandIt const next_hole = hole+1;
+      if(next_hole == src){            //The hole already moved with the consumed element
+         hole = src;
+      }
+      else if(next_hole != first1){    //A buffer element follows the hole
+         *src = boost::move(*next_hole);
+         hole = next_hole;
+      }
+      else{
+         //The buffer in front of the first range is exhausted. As the buffer is
+         //at least as long as the second range, that can only happen just as the
+         //second range empties, and the rest of the first range is then already
+         //in its final place.
+         hole = src;
+         assert(first2 == last2);
+         buf_exhausted = true;
+         break;
+      }
+   }
+   //One range is left. Its elements just shift over the free ones before them.
+   if(!buf_exhausted){
+      hole = first1 == last1 ? op_shift_hole(hole, first2, last2)
+                             : op_shift_hole(hole, first1, last1);
+   }
+   *hole = boost::move(tmp);           //Closes the hole
+}
+
+// Merges range 1 and range 2 forward into the buffer that precedes them, as
+// described above. Each placed element costs whatever "op" costs: one move for
+// move_op, one swap for swap_op.
 template<class RandIt, class Compare, class Op>
 void op_merge_left( RandIt buf_first
                     , RandIt first1
@@ -400,76 +514,22 @@ void op_merge_left( RandIt buf_first
    }
 }
 
-// [buf_first, first1) -> buffer
-// [first1, last1) merge [last1,last2) -> [buf_first,buf_first+(last2-first1))
-// Elements from buffer are moved to [last2 - (first1-buf_first), last2)
-// Note: distance(buf_first, first1) >= distance(last1, last2), so no overlapping occurs
-template<class RandIt, class Compare>
-void merge_left
-   (RandIt buf_first, RandIt first1, RandIt const last1, RandIt const last2, Compare comp)
-{
-   op_merge_left(buf_first, first1, last1, last2, comp, move_op());
-}
-
-// [buf_first, first1) -> buffer
-// [first1, last1) merge [last1,last2) -> [buf_first,buf_first+(last2-first1))
-// Elements from buffer are swapped to [last2 - (first1-buf_first), last2)
-// Note: distance(buf_first, first1) >= distance(last1, last2), so no overlapping occurs
-template<class RandIt, class Compare>
-void swap_merge_left
-   (RandIt buf_first, RandIt first1, RandIt const last1, RandIt const last2, Compare comp)
-{
-   op_merge_left(buf_first, first1, last1, last2, comp, swap_op());
-}
-
+// Merges range 1 and range 2 backward into the buffer that follows them, as
+// described above.
+//
+// It is the mirror image of op_merge_left: reversing the three ranges puts the
+// buffer in front of the merged output again, and the inverse comparison makes
+// the reversed merge the stable one (the reversal swaps the roles of the two
+// ranges, so the tie rule of op_merge_left still puts range 1 first here).
 template<class RandIt, class Compare, class Op>
-void op_merge_right
+inline void op_merge_right
    (RandIt const first1, RandIt last1, RandIt last2, RandIt buf_last, Compare comp, Op op)
 {
-   RandIt const first2 = last1;
-   bool is_range_2_left;
-   while((is_range_2_left = (last2 != first2)) && first1 != last1){
-      --last2;
-      --last1;
-      --buf_last;
-      if(comp(*last2, *last1)){
-         op(last1, buf_last);
-         ++last2;
-      }
-      else{
-         op(last2, buf_last);
-         ++last1;
-      }
-   }
-   if(!is_range_2_left){
-      op(backward_t(), first1, last1, buf_last);
-      return;
-   }
-   if(last2 != buf_last){  //In case all remaining elements are in the same place
-                           //(e.g. buffer is exactly the size of the first half
-                           //and all elements from the second half are less)
-      op(backward_t(), first2, last2, buf_last);
-   }
-}
-
-// [last2, buf_last) - buffer
-// [first1, last1) merge [last1,last2) -> [first1+(buf_last-last2), buf_last)
-// Note: distance[last2, buf_last) >= distance[first1, last1), so no overlapping occurs
-template<class RandIt, class Compare>
-void merge_right
-   (RandIt first1, RandIt last1, RandIt last2, RandIt buf_last, Compare comp)
-{
-   op_merge_right(first1, last1, last2, buf_last, comp, move_op());
-}
-
-// [last2, buf_last) - buffer
-// [first1, last1) merge [last1,last2) -> [first1+(buf_last-last2), buf_last)
-// Note: distance[last2, buf_last) >= distance[first1, last1), so no overlapping occurs
-template<class RandIt, class Compare>
-void swap_merge_right
-   (RandIt first1, RandIt last1, RandIt last2, RandIt buf_last, Compare comp)
-{
-   op_merge_right(first1, last1, last2, buf_last, comp, swap_op());
+   op_merge_left( (make_reverse_iterator)(buf_last)
+                , (make_reverse_iterator)(last2)
+                , (make_reverse_iterator)(last1)
+                , (make_reverse_iterator)(first1)
+                , inverse<Compare>(comp), op);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -477,6 +537,37 @@ void swap_merge_right
 //                            BUFFERED MERGE
 //
 ///////////////////////////////////////////////////////////////////////////////
+
+// Merges the two adjacent sorted ranges
+//
+//    range 1 = [first, middle)   and   range 2 = [middle, last)
+//
+// in place, with the help of "xbuf", which must hold at least
+// min(len1, len2) elements. Nothing outside [first, last) is written and the
+// merge is stable.
+//
+// The leading and trailing elements that are already in their final position
+// are skipped first. Then the shorter half is moved into "xbuf", which leaves
+// a free run inside [first, last) as long as that half, and the half that
+// stayed in place already sits at the end of the output it belongs to. So the
+// merge is finished by op_merge_with_right_placed when the first half was the
+// one buffered, and by op_merge_with_left_placed when it was the second one:
+//
+//    len1 <= len2   [ range 1 ][ range 2 ]      xbuf = range 1
+//                   [  free   ][ range 2 ]
+//                -> [       merged       ]
+//
+//    len1 >  len2   [ range 1 ][ range 2 ]      xbuf = range 2
+//                   [ range 1 ][  free   ]
+//                -> [       merged       ]
+//
+// The half that goes to "xbuf" is always moved there, so its previous contents
+// are lost whatever "op" is, and on return it holds that many moved-from
+// elements. "op" only places the elements of the merge itself.
+//
+// "xbuf" is any of the buffer types of this header: adaptive_xbuf, which owns
+// raw storage and constructs the elements it is given, or range_xbuf, which is
+// a range of elements that already exist.
 template<class RandIt, class Compare, class Op, class Buf>
 void op_buffered_merge
       ( RandIt first, RandIt const middle, RandIt last
@@ -502,6 +593,7 @@ void op_buffered_merge
    }
 }
 
+// op_buffered_merge that moves the elements it places
 template<class RandIt, class Compare, class XBuf>
 void buffered_merge
       ( RandIt first, RandIt const middle, RandIt last
@@ -511,6 +603,37 @@ void buffered_merge
    op_buffered_merge(first, middle, last, comp, move_op(), xbuf);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+//                            BUFFERLESS MERGE
+//
+///////////////////////////////////////////////////////////////////////////////
+
+// Merges the two adjacent sorted ranges
+//
+//    range 1 = [first, middle)   and   range 2 = [middle, last)
+//
+// in place, into [first, last), with no additional memory at all: elements are
+// carried to their place by rotations. Stable, like every merge of this header.
+//
+// This one walks the shorter range element by element. Taking range 1 as the
+// shorter one, each step binary searches in range 2 the elements that must
+// precede the leading element of range 1, rotates them in front of it, and then
+// skips the elements of range 1 that the rotation already left in place:
+//
+//       first      middle
+//       [ x rest1 ][ b1 b2 ][ rest2 ] last         b1, b2 < x
+//    -> [ b1 b2 ][ x rest1 ][ rest2 ]
+//                ^the next step starts here
+//
+// When range 2 is the shorter one the same is done from the other end.
+//
+// Only one binary search and one rotation are paid per element of the shorter
+// range, so the comparisons are about min*log(max), which is very few when one
+// range is much shorter than the other. The quadratic term is paid on the
+// shorter range alone, so this beats the recursive merge below while that range
+// stays near sqrt(len1+len2).
+//
 //Complexity: min(len1,len2)^2 + max(len1,len2)
 template<class RandIt, class Compare>
 void merge_bufferless_ON2(RandIt first, RandIt middle, RandIt last, Compare comp)
@@ -546,6 +669,26 @@ void merge_bufferless_ON2(RandIt first, RandIt middle, RandIt last, Compare comp
 
 static const std::size_t MergeBufferlessONLogNRotationThreshold = 16u;
 
+// Merges the same two adjacent ranges as merge_bufferless_ON2, in place and
+// with no additional memory, but by halving instead of by walking: "len1" and
+// "len2" are their lengths, which the caller already knows.
+//
+// The longer range is cut in half, the matching cut of the other one is found
+// with a binary search, and one rotation puts the two inner pieces in the right
+// order. That leaves two independent merges that touch no common element, one
+// on each side of the new middle:
+//
+//       first     first_cut middle    second_cut
+//       [   A1   ][   A2   ][   B1   ][   B2   ] last    B1 goes before A2
+//    -> [   A1   ][   B1   ][   A2   ][   B2   ]
+//                           ^new_middle
+//
+// A1 is then merged with B1 and A2 with B2. The bigger of the two is continued
+// by the loop rather than by a recursive call, so the recursion only ever
+// descends into the smaller half.
+//
+// Ranges short enough to make the halving not worth it go to
+// merge_bufferless_ON2.
 template <class RandIt, class Compare>
 void merge_bufferless_ONlogN_recursive
    ( RandIt first, RandIt middle, RandIt last
@@ -632,6 +775,53 @@ void merge_bufferless(RandIt first, RandIt middle, RandIt last, Compare comp)
    #endif   //BOOST_ADAPTIVE_MERGE_NLOGN_MERGE
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+//                        MERGE WITH ONE RANGE PLACED
+//
+///////////////////////////////////////////////////////////////////////////////
+
+// op_merge_with_right_placed and op_merge_with_left_placed also merge two
+// sorted ranges, but unlike the merges above the two ranges are not adjacent:
+// one of them already sits inside the destination, at the end it belongs to,
+// and the other one is somewhere else, usually a buffer the caller filled.
+// The destination is the range that one covers plus the free run next to it,
+// and that free run must be exactly as long as the range that comes from
+// outside:
+//
+//    op_merge_with_right_placed      range 2 is the one already placed
+//
+//       first      last                            (anywhere else)
+//       [ range 1 ]
+//
+//       dest_first r_first    r_last
+//       [   free  ][ range 2 ]
+//    -> [       merged       ]
+//
+//    op_merge_with_left_placed       range 1 is the one already placed
+//
+//                  r_first    r_last                (anywhere else)
+//                  [ range 2 ]
+//
+//       first      last       dest_last
+//       [ range 1 ][   free  ]
+//    -> [       merged       ]
+//
+// op_merge_with_right_placed fills the destination forward from dest_first and
+// op_merge_with_left_placed backward from dest_last, so in both the output runs
+// towards the range that is already in place. Neither ever overtakes it: the
+// free run always holds exactly as many slots as elements are left outside, so
+// when those run out the output has reached the placed range and whatever is
+// left of it needs no move at all. That is why they take no buffer of their own
+// and write nothing outside the destination.
+//
+// The merge is stable, range 1 first on equivalent elements, and "op" places
+// every element. move_op leaves the outside range moved-from, so its storage is
+// free afterwards. swap_op loses no value: what the destination held is carried
+// out into the outside range instead, which is what the callers that keep an
+// internal buffer there want, and it comes back in an order they must not rely
+// on.
+
 // [r_first, r_last) are already in the right part of the destination range.
 template <class Compare, class InputIterator, class InputOutIterator, class Op>
 void op_merge_with_right_placed
@@ -660,57 +850,25 @@ void op_merge_with_right_placed
    // Remaining [r_first, r_last) already in the correct place
 }
 
-template <class Compare, class InputIterator, class InputOutIterator>
-void swap_merge_with_right_placed
-   ( InputIterator first, InputIterator last
-   , InputOutIterator dest_first, InputOutIterator r_first, InputOutIterator r_last
-   , Compare comp)
-{
-   op_merge_with_right_placed(first, last, dest_first, r_first, r_last, comp, swap_op());
-}
-
-// [first, last) are already in the right part of the destination range.
+// [first, last) are already in the left part of the destination range.
+//
+// Mirror image of op_merge_with_right_placed: reversing the destination turns
+// the range that is already in its left part into a range in the right part,
+// and the inverse comparison makes the reversed merge the stable one.
 template <class Compare, class Op, class BidirIterator, class BidirOutIterator>
-void op_merge_with_left_placed
+inline void op_merge_with_left_placed
    ( BidirOutIterator const first, BidirOutIterator last, BidirOutIterator dest_last
    , BidirIterator const r_first, BidirIterator r_last
    , Compare comp, Op op)
 {
-   assert((dest_last - last) == (r_last - r_first));
-   while( r_first != r_last ) {
-      if(first == last) {
-         BidirOutIterator res = op(backward_t(), r_first, r_last, dest_last);
-         assert(last == res);
-         boost::movelib::ignore(res);
-         return;
-      }
-      --r_last;
-      --last;
-      if(comp(*r_last, *last)){
-         ++r_last;
-         --dest_last;
-         op(last, dest_last);
-      }
-      else{
-         ++last;
-         --dest_last;
-         op(r_last, dest_last);
-      }
-   }
-   // Remaining [first, last) already in the correct place
+   op_merge_with_right_placed
+      ( (make_reverse_iterator)(r_last), (make_reverse_iterator)(r_first)
+      , (make_reverse_iterator)(dest_last)
+      , (make_reverse_iterator)(last), (make_reverse_iterator)(first)
+      , inverse<Compare>(comp), op);
 }
 
 // @endcond
-
-// [first, last) are already in the right part of the destination range.
-template <class Compare, class BidirIterator, class BidirOutIterator>
-void merge_with_left_placed
-   ( BidirOutIterator const first, BidirOutIterator last, BidirOutIterator dest_last
-   , BidirIterator const r_first, BidirIterator r_last
-   , Compare comp)
-{
-   op_merge_with_left_placed(first, last, dest_last, r_first, r_last, comp, move_op());
-}
 
 // [r_first, r_last) are already in the right part of the destination range.
 template <class Compare, class InputIterator, class InputOutIterator>

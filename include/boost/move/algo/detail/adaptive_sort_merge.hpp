@@ -158,6 +158,27 @@ typename iter_size<ForwardIt>::type
 }
 
 
+// Tells where the free elements a merge may rotate a hole through are:
+//   - free_run_t: they are [d_first, first1), in front of range 1, which is what
+//     the rotating hole needs.
+//   - no_free_run_t: range 1 is a detached buffer and the output chases range 2,
+//     so the element after the output is live and no hole can be opened.
+// Only the caller knows which one applies, so it says so with these tags.
+struct free_run_t{};
+struct no_free_run_t{};
+
+// True if both iterators denote the same position. Iterators of different types
+// walk different storage, which can not overlap, so they never do. Comparing the
+// iterators and not the addresses of their elements means the position one past
+// the last one may be tested without dereferencing it.
+template<class It1, class It2>
+inline bool is_same_position(It1, It2)
+{  return false;  }
+
+template<class It>
+inline bool is_same_position(It l, It r)
+{  return l == r;  }
+
 template<class RandIt, class Compare>
 RandIt skip_until_merge
    ( RandIt first1, RandIt const last1
@@ -990,6 +1011,80 @@ OutputIt op_partial_merge_impl
    return d_first;
 }
 
+// Merges as op_partial_merge_impl does, but rotating a hole through the free
+// elements in front of range 1, which needs one move less per element than a
+// swap (Katajainen, Pasanen and Teuhola, "Practical in-place mergesort", Nordic
+// Journal of Computing 3(1), 1996, Section 2).
+//
+// The hole is the output position: the selected element is moved into it and the
+// free element that follows the output takes the slot just vacated, which puts
+// the hole at the next output position. The free elements end up rotated by one
+// place, which no caller depends on.
+//
+// Consuming from range 2 shortens the free run. Should it run out, the hole is
+// closed and the rest is swapped as before, so how long it lasts need not be
+// known. Only callers passing free_run_t reach this.
+template<class InputIt1, class InputIt2, class OutputIt, class Compare>
+OutputIt op_partial_merge_hole_impl
+   (InputIt1 &r_first1, InputIt1 const last1, InputIt2 &r_first2, InputIt2 const last2, OutputIt d_first, Compare comp)
+{
+   typedef typename iterator_traits<OutputIt>::value_type value_type;
+   InputIt1 first1(r_first1);
+   InputIt2 first2(r_first2);
+
+   if(first2 != last2 && last1 != first1){
+      value_type tmp(boost::move(*d_first));      //Opens the hole
+      bool hole_open = true;
+      while(1){
+         if(comp(*first2, *first1)) {
+            if(hole_open){
+               InputIt2 const src = first2++;
+               *d_first = boost::move(*src);
+               OutputIt const next = d_first+1;
+               if(!is_same_position(next, first1)){
+                  *src = boost::move(*next);      //A free element follows the output
+               }
+               else{                              //The free run is spent
+                  *src = boost::move(tmp);
+                  hole_open = false;
+               }
+               ++d_first;
+            }
+            else{
+               swap_op()(first2++, d_first++);
+            }
+            if(first2 == last2){
+               break;
+            }
+         }
+         else{
+            if(hole_open){
+               //Taking from range 1 leaves the free run as long as it was
+               InputIt1 const src = first1++;
+               *d_first = boost::move(*src);
+               OutputIt const next = d_first+1;
+               if(!is_same_position(next, src)){  //Else the hole already is there
+                  *src = boost::move(*next);
+               }
+               ++d_first;
+            }
+            else{
+               swap_op()(first1++, d_first++);
+            }
+            if(first1 == last1){
+               break;
+            }
+         }
+      }
+      if(hole_open){
+         *d_first = boost::move(tmp);             //Closes the hole
+      }
+   }
+   r_first1 = first1;
+   r_first2 = first2;
+   return d_first;
+}
+
 template<class InputIt1, class InputIt2, class OutputIt, class Compare, class Op>
 OutputIt op_partial_merge
    (InputIt1 &r_first1, InputIt1 const last1, InputIt2 &r_first2, InputIt2 const last2, OutputIt d_first, Compare comp, Op op, bool is_stable)
@@ -1031,6 +1126,70 @@ OutputIt op_partial_merge_and_swap_impl
       r_first1 = first1;
       r_first2 = first2;
    }
+   return d_first;
+}
+
+// op_partial_merge_and_swap_impl with a rotating hole. Taking from range 2 is a
+// three way rotation, range2 -> range_min -> output, so the hole travels to the
+// range 2 slot and a free element refills it. See op_partial_merge_hole_impl.
+template<class InputIt1, class InputIt2, class OutputIt, class Compare>
+OutputIt op_partial_merge_and_swap_hole_impl
+   (InputIt1 &r_first1, InputIt1 const last1, InputIt2 &r_first2, InputIt2 const last2, InputIt2 &r_first_min, OutputIt d_first, Compare comp)
+{
+   typedef typename iterator_traits<OutputIt>::value_type value_type;
+   InputIt1 first1(r_first1);
+   InputIt2 first2(r_first2);
+
+   if(first2 != last2 && last1 != first1) {
+      InputIt2 first_min(r_first_min);
+      value_type tmp(boost::move(*d_first));      //Opens the hole
+      bool hole_open = true;
+      bool non_empty_ranges = true;
+      do{
+         if(comp(*first_min, *first1)) {
+            if(hole_open){
+               InputIt2 const src  = first2++;
+               InputIt2 const srcm = first_min++;
+               *d_first = boost::move(*srcm);
+               *srcm    = boost::move(*src);
+               OutputIt const next = d_first+1;
+               if(!is_same_position(next, first1)){
+                  *src = boost::move(*next);      //A free element follows the output
+               }
+               else{                              //The free run is spent
+                  *src = boost::move(tmp);
+                  hole_open = false;
+               }
+               ++d_first;
+            }
+            else{
+               swap_op()(three_way_t(), first2++, first_min++, d_first++);
+            }
+            non_empty_ranges = first2 != last2;
+         }
+         else{
+            if(hole_open){
+               InputIt1 const src = first1++;
+               *d_first = boost::move(*src);
+               OutputIt const next = d_first+1;
+               if(!is_same_position(next, src)){  //Else the hole already is there
+                  *src = boost::move(*next);
+               }
+               ++d_first;
+            }
+            else{
+               swap_op()(first1++, d_first++);
+            }
+            non_empty_ranges = first1 != last1;
+         }
+      } while(non_empty_ranges);
+      if(hole_open){
+         *d_first = boost::move(tmp);             //Closes the hole
+      }
+      r_first_min = first_min;
+   }
+   r_first1 = first1;
+   r_first2 = first2;
    return d_first;
 }
 
@@ -1115,11 +1274,42 @@ RandItB op_buffered_partial_merge_to_range1_and_buffer
    return lastb;
 }
 
-template<class RandIt, class RandItBuf, class Compare, class Op>
+// The rotating hole is taken only when the caller says the free elements are in
+// front of range 1, the operation is a swap, and the free run is not empty
+// already. Every other combination goes through the general merge below.
+template<class InputIt1, class InputIt2, class OutputIt, class Compare, class Op, class FreeRun>
+inline OutputIt op_partial_merge_sel
+   (InputIt1 &f1, InputIt1 const l1, InputIt2 &f2, InputIt2 const l2, OutputIt d, Compare comp, Op op, FreeRun)
+{  return op_partial_merge_impl(f1, l1, f2, l2, d, comp, op);  }
+
+template<class InputIt1, class InputIt2, class OutputIt, class Compare, class Op, class FreeRun>
+inline OutputIt op_partial_merge_and_swap_sel
+   (InputIt1 &f1, InputIt1 const l1, InputIt2 &f2, InputIt2 const l2, InputIt2 &fm, OutputIt d, Compare comp, Op op, FreeRun)
+{  return op_partial_merge_and_swap_impl(f1, l1, f2, l2, fm, d, comp, op);  }
+
+template<class InputIt1, class InputIt2, class OutputIt, class Compare>
+inline OutputIt op_partial_merge_sel
+   (InputIt1 &f1, InputIt1 const l1, InputIt2 &f2, InputIt2 const l2, OutputIt d, Compare comp, swap_op, free_run_t)
+{
+   return is_same_position(d, f1)   //An empty free run leaves no slot to open the hole in
+      ? op_partial_merge_impl(f1, l1, f2, l2, d, comp, swap_op())
+      : op_partial_merge_hole_impl(f1, l1, f2, l2, d, comp);
+}
+
+template<class InputIt1, class InputIt2, class OutputIt, class Compare>
+inline OutputIt op_partial_merge_and_swap_sel
+   (InputIt1 &f1, InputIt1 const l1, InputIt2 &f2, InputIt2 const l2, InputIt2 &fm, OutputIt d, Compare comp, swap_op, free_run_t)
+{
+   return is_same_position(d, f1)
+      ? op_partial_merge_and_swap_impl(f1, l1, f2, l2, fm, d, comp, swap_op())
+      : op_partial_merge_and_swap_hole_impl(f1, l1, f2, l2, fm, d, comp);
+}
+
+template<class RandIt, class RandItBuf, class Compare, class Op, class FreeRun>
 RandIt op_partial_merge_and_save_impl
    ( RandIt first1, RandIt const last1, RandIt &rfirst2, RandIt last2, RandIt first_min
    , RandItBuf &buf_first1_in_out, RandItBuf &buf_last1_in_out
-   , Compare comp, Op op
+   , Compare comp, Op op, FreeRun free_run
    )
 {
    RandItBuf buf_first1 = buf_first1_in_out;
@@ -1141,28 +1331,29 @@ RandIt op_partial_merge_and_save_impl
    }
 
    //Now merge from buffer
-   first1 = do_swap ? op_partial_merge_and_swap_impl(buf_first1, buf_last1, first2, last2, first_min, first1, comp, op)
-                    : op_partial_merge_impl    (buf_first1, buf_last1, first2, last2, first1, comp, op);
+   first1 = do_swap ? op_partial_merge_and_swap_sel(buf_first1, buf_last1, first2, last2, first_min, first1, comp, op, free_run)
+                    : op_partial_merge_sel    (buf_first1, buf_last1, first2, last2, first1, comp, op, free_run);
    buf_first1_in_out = buf_first1;
    buf_last1_in_out  = buf_last1;
    rfirst2 = first2;
    return first1;
 }
 
-template<class RandIt, class RandItBuf, class Compare, class Op>
+template<class RandIt, class RandItBuf, class Compare, class Op, class FreeRun>
 RandIt op_partial_merge_and_save
    ( RandIt first1, RandIt const last1, RandIt &rfirst2, RandIt last2, RandIt first_min
    , RandItBuf &buf_first1_in_out
    , RandItBuf &buf_last1_in_out
    , Compare comp
    , Op op
-   , bool is_stable)
+   , bool is_stable
+   , FreeRun free_run)
 {
    return is_stable
       ? op_partial_merge_and_save_impl
-         (first1, last1, rfirst2, last2, first_min, buf_first1_in_out, buf_last1_in_out, comp, op)
+         (first1, last1, rfirst2, last2, first_min, buf_first1_in_out, buf_last1_in_out, comp, op, free_run)
       : op_partial_merge_and_save_impl
-         (first1, last1, rfirst2, last2, first_min, buf_first1_in_out, buf_last1_in_out, antistable<Compare>(comp), op)
+         (first1, last1, rfirst2, last2, first_min, buf_first1_in_out, buf_last1_in_out, antistable<Compare>(comp), op, free_run)
       ;
 }
 
@@ -1327,13 +1518,13 @@ void op_merge_blocks_left
          if(is_buffer_middle){
             buf_end = buf_beg = first2 - (last1-first1);
             unmerged = op_partial_merge_and_save( first1, last1, first2, last2, first_min
-                                                , buf_beg, buf_end, comp, op, is_range1_A);
+                                                , buf_beg, buf_end, comp, op, is_range1_A, free_run_t());
          }  
          else{
             buf_beg = first1;
             buf_end = last1;
             unmerged = op_partial_merge_and_save
-               (buffer, buffer+(last1-first1), first2, last2, first_min, buf_beg, buf_end, comp, op, is_range1_A);
+               (buffer, buffer+(last1-first1), first2, last2, first_min, buf_beg, buf_end, comp, op, is_range1_A, free_run_t());
          }
 
          boost::movelib::ignore(unmerged);
@@ -1558,7 +1749,9 @@ void op_merge_blocks_with_buf
          BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(first, first1, comp));
       }
       else {
-         RandIt const unmerged = op_partial_merge_and_save(first1, last1, first2, last2, first_min, buffer, buffer_end, comp, op, is_range1_A);
+         //The save area is behind the output here, not in front of range 1, so
+         //there is no free run to rotate a hole through
+         RandIt const unmerged = op_partial_merge_and_save(first1, last1, first2, last2, first_min, buffer, buffer_end, comp, op, is_range1_A, no_free_run_t());
          BOOST_MOVE_ADAPTIVE_SORT_PRINT_L2("   merge_blocks_w_mrs: ", len);
          bool const is_range_1_empty = buffer == buffer_end;
          BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(is_range_1_empty || (buffer_end-buffer) == (last1+l_block-unmerged));

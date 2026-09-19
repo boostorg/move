@@ -26,6 +26,7 @@
 
 #include "order_type.hpp"
 #include "random_shuffle.hpp"
+#include "bench_util.hpp"
 
 using boost::move_detail::cpu_timer;
 using boost::move_detail::nanosecond_type;
@@ -137,14 +138,8 @@ const char *AlgoNames [] = { "StdMerge             "
 BOOST_MOVE_STATIC_ASSERT((sizeof(AlgoNames)/sizeof(*AlgoNames)) == MaxMerge);
 
 template<class T>
-bool measure_algo(T *elements, std::size_t element_count, std::size_t split_pos, std::size_t alg, nanosecond_type &prev_clock)
+void run_merge_algo(T *elements, std::size_t element_count, std::size_t split_pos, std::size_t alg)
 {
-   std::printf("%s ", AlgoNames[alg]);
-   order_perf_type::num_compare=0;
-   order_perf_type::num_copy=0;
-   order_perf_type::num_elements = element_count;
-   cpu_timer timer;
-   timer.resume();
    switch(alg)
    {
       case StdMerge:
@@ -208,41 +203,74 @@ bool measure_algo(T *elements, std::size_t element_count, std::size_t split_pos,
                             , (element_count)/4+1);
       break;
    }
-   timer.stop();
+}
 
-   if(order_perf_type::num_elements == element_count){
+//Restores the input and runs one algorithm on it, so that the timing loop can
+//repeat the measurement
+template<class T>
+struct merge_runner
+{
+   merge_runner(std::size_t n, std::size_t sp, std::size_t a)
+      : element_count(n), split_pos(sp), alg(a)
+      , num_compare(0), num_copy(0), num_elements(0)
+   {}
+
+   void reset()
+   {
+      order_perf_type::num_compare = 0;
+      order_perf_type::num_copy = 0;
+      order_perf_type::num_elements = element_count;
+   }
+
+   //Only the first run is measured for counters, the rest add to them
+   void record()
+   {
+      num_compare  = order_perf_type::num_compare;
+      num_copy     = order_perf_type::num_copy;
+      num_elements = order_perf_type::num_elements;
+   }
+
+   void operator()(T *elements) const
+   {  run_merge_algo(elements, element_count, split_pos, alg);  }
+
+   std::size_t element_count;
+   std::size_t split_pos;
+   std::size_t alg;
+
+   boost::ulong_long_type num_compare;
+   boost::ulong_long_type num_copy;
+   boost::ulong_long_type num_elements;
+};
+
+template<class Vector>
+bool measure_algo( Vector &elements, const Vector &original, std::size_t element_count
+                 , std::size_t split_pos, std::size_t alg, nanosecond_type &prev_clock)
+{
+   typedef typename Vector::value_type T;
+   std::printf("%s ", AlgoNames[alg]);
+
+   merge_runner<T> runner(element_count, split_pos, alg);
+   bench_util::bench_result const r = bench_util::measure_best_of(elements, original, runner);
+
+   if(runner.num_elements == element_count){
       std::printf(" Tmp Ok ");
    } else{
       std::printf(" Tmp KO ");
    }
-   nanosecond_type new_clock = timer.elapsed().wall;
 
-   //std::cout << "Cmp:" << order_perf_type::num_compare << " Cpy:" << order_perf_type::num_copy;   //for old compilers without ll size argument
-   std::printf("Cmp:%8.04f Cpy:%9.04f", double(order_perf_type::num_compare)/double(element_count), double(order_perf_type::num_copy)/double(element_count) );
-
-   double time = double(new_clock);
-
-   const char *units = "ns";
-   if(time >= 1000000000.0){
-      time /= 1000000000.0;
-      units = " s";
-   }
-   else if(time >= 1000000.0){
-      time /= 1000000.0;
-      units = "ms";
-   }
-   else if(time >= 1000.0){
-      time /= 1000.0;
-      units = "us";
-   }
-
-   std::printf(" %6.02f%s (%6.02f)\n"
-              , time
-              , units
-              , prev_clock ? double(new_clock)/double(prev_clock): 1.0);
-   prev_clock = new_clock;
-   bool res = is_order_type_ordered(elements, element_count, true);
-   return res;
+   //The counters are read before the order check, which compares elements too
+   std::printf( "Cmp:%8.04f Cpy:%9.04f "
+              , double(runner.num_compare)/double(element_count)
+              , double(runner.num_copy)/double(element_count) );
+   bench_util::print_time(r.best);
+   //"n" is the number of runs the best time comes from, and the last value is
+   //how far the median is above it, that is, how noisy the measurement was
+   std::printf( " (%6.02f) n=%-2u +%.01f%%\n"
+              , prev_clock ? double(r.best)/double(prev_clock) : 1.0
+              , r.runs
+              , r.noise());
+   prev_clock = r.best;
+   return is_order_type_ordered(elements.data(), element_count, true);
 }
 
 template<class T>
@@ -256,70 +284,54 @@ bool measure_all(std::size_t L, std::size_t NK, std::size_t split = 0)
    nanosecond_type back_clock;
    bool res = true;
 
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, StdMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, StdMerge, prev_clock);
    back_clock = prev_clock;
    //
 
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, QuartAdaptMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, QuartAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, QuartAdaptMergeNoStk, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, QuartAdaptMergeNoStk, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, StdLkQuartAdaptMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, StdLkQuartAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, Sqrt2AdaptMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, Sqrt2AdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, Sqrt2AdaptMergeNoStk, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, Sqrt2AdaptMergeNoStk, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, StdLkSqrt2AdaptMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, StdLkSqrt2AdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, SqrtAdaptMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, SqrtAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, SqrtAdaptMergeNoStk, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, SqrtAdaptMergeNoStk, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, StdLkSqrtAdaptMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, StdLkSqrtAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, SqrtHAdaptMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, SqrtHAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, SqrtHAdaptMergeNoStk, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, SqrtHAdaptMergeNoStk, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, StdLkSqrtHAdaptMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, StdLkSqrtHAdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, AdaptMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, AdaptMerge, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos, AdaptMergeNoStk, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos, AdaptMergeNoStk, prev_clock);
    //
    prev_clock = back_clock;
-   elements = original_elements;
-   res = res && measure_algo(elements.data(), L, split_pos,StdInplaceMerge, prev_clock);
+   res = res && measure_algo(elements, original_elements, L, split_pos,StdInplaceMerge, prev_clock);
    //
    if (!res)
       std::abort();

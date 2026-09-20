@@ -36,7 +36,7 @@ BOOST_MOVE_STATIC_ASSERT(stack_buffer_elements >= 8u);
 //written as multiples of it so that they keep leaving the same remainders in the
 //blocks of a combination step if the threshold changes.
 static const std::size_t insertion_sort_threshold =
-   boost::movelib::detail_adaptive::AdaptiveSortInsertionSortThreshold;
+   boost::movelib::MergeSortInsertionSortThreshold;
 
 //Number of integral keys adaptive_sort tags blocks with in a local array. A
 //combination step needing more tags than this uses the collected keys instead.

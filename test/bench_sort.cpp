@@ -111,12 +111,12 @@ enum AlgoType
    Sqrt2AdaptiveSortNoStk,
    QuartAdaptiveSort,
    QuartAdaptiveSortNoStk,
-   InplaceStableSort,
+   StableSortBuflessRec,
    StdLkSqrtHAdpSort,
    StdLkSqrtAdpSort,
    StdLkSqrt2AdpSort,
    StdLkQuartAdpSort,
-   SlowStableSort,
+   StableSortBufless,
    HeapSort,
    MaxSort
 };
@@ -135,12 +135,12 @@ const char *AlgoNames [] = { "MergeSort           "
                            , "Sqrt2AdaptSortNoStk "
                            , "QuartAdaptSort      "
                            , "QuartAdaptSortNoStk "
-                           , "InplStableSort      "
+                           , "StblSortBuflessRec  "
                            , "StdLkSqrtHAdpSort   "
                            , "StdLkSqrtAdpSort    "
                            , "StdLkSqrt2AdpSort   "
                            , "StdLkQuartAdpSort   "
-                           , "SlowSort            "
+                           , "StblSortBufless     "
                            , "HeapSort            "
                            };
 
@@ -201,8 +201,8 @@ void run_sort_algo(T *elements, std::size_t element_count, std::size_t alg)
          adaptive_sort_buffered_nostack( elements, element_count, order_type_less()
                             , (element_count-1)/4+1);
       break;
-      case InplaceStableSort:
-         boost::movelib::inplace_stable_sort(elements, elements+element_count, order_type_less());
+      case StableSortBuflessRec:
+         boost::movelib::stable_sort_bufferless_ONlogN2_recursive(elements, elements+element_count, order_type_less());
       break;
       case StdLkSqrtHAdpSort:
          std_like_adaptive_stable_sort_buffered( elements, element_count, order_type_less()
@@ -220,8 +220,8 @@ void run_sort_algo(T *elements, std::size_t element_count, std::size_t alg)
          std_like_adaptive_stable_sort_buffered( elements, element_count, order_type_less()
                                                , (element_count-1)/4+1);
       break;
-      case SlowStableSort:
-         boost::movelib::detail_adaptive::slow_stable_sort(elements, elements+element_count, order_type_less());
+      case StableSortBufless:
+         boost::movelib::stable_sort_bufferless_ONlogN2(elements, elements+element_count, order_type_less());
       break;
       case HeapSort:
          boost::movelib::heap_sort(elements, elements+element_count, order_type_less());
@@ -366,10 +366,10 @@ bool measure_all(std::size_t L, std::size_t NK)
    res = res && measure_algo(elements, original_elements, L,AdaptiveSortNoStk, prev_clock);
    //
    prev_clock = back_clock;
-   res = res && measure_algo(elements, original_elements, L,InplaceStableSort, prev_clock);
+   res = res && measure_algo(elements, original_elements, L,StableSortBuflessRec, prev_clock);
    //
-   //prev_clock = back_clock;
-   //res = res && measure_algo(elements, original_elements, L,SlowStableSort, prev_clock);
+   prev_clock = back_clock;
+   res = res && measure_algo(elements, original_elements, L,StableSortBufless, prev_clock);
 
    if(!res)
       std::abort();

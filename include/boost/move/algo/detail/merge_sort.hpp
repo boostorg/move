@@ -46,8 +46,10 @@ namespace movelib {
 
 static const unsigned MergeSortInsertionSortThreshold = 16;
 
+// Recursive top-down stable sort with no additional memory, moves elements by rotating.
+// O(N log^2 N) in the worst case.
 template <class RandIt, class Compare>
-void inplace_stable_sort(RandIt first, RandIt last, Compare comp)
+void stable_sort_bufferless_ONlogN2_recursive(RandIt first, RandIt last, Compare comp)
 {
    typedef typename iter_size<RandIt>::type  size_type;
    if (size_type(last - first) <= size_type(MergeSortInsertionSortThreshold)) {
@@ -55,10 +57,65 @@ void inplace_stable_sort(RandIt first, RandIt last, Compare comp)
       return;
    }
    RandIt middle = first + (last - first) / 2;
-   inplace_stable_sort(first, middle, comp);
-   inplace_stable_sort(middle, last, comp);
+   stable_sort_bufferless_ONlogN2_recursive(first, middle, comp);
+   stable_sort_bufferless_ONlogN2_recursive(middle, last, comp);
    merge_bufferless_ONlogN_recursive
       (first, middle, last, size_type(middle - first), size_type(last - middle), comp);
+}
+
+// Insertion sorts consecutive runs of "step" elements, or of
+// MergeSortInsertionSortThreshold when that is shorter, and returns the length
+// the runs really got. The tail run is whatever is left over.
+template<class RandIt, class Compare>
+typename iter_size<RandIt>::type
+   insertion_sort_step
+      ( RandIt const first
+      , typename iter_size<RandIt>::type const length
+      , typename iter_size<RandIt>::type const step
+      , Compare comp)
+{
+   typedef typename iter_size<RandIt>::type size_type;
+   size_type const s = step < size_type(MergeSortInsertionSortThreshold)
+                          ? step : size_type(MergeSortInsertionSortThreshold);
+   size_type m = 0;
+
+   while((length - m) > s){
+      insertion_sort(first+m, first+m+s, comp);
+      m = size_type(m + s);
+   }
+   insertion_sort(first+m, first+length, comp);
+   return s;
+}
+
+// Recursive bottom-up stable sort with no additional memory, moves elements by rotating.
+// insertion sorts short runs and then merges adjacent runs with merge_bufferless,
+// doubling the run length until it covers everything. O(N log^2 N) in the worst case.
+template<class RandIt, class Compare>
+void stable_sort_bufferless_ONlogN2
+   ( RandIt const first, RandIt const last, Compare comp)
+{
+   typedef typename iter_size<RandIt>::type       size_type;
+
+   size_type L = size_type(last - first);
+
+   //Sort the shortest runs, the step returns their length, which is the first
+   //merge level below
+   size_type h = insertion_sort_step(first, L, size_type(MergeSortInsertionSortThreshold), comp);
+
+   for(bool do_merge = L > h; do_merge; h = size_type(h*2)){
+      do_merge = (L - h) > h;
+      size_type p0 = 0;
+      if(do_merge){
+         size_type const h_2 = size_type(2*h);
+         while((L-p0) > h_2){
+            merge_bufferless(first+p0, first+p0+h, first+p0+h_2, comp);
+            p0 = size_type(p0 + h_2);
+         }
+      }
+      if((L-p0) > h){
+         merge_bufferless(first+p0, first+p0+h, last, comp);
+      }
+   }
 }
 
 // @endcond

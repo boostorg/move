@@ -426,7 +426,7 @@ bool adaptive_sort_build_params
    non_unique_buf = false;
 
    //Try to find a value near sqrt(len) that is 2^N*l_base where
-   //l_base <= AdaptiveSortInsertionSortThreshold. This property is important
+   //l_base <= MergeSortInsertionSortThreshold. This property is important
    //as build_blocks merges to the left iteratively duplicating the
    //merged size and all the buffer must be used just before the final
    //merge to right step. This guarantees "build_blocks" produces 
@@ -500,8 +500,8 @@ bool adaptive_sort_build_params
          while(n_keys > collected){
             n_keys/=2;
          }
-         //AdaptiveSortInsertionSortThreshold is always power of two so the minimum is power of two
-         l_base = min_value<Unsigned>(n_keys, AdaptiveSortInsertionSortThreshold);
+         //MergeSortInsertionSortThreshold is always power of two so the minimum is power of two
+         l_base = min_value<Unsigned>(n_keys, MergeSortInsertionSortThreshold);
          l_intbuf = 0;
          l_build_buf = n_keys;
          non_unique_buf = false;
@@ -579,7 +579,7 @@ void adaptive_sort_impl
    typedef typename iter_size<RandIt>::type         size_type;
 
    //Small sorts go directly to insertion sort
-   if(len <= size_type(AdaptiveSortInsertionSortThreshold)){
+   if(len <= size_type(MergeSortInsertionSortThreshold)){
       insertion_sort(first, first + len, comp);
    }
    else if((len-len/2) <= xbuf.capacity()){
@@ -587,7 +587,7 @@ void adaptive_sort_impl
    }
    else{
       //Make sure it is at least four
-      BOOST_MOVE_STATIC_ASSERT(AdaptiveSortInsertionSortThreshold >= 4);
+      BOOST_MOVE_STATIC_ASSERT(MergeSortInsertionSortThreshold >= 4);
 
       size_type l_base = 0;
       size_type l_intbuf = 0;

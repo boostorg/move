@@ -102,8 +102,6 @@ namespace boost {
 namespace movelib {
 namespace detail_adaptive {
 
-static const std::size_t AdaptiveSortInsertionSortThreshold = 16;
-
 //Default number of stack bytes that adaptive_sort and adaptive_merge may use
 //as an internal buffer when the caller supplies a smaller one (or none).
 static const std::size_t AdaptiveDefaultStackBytes = 1024u*sizeof(void*)/8u;
@@ -123,9 +121,7 @@ inline SizeType stack_buffer_capacity()
    const std::size_t max_val = std::size_t(SizeType(-1));
    return static_cast<SizeType>(n_elem < max_val ? n_elem : max_val);
 }
-//static const std::size_t AdaptiveSortInsertionSortThreshold = 4;
-BOOST_MOVE_STATIC_ASSERT((AdaptiveSortInsertionSortThreshold&(AdaptiveSortInsertionSortThreshold-1)) == 0);
-
+BOOST_MOVE_STATIC_ASSERT((MergeSortInsertionSortThreshold&(MergeSortInsertionSortThreshold-1)) == 0);
 #if defined BOOST_HAS_INTPTR_T
    typedef ::boost::uintptr_t uintptr_t;
 #else
@@ -564,7 +560,7 @@ Unsigned floor_merge_multiple(Unsigned const n, Unsigned &base, Unsigned &pow)
 {
    Unsigned s = n;
    Unsigned p = 0;
-   while(s > AdaptiveSortInsertionSortThreshold){
+   while(s > MergeSortInsertionSortThreshold){
       s /= 2;
       ++p;
    }
@@ -579,11 +575,11 @@ Unsigned ceil_merge_multiple(Unsigned const n, Unsigned &base, Unsigned &pow)
    Unsigned fm = floor_merge_multiple(n, base, pow);
 
    if(fm != n){
-      if(base < AdaptiveSortInsertionSortThreshold){
+      if(base < MergeSortInsertionSortThreshold){
          ++base;
       }
       else{
-         base = AdaptiveSortInsertionSortThreshold/2 + 1;
+         base = MergeSortInsertionSortThreshold/2 + 1;
          ++pow;
       }
    }
@@ -608,82 +604,29 @@ struct less
    {  return l < r;  }
 };
 
-//////////////////////////////////
-//////////////////////////////////
-//////////////////////////////////
-//
-//    insertion_sort_step
-//
-//////////////////////////////////
-//////////////////////////////////
-//////////////////////////////////
-template<class RandIt, class Compare>
-typename iter_size<RandIt>::type
-   insertion_sort_step
-      ( RandIt const first
-      , typename iter_size<RandIt>::type const length
-      , typename iter_size<RandIt>::type const step
-      , Compare comp)
-{
-   typedef typename iter_size<RandIt>::type size_type;
-   size_type const s = min_value<size_type>(step, AdaptiveSortInsertionSortThreshold);
-   size_type m = 0;
-
-   while((length - m) > s){
-      insertion_sort(first+m, first+m+s, comp);
-      m = size_type(m + s);
-   }
-   insertion_sort(first+m, first+length, comp);
-   return s;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 //                            MERGE BLOCKS
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+//Define it to fall back to the top-down form instead of the bottom-up one.
+//Both are stable, need no additional memory and are O(N log^2 N), so this only
+//chooses which of the two the adaptive algorithms use.
 //#define ADAPTIVE_SORT_MERGE_SLOW_STABLE_SORT_IS_NLOGN
 
-#if defined ADAPTIVE_SORT_MERGE_SLOW_STABLE_SORT_IS_NLOGN
+// The stable sort the adaptive algorithms fall back to when they could not get
+// a buffer. It is only a name for one of the two bufferless stable sorts.
 template<class RandIt, class Compare>
 void slow_stable_sort
    ( RandIt const first, RandIt const last, Compare comp)
 {
-   boost::movelib::inplace_stable_sort(first, last, comp);
+   #if defined ADAPTIVE_SORT_MERGE_SLOW_STABLE_SORT_IS_NLOGN
+   boost::movelib::stable_sort_bufferless_ONlogN2_recursive(first, last, comp);
+   #else
+   stable_sort_bufferless_ONlogN2(first, last, comp);
+   #endif
 }
-
-#else //ADAPTIVE_SORT_MERGE_SLOW_STABLE_SORT_IS_NLOGN
-
-template<class RandIt, class Compare>
-void slow_stable_sort
-   ( RandIt const first, RandIt const last, Compare comp)
-{
-   typedef typename iter_size<RandIt>::type       size_type;
-
-   size_type L = size_type(last - first);
-
-   //Sort runs of AdaptiveSortInsertionSortThreshold elements, the step returns
-   //the length of those runs, which is the first merge level below
-   size_type h = insertion_sort_step(first, L, size_type(AdaptiveSortInsertionSortThreshold), comp);
-
-   for(bool do_merge = L > h; do_merge; h = size_type(h*2)){
-      do_merge = (L - h) > h;
-      size_type p0 = 0;
-      if(do_merge){
-         size_type const h_2 = size_type(2*h);
-         while((L-p0) > h_2){
-            merge_bufferless(first+p0, first+p0+h, first+p0+h_2, comp);
-            p0 = size_type(p0 + h_2);
-         }
-      }
-      if((L-p0) > h){
-         merge_bufferless(first+p0, first+p0+h, last, comp);
-      }
-   }
-}
-
-#endif   //ADAPTIVE_SORT_MERGE_SLOW_STABLE_SORT_IS_NLOGN
 
 //Returns new l_block and updates use_buf
 template<class Unsigned>
@@ -1832,7 +1775,7 @@ typename iter_size<RandIt>::type
 {
    typedef typename iter_size<RandIt>::type       size_type;
 
-   size_type const s = min_value<size_type>(step, AdaptiveSortInsertionSortThreshold);
+   size_type const s = min_value<size_type>(step, MergeSortInsertionSortThreshold);
    size_type m = 0;
 
    while(size_type(length - m) > s){

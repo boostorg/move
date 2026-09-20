@@ -664,14 +664,21 @@ Unsigned lblock_for_combine
    }
 }
 
+// Stable sort tries to take advantages of any uninitialized memory in "xbuf"
+// using different algorithms depending on the provided buffer size.
 template<class RandIt, class Compare, class XBuf>
 void stable_sort( RandIt first, RandIt last, Compare comp, XBuf & xbuf)
 {
    typedef typename iter_size<RandIt>::type size_type;
    size_type const len = size_type(last - first);
    size_type const half_len = size_type(len/2u + (len&1u));
-   if(std::size_t(xbuf.capacity() - xbuf.size()) >= half_len) {
+   size_type const cap = size_type(xbuf.capacity() - xbuf.size());
+   if(cap >= half_len) {
       merge_sort(first, last, comp, xbuf.data()+xbuf.size());
+   }
+   else if(cap){
+      //If merge sort is not possible use existing capacity for internal merges
+      stable_sort_adaptive_ONlogN2(first, last, comp, xbuf.data()+xbuf.size(), cap);
    }
    else{
       slow_stable_sort(first, last, comp);

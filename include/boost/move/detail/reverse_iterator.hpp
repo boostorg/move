@@ -57,9 +57,7 @@ class reverse_iterator
       : m_current(r)
    {}
 
-   inline reverse_iterator(const reverse_iterator& r)
-      : m_current(r.base())
-   {}
+   //Implicit copy operations: keeps the iterator trivially copyable (passed in registers)
 
    template<class OtherIt>
    inline
@@ -68,9 +66,6 @@ class reverse_iterator
                    )
       : m_current(r.base())
    {}
-
-   inline reverse_iterator & operator=( const reverse_iterator& r)
-   {  m_current = r.base();   return *this;  }
 
    template<class OtherIt>
    inline typename boost::move_detail::enable_if_convertible<OtherIt, It, reverse_iterator &>::type

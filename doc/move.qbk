@@ -807,6 +807,10 @@ Special thanks to:
 *  Fixed stability bugs both in adaptive_merge and adaptive_sort.
 *  Significantly improved performance of adaptive algorithms. Up to 4x faster in some corner cases.
 *  Fixed bugs in internal traits and compiler-intrinsic detection.
+*  `unique_ptr` is now marked with the `trivial_abi` attribute when the compiler supports it (Clang targeting
+   Itanium ABI), so it is passed and returned in registers. This changes the calling convention so it must
+   be consistent when passing across translation units. Define `BOOST_MOVE_DISABLE_TRIVIAL_ABI` to keep the
+   old calling convention.
 
 [endsect]
 

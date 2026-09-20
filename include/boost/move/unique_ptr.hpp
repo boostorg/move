@@ -114,10 +114,7 @@ struct unique_ptr_data
 
    P m_p;
    D d;
-
-   private:
-   unique_ptr_data& operator=(const unique_ptr_data&);
-   unique_ptr_data(const unique_ptr_data&);
+   //Implicit copy operations: a user-declared one would disable BOOST_MOVE_TRIVIAL_ABI on unique_ptr
 };
 
 template <class P, class D>
@@ -149,10 +146,7 @@ struct unique_ptr_data<P, D, false>
    inline del_cref deleter() const BOOST_NOEXCEPT   {  return static_cast<del_cref>(*this);  }
 
    P m_p;
-
-   private:
-   unique_ptr_data& operator=(const unique_ptr_data&);
-   unique_ptr_data(const unique_ptr_data&);
+   //Implicit copy operations: a user-declared one would disable BOOST_MOVE_TRIVIAL_ABI on unique_ptr
 };
 
 ////////////////////////////////////////////
@@ -349,8 +343,12 @@ namespace movelib {
 //!      d(ptr) is valid and has the effect of disposing of the pointer as appropriate for that deleter.
 //!   -  If the deleter's type D is not a reference type, D shall satisfy the requirements of Destructible.
 //!   -  If the type <tt>remove_reference&lt;D&gt;::type::pointer</tt> exists, it shall satisfy the requirements of NullablePointer.
+//!
+//! <b>ABI note</b>: when the compiler supports the <tt>trivial_abi</tt> attribute (Clang targeting Itanium ABI),
+//! unique_ptr is passed to and returned from functions in registers if the pointer type is a raw pointer and the
+//! deleter is trivially copyable.
 template <class T, class D = default_delete<T> >
-class unique_ptr
+class BOOST_MOVE_TRIVIAL_ABI unique_ptr
 {
    #if defined(BOOST_MOVE_DOXYGEN_INVOKED)
    public:

@@ -147,6 +147,17 @@ template<unsigned> struct static_assert_test {};
 #define BOOST_MOVE_INTRINSIC_CAST BOOST_MOVE_FORCEINLINE
 #endif
 
+//BOOST_MOVE_TRIVIAL_ABI expands to the "trivial_abi" attribute when the compiler supports
+//it (Clang). Define BOOST_MOVE_DISABLE_TRIVIAL_ABI to opt out
+#if !defined(BOOST_MOVE_DISABLE_TRIVIAL_ABI) && defined(__has_attribute)
+#  if __has_attribute(trivial_abi)
+#     define BOOST_MOVE_TRIVIAL_ABI __attribute__((trivial_abi))
+#  endif
+#endif
+#if !defined(BOOST_MOVE_TRIVIAL_ABI)
+#  define BOOST_MOVE_TRIVIAL_ABI
+#endif
+
 #if defined(__has_builtin)
 #if __has_builtin(__builtin_launder)
    #define BOOST_MOVE_HAS_BUILTIN_LAUNDER

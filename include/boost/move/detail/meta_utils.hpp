@@ -275,6 +275,28 @@ struct is_convertible
    static const bool value = __is_convertible_to(T, U);
 };
 
+#elif !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_DECLTYPE) && \
+      !defined(BOOST_NO_CXX11_SFINAE_EXPR)    && !defined(BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS)
+
+//C++11 implementation: converts an xvalue when T is not a reference, so that
+//move-only types are reported as convertible, and an ill-formed conversion is "false".
+template <class T>
+T&& is_convertible_declval() BOOST_NOEXCEPT;
+
+template <class T, class U>
+class is_convertible
+{
+   typedef char true_t;
+   class false_t { char dummy[2]; };
+   template<class V> static void sink(V);
+   template<class F, class V, class = decltype(sink<V>(is_convertible_declval<F>()))>
+   static true_t  dispatch(int);
+   template<class, class>
+   static false_t dispatch(...);
+   public:
+   static const bool value = sizeof(dispatch<T, U>(0)) == sizeof(true_t);
+};
+
 #else
 
 template <class T, class U>

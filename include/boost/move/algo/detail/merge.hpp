@@ -766,17 +766,6 @@ void merge_bufferless_ONlogN(RandIt first, RandIt middle, RandIt last, Compare c
       (first, middle, last, size_type(middle - first), size_type(last - middle), comp);
 }
 
-template<class RandIt, class Compare>
-void merge_bufferless(RandIt first, RandIt middle, RandIt last, Compare comp)
-{
-   #define BOOST_ADAPTIVE_MERGE_NLOGN_MERGE
-   #ifdef BOOST_ADAPTIVE_MERGE_NLOGN_MERGE
-   merge_bufferless_ONlogN(first, middle, last, comp);
-   #else
-   merge_bufferless_ON2(first, middle, last, comp);
-   #endif   //BOOST_ADAPTIVE_MERGE_NLOGN_MERGE
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 //                        MERGE WITH ONE RANGE PLACED
@@ -1049,7 +1038,7 @@ void merge_adaptive_ONlogN(BidirectionalIterator first,
    }
    else
    {
-      merge_bufferless(first, middle, last, comp);
+      merge_bufferless_ONlogN(first, middle, last, comp);
    }
 }
 

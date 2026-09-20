@@ -397,7 +397,7 @@ void merge_blocks_bufferless
       BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(first, first1, comp));
    }
 
-   merge_bufferless(is_range1_A ? first1 : last1, first_irr2, last_irr2, comp);
+   merge_bufferless_ONlogN(is_range1_A ? first1 : last1, first_irr2, last_irr2, comp);
    BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(first, last_irr2, comp));
 }
 
@@ -854,7 +854,7 @@ void stable_merge
       xbuf.clear();
    }
    else{
-      //merge_bufferless(first, middle, last, comp);
+      //merge_bufferless_ONlogN(first, middle, last, comp);
       merge_adaptive_ONlogN(first, middle, last, comp, xbuf.begin(), xbuf.capacity());
    }
    BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(boost::movelib::is_sorted(first, last, boost::movelib::unantistable(comp)));

@@ -382,8 +382,8 @@ void adaptive_merge_impl
       //(measured: at 3 distinct values a 0.25*sqrt(N) buffer costs 18% more comparisons for no
       //time gain), and the additional memory is not worth using.
       if(collected != to_collect && collected < 4){
-         merge_bufferless(first, first+collected, first+len1, comp);
-         merge_bufferless(first, first + len1, first + len1 + len2, comp);
+         merge_bufferless_ONlogN(first, first+collected, first+len1, comp);
+         merge_bufferless_ONlogN(first, first + len1, first + len1 + len2, comp);
          return;
       }
 

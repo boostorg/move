@@ -88,7 +88,7 @@ typename iter_size<RandIt>::type
 }
 
 // Recursive bottom-up stable sort with no additional memory, moves elements by rotating.
-// insertion sorts short runs and then merges adjacent runs with merge_bufferless,
+// insertion sorts short runs and then merges adjacent runs with merge_bufferless_ONlogN,
 // doubling the run length until it covers everything. O(N log^2 N) in the worst case.
 template<class RandIt, class Compare>
 void stable_sort_bufferless_ONlogN2
@@ -108,12 +108,12 @@ void stable_sort_bufferless_ONlogN2
       if(do_merge){
          size_type const h_2 = size_type(2*h);
          while((L-p0) > h_2){
-            merge_bufferless(first+p0, first+p0+h, first+p0+h_2, comp);
+            merge_bufferless_ONlogN(first+p0, first+p0+h, first+p0+h_2, comp);
             p0 = size_type(p0 + h_2);
          }
       }
       if((L-p0) > h){
-         merge_bufferless(first+p0, first+p0+h, last, comp);
+         merge_bufferless_ONlogN(first+p0, first+p0+h, last, comp);
       }
    }
 }

@@ -251,12 +251,19 @@ void stable_sort_adaptive_ONlogN2(BidirectionalIterator first,
 		                           BidirectionalIterator last,
 		                           Compare comp,
                                  RandRawIt uninitialized,
-                                 std::size_t uninitialized_len)
+                                 typename iter_size<BidirectionalIterator>::type uninitialized_len)
 {
    typedef typename iterator_traits<BidirectionalIterator>::value_type  value_type;
 
+   if(BOOST_UNLIKELY(first == last)){
+      return;     //Nothing to sort, and no element to fill the buffer from
+   }
+
+   //The buffer holds constructed elements, copied from the first one
    ::boost::movelib::adaptive_xbuf<value_type, RandRawIt> xbuf(uninitialized, uninitialized_len);
-   xbuf.initialize_until(uninitialized_len, *first);
+   if(uninitialized_len){
+      xbuf.initialize_until(uninitialized_len, *first);
+   }
    stable_sort_ONlogN_recursive(first, last, uninitialized, uninitialized_len, comp);
 }
 
@@ -270,4 +277,4 @@ void stable_sort_adaptive_ONlogN2(BidirectionalIterator first,
 
 #include <boost/move/detail/config_end.hpp>
 
-#endif //#ifndef BOOST_MOVE_DETAIL_MERGE_SORT_HPP
+#endif //#ifndef) BOOST_MOVE_DETAIL_MERGE_SORT_HPP

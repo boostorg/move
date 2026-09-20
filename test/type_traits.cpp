@@ -38,6 +38,15 @@ struct deleted_copy_and_assign_type
 #endif   //defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)
 
 //
+//       trivial_but_not_pod: user-provided default constructor, everything else trivial
+//
+struct trivial_but_not_pod
+{
+   trivial_but_not_pod() : i(0) {}
+   int i;
+};
+
+//
 //       boost_move_type
 //
 class boost_move_type
@@ -89,9 +98,41 @@ void test()
 
 }  //namespace trivially_memcopyable_test {
 
+namespace trivial_but_not_pod_test
+{
+
+void test()
+{
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_pod<trivial_but_not_pod>::value));
+   #if defined(BOOST_MOVE_HAS_TRIVIAL_COPY)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_copy_constructible<trivial_but_not_pod>::value));
+   #endif
+   #if defined(BOOST_MOVE_HAS_TRIVIAL_ASSIGN)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_copy_assignable<trivial_but_not_pod>::value));
+   #endif
+   #if defined(BOOST_MOVE_HAS_TRIVIAL_DESTRUCTOR)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_destructible<trivial_but_not_pod>::value));
+   #endif
+   #if defined(BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_move_constructible<trivial_but_not_pod>::value));
+   #endif
+   #if defined(BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_move_assignable<trivial_but_not_pod>::value));
+   #endif
+   #if defined(BOOST_MOVE_HAS_NOTHROW_COPY)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_nothrow_copy_constructible<trivial_but_not_pod>::value));
+   #endif
+   #if defined(BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_nothrow_move_constructible<trivial_but_not_pod>::value));
+   #endif
+}
+
+}  //namespace trivial_but_not_pod_test {
+
 int main()
 {
    trivially_memcopyable_test::test();
    is_pod_test::test();
+   trivial_but_not_pod_test::test();
    boost::report_errors();
 }

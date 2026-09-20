@@ -806,6 +806,7 @@ Special thanks to:
 
 *  Fixed stability bugs both in adaptive_merge and adaptive_sort.
 *  Significantly improved performance of adaptive algorithms. Up to 4x faster in some corner cases.
+*  Fixed bugs in internal traits and compiler-intrinsic detection.
 
 [endsect]
 

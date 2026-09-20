@@ -155,8 +155,8 @@
 
 //    BOOST_MOVE_HAS_TRIVIAL_ASSIGN
 #   if BOOST_MOVE_HAS_TRAIT(is_assignable) && BOOST_MOVE_HAS_TRAIT(is_trivially_assignable)
-#     define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) (__is_assignable(T, const T &) && __is_trivially_assignable(T, const T &))
-#   elif BOOST_MOVE_HAS_TRAIT(has_trivial_copy)
+#     define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) (__is_assignable(T&, const T &) && __is_trivially_assignable(T&, const T &))
+#   elif BOOST_MOVE_HAS_TRAIT(has_trivial_assign)
 #     define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) __has_trivial_assign(T)
 #   endif
 
@@ -183,7 +183,7 @@
 
 //    BOOST_MOVE_HAS_NOTHROW_ASSIGN
 #   if BOOST_MOVE_HAS_TRAIT(is_assignable) && BOOST_MOVE_HAS_TRAIT(is_nothrow_assignable)
-#     define BOOST_MOVE_HAS_NOTHROW_ASSIGN(T) (__is_assignable(T, const T &) && __is_nothrow_assignable(T, const T &))
+#     define BOOST_MOVE_HAS_NOTHROW_ASSIGN(T) (__is_assignable(T&, const T &) && __is_nothrow_assignable(T&, const T &))
 #   elif BOOST_MOVE_HAS_TRAIT(has_nothrow_assign)
 #     define BOOST_MOVE_HAS_NOTHROW_ASSIGN(T) (__has_nothrow_assign(T))
 #   endif
@@ -199,7 +199,7 @@
 
 //    BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN
 #   if BOOST_MOVE_HAS_TRAIT(is_assignable) && BOOST_MOVE_HAS_TRAIT(is_trivially_assignable)
-#     define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T) (__is_assignable(T, T&&) && __is_trivially_assignable(T, T&&))
+#     define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T) (__is_assignable(T&, T&&) && __is_trivially_assignable(T&, T&&))
 #   elif BOOST_MOVE_HAS_TRAIT(has_trivial_move_assign)
 #     define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T) __has_trivial_move_assign(T)
 #   endif
@@ -213,7 +213,7 @@
 
 //    BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN
 #   if BOOST_MOVE_HAS_TRAIT(is_assignable) && BOOST_MOVE_HAS_TRAIT(is_nothrow_assignable)
-#     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T) (__is_assignable(T, T&&) && __is_nothrow_assignable(T, T&&))
+#     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T) (__is_assignable(T&, T&&) && __is_nothrow_assignable(T&, T&&))
 #   elif BOOST_MOVE_HAS_TRAIT(has_nothrow_move_assign)
 #     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T) __has_nothrow_move_assign(T)
 #   endif
@@ -240,7 +240,11 @@
 
 #   if defined(BOOST_GCC) && (BOOST_GCC > 50000)
 #     define BOOST_MOVE_HAS_TRIVIAL_COPY(T) (__is_trivially_constructible(T, const T &))
-#     define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) (__is_trivially_assignable(T, const T &))
+#     define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) (__is_trivially_assignable(T&, const T &))
+#     if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+#       define BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T) (__is_trivially_constructible(T, T&&))
+#       define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T) (__is_trivially_assignable(T&, T&&))
+#     endif
 #   else
 #     define BOOST_MOVE_HAS_TRIVIAL_COPY(T) ((__has_trivial_copy(T) BOOST_MOVE_INTEL_TT_OPTS))
 #     define BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T) ((__has_trivial_assign(T) BOOST_MOVE_INTEL_TT_OPTS) )
@@ -452,7 +456,7 @@
 #ifdef BOOST_MOVE_HAS_NOTHROW_COPY
    #define BOOST_MOVE_IS_NOTHROW_COPY_CONSTRUCTIBLE(T)   BOOST_MOVE_HAS_NOTHROW_COPY(T) || ::boost::move_detail::is_pod<T>::value
 #else
-   #define BOOST_MOVE_IS_NOTHROW_COPY_CONSTRUCTIBLE(T)   BOOST_MOVE_IS_TRIVIALLY_COPY_ASSIGNABLE(T)
+   #define BOOST_MOVE_IS_NOTHROW_COPY_CONSTRUCTIBLE(T)   BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T)
 #endif
 
 #ifdef BOOST_MOVE_HAS_NOTHROW_ASSIGN
@@ -464,7 +468,7 @@
 #ifdef BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR
    #define BOOST_MOVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE(T)   BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T) || ::boost::move_detail::is_pod<T>::value
 #else
-   #define BOOST_MOVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE(T)   BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T)
+   #define BOOST_MOVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE(T)   BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T)
 #endif
 
 #ifdef BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN

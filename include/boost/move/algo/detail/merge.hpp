@@ -712,6 +712,8 @@ void merge_bufferless_ONlogN_recursive
          return;
       }
       else if(size_type(len1+len2) < MergeBufferlessONLogNRotationThreshold){
+         //Base case: below this size the binary searches and the rotation
+         //of the halving cost more than walking the shorter range
          merge_bufferless_ON2(first, middle, last, comp);
          return;
       }
@@ -986,6 +988,8 @@ template<typename BidirectionalIterator,
          adl_move_swap(*first, *middle);
    }
    else if (size_type(len1 + len2) < MergeBufferlessONLogNRotationThreshold) {
+      //Base case: below this size the binary searches and the rotation
+      //of the halving cost more than walking the shorter range
       merge_bufferless_ON2(first, middle, last, comp);
    }
    else {

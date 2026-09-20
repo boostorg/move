@@ -268,9 +268,9 @@ inline void adaptive_merge_rotation_merge
       xbuf.clear();
    }
    else if (l_min <= size_type(csqrt + csqrt/4u)) {
-      //merge_bufferless_ON2 places the elements of the short range one by one
-      //with a rotation. The squared term is paid for the short range, so
-      //while that range stays near sqrt(len) it's efficient
+      //Unbalaaced input: the short range is near sqrt(len)
+      //merge_bufferless_ON2 pays the squared term on the short range alone.
+      //A recursive rotation merge would move more elements
       merge_bufferless_ON2(first, middle, last, comp);
    }
    else {

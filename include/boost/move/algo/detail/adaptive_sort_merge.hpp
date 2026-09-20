@@ -753,6 +753,10 @@ void merge_small_run_rotations
          buffered_merge(keys, group_end, rest_keys, comp, rxbuf);
       }
       else{
+         //The group does not fit in the buffer. The input is unbalanced by
+         //construction, about sqrt(n_keys) vs whole data segment, so
+         //merge_bufferless_ON2 pays the squared term on the small group
+         //A recursive rotation merge would move more elements
          merge_bufferless_ON2(keys, group_end, rest_keys, comp);
       }
       keys = rest_keys;

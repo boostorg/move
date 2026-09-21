@@ -25,6 +25,7 @@ template< class RandomIt >
 void random_shuffle( RandomIt first, RandomIt last )
 {
    std::size_t n = std::size_t (last - first);
+   if(n)
    for (std::size_t i = n-1; i > 0; --i) {
       std::size_t j = static_cast<std::size_t >(ullrand() % (unsigned long long)(i+1));
       if(j != i) {

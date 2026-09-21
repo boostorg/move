@@ -468,6 +468,114 @@ void test_bufferless_recursive_long()
    }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+//                        merge_adaptive_ONsqrtN
+//
+//    Merges in place by rotating the elements of range 1 past the data of
+//    range 2 they interleave with, in groups of about sqrt(len1).
+//
+///////////////////////////////////////////////////////////////////////////////
+
+template<class Compare>
+void test_merge_adaptive_ONsqrtN_one(const merge_case &c, std::size_t cap, Compare comp, bool range1_first)
+{
+   std::size_t const n = c.len1 + c.len2;
+
+   guarded_array arr(n);
+   test_type *const p = arr.data();
+   fill_from(p, c.range1, c.len1);
+   fill_from(p+c.len1, c.range2, c.len2);
+
+   //The buffer holds constructed elements
+   guarded_array buf(cap);
+   fill_buffer(buf.data(), cap);
+
+   boost::movelib::merge_adaptive_ONsqrtN(p, p+c.len1, p+n, comp, buf.data(), cap);
+
+   kv exp[2u*MaxLen];
+   c.expected(exp, range1_first);
+   BOOST_TEST(std::equal(p, p+n, exp, same_element()));
+   BOOST_TEST(arr.guards_intact());
+   BOOST_TEST(buf.guards_intact());
+}
+
+void test_merge_adaptive_ONsqrtN()
+{
+   less_type comp;
+   antistable<less_type> acomp(comp);
+
+   for(std::size_t n = 2u; n <= MaxLen; ++n){
+      for(unsigned long mask = 0u; mask != (1ul << n); ++mask){
+         for(unsigned pat = 0u; pat != max_key_pattern; ++pat){
+            merge_case c;
+            c.build(n, mask, key_pattern(pat));
+            if(!c.len1 || !c.len2){
+               continue;   //Both ranges must be non-empty, that is the precondition
+            }
+            //A capacity of zero makes this a merge with no additional memory,
+            //and one of "n" is more than any group can need
+            for(std::size_t cap = 0u; cap <= n; ++cap){
+               test_merge_adaptive_ONsqrtN_one(c, cap, comp,  true);
+               test_merge_adaptive_ONsqrtN_one(c, cap, acomp, false);
+            }
+         }
+      }
+   }
+}
+
+//A range of MaxLen elements is merged in two or three groups, which is not
+//enough to reach the step where the elements of range 1 that are still
+//unmerged are fewer than a whole group, nor the one where a group fits in the
+//buffer but the whole of range 1 does not.
+void test_merge_adaptive_ONsqrtN_many_groups()
+{
+   less_type comp;
+   std::size_t const n = 300u;
+   std::size_t const len1_cases[] = { 1u, 2u, 7u, 31u, 100u, 149u };
+   std::size_t const cap_cases[]  = { 0u, 1u, 3u, 8u, 64u };
+
+   for(std::size_t i = 0u; i != sizeof(len1_cases)/sizeof(*len1_cases); ++i){
+      std::size_t const len1 = len1_cases[i];
+      std::size_t const len2 = n - len1;
+
+      for(std::size_t j = 0u; j != sizeof(cap_cases)/sizeof(*cap_cases); ++j){
+         std::size_t const cap = cap_cases[j];
+
+         guarded_array arr(n);
+         test_type *const p = arr.data();
+         //Spread range 1 over the whole of range 2, so that every group has to
+         //be rotated past a part of the data
+         for(std::size_t k = 0u; k != len1; ++k){
+            p[k].key = k*(len2/len1 + 1u);
+            p[k].val = k;
+         }
+         for(std::size_t k = 0u; k != len2; ++k){
+            p[len1+k].key = k;
+            p[len1+k].val = Range2ValBase + k;
+         }
+
+         guarded_array buf(cap);
+         fill_buffer(buf.data(), cap);
+
+         boost::movelib::unique_ptr<kv[]> exp(boost::movelib::make_unique<kv[]>(n));
+         {
+            boost::movelib::unique_ptr<kv[]> r1(boost::movelib::make_unique<kv[]>(n));
+            boost::movelib::unique_ptr<kv[]> r2(boost::movelib::make_unique<kv[]>(n));
+            std::transform(p, p+len1, r1.get(), to_kv());
+            std::transform(p+len1, p+n, r2.get(), to_kv());
+            std::merge(r1.get(), r1.get()+len1, r2.get(), r2.get()+len2, exp.get(), comp);
+         }
+
+         boost::movelib::merge_adaptive_ONsqrtN(p, p+len1, p+n, comp, buf.data(), cap);
+
+         BOOST_TEST(std::equal(p, p+n, exp.get(), same_element()));
+         BOOST_TEST(arr.guards_intact());
+         BOOST_TEST(buf.guards_intact());
+      }
+   }
+}
+
 int main()
 {
    test_op_merge_left();
@@ -477,6 +585,8 @@ int main()
    test_buffered_merge();
    test_bufferless_merges();
    test_bufferless_recursive_long();
+   test_merge_adaptive_ONsqrtN();
+   test_merge_adaptive_ONsqrtN_many_groups();
 
    return ::boost::report_errors();
 }

@@ -110,6 +110,8 @@ enum AlgoType
    QuartAdaptMerge,
    QuartAdaptMergeNoStk,
    StdInplaceMerge,
+   MergeBuflessON2,
+   MergeAdaptONsqrtN,
    StdLkSqrtHAdaptMerge,
    StdLkSqrtAdaptMerge,
    StdLkSqrt2AdaptMerge,
@@ -129,6 +131,8 @@ const char *AlgoNames [] = { "StdMerge             "
                            , "QuartAdaptMerge      "
                            , "QuartAdaptMergeNoStk "
                            , "StdInplaceMerge      "
+                           , "MergeBuflessON2      "
+                           , "MergeAdaptONsqrtN    "
                            , "StdLkSqrtHAdaptMerge "
                            , "StdLkSqrtAdaptMerge  "
                            , "StdLkSqrt2AdaptMerge "
@@ -185,6 +189,18 @@ void run_merge_algo(T *elements, std::size_t element_count, std::size_t split_po
       break;
       case StdInplaceMerge:
          boost::movelib::merge_bufferless_ONlogN(elements, elements+split_pos, elements+element_count, order_type_less());
+      break;
+      case MergeBuflessON2:
+         boost::movelib::merge_bufferless_ON2(elements, elements+split_pos, elements+element_count, order_type_less());
+      break;
+      case MergeAdaptONsqrtN:
+         //Both halves must be non-empty, and no external buffer is given, so
+         //this measures the group rotations with no additional memory at all
+         if(split_pos && split_pos != element_count){
+            boost::movelib::merge_adaptive_ONsqrtN
+               ( elements, elements+split_pos, elements+element_count, order_type_less()
+               , elements, 0u);
+         }
       break;
       case StdLkSqrtHAdaptMerge:
          std_like_adaptive_merge_buffered( elements, elements+split_pos, elements+element_count, order_type_less()
@@ -333,6 +349,16 @@ bool measure_all(std::size_t L, std::size_t NK, std::size_t split = 0)
    prev_clock = back_clock;
    res = res && measure_algo(elements, original_elements, L, split_pos,StdInplaceMerge, prev_clock);
    //
+   //These have quadratic complexity, so they are measured when the min half is short
+   std::size_t const l_min = split_pos < (L - split_pos) ? split_pos : (L - split_pos);
+   if(l_min && l_min <= 4u*boost::movelib::ceil_sqrt(L)){
+      prev_clock = back_clock;
+      res = res && measure_algo(elements, original_elements, L, split_pos, MergeBuflessON2, prev_clock);
+      //
+      prev_clock = back_clock;
+      res = res && measure_algo(elements, original_elements, L, split_pos, MergeAdaptONsqrtN, prev_clock);
+   }
+   //
    if (!res)
       std::abort();
    return res;
@@ -350,7 +376,7 @@ bool measure_all(std::size_t L, std::size_t NK, std::size_t split = 0)
 template<class T>
 bool measure_all_lopsided(std::size_t L, std::size_t NK)
 {
-   const std::size_t csqrt = boost::movelib::detail_adaptive::ceil_sqrt(L);
+   const std::size_t csqrt = boost::movelib::ceil_sqrt(L);
    bool res = true;
    //A quarter of the threshold, the threshold itself, and just past it, so that a
    //change of the rotation-based merge shows up on both sides of the switch.

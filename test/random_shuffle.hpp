@@ -4,7 +4,8 @@
 
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/move/detail/iterator_traits.hpp>
-#include <stdlib.h>
+#include <cstddef>
+#include <cstdlib>
 
 inline unsigned long long rand_15_bit()
 {

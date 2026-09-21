@@ -34,7 +34,7 @@
 
 #include "adaptive_test_util.hpp"
 
-using boost::movelib::detail_adaptive::ceil_sqrt;
+using boost::movelib::ceil_sqrt;
 using boost::movelib::detail_adaptive::adaptive_merge_n_keys_without_external_keys;
 
 //How the keys of the second range relate to the keys of the first one

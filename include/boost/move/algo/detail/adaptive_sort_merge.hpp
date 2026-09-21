@@ -128,18 +128,6 @@ BOOST_MOVE_STATIC_ASSERT((MergeSortInsertionSortThreshold&(MergeSortInsertionSor
    typedef std::size_t uintptr_t;
 #endif
 
-template<class T>
-const T &min_value(const T &a, const T &b)
-{
-   return a < b ? a : b;
-}
-
-template<class T>
-const T &max_value(const T &a, const T &b)
-{
-   return a > b ? a : b;
-}
-
 template<class ForwardIt, class Pred, class V>
 typename iter_size<ForwardIt>::type
    count_if_with(ForwardIt first, ForwardIt last, Pred pred, const V &v)
@@ -531,31 +519,6 @@ typename iter_size<RandIt>::type
 }
 
 template<class Unsigned>
-Unsigned floor_sqrt(Unsigned n)
-{
-   Unsigned rem = 0, root = 0;
-   const unsigned bits = sizeof(Unsigned)*CHAR_BIT;
-
-   for (unsigned i = bits / 2; i > 0; i--) {
-      root = Unsigned(root << 1u);
-      rem = Unsigned(Unsigned(rem << 2u) | Unsigned(n >> (bits - 2u)));
-      n = Unsigned(n << 2u);
-      if (root < rem) {
-         rem  = Unsigned(rem - Unsigned(root | 1u));
-         root = Unsigned(root + 2u);
-      }
-   }
-   return Unsigned(root >> 1u);
-}
-
-template<class Unsigned>
-Unsigned ceil_sqrt(Unsigned const n)
-{
-   Unsigned r = floor_sqrt(n);
-   return Unsigned(r + Unsigned((n%r) != 0));
-}
-
-template<class Unsigned>
 Unsigned floor_merge_multiple(Unsigned const n, Unsigned &base, Unsigned &pow)
 {
    Unsigned s = n;
@@ -696,78 +659,15 @@ void unstable_sort( RandIt first, RandIt last
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-//                    MERGE SMALL RUN INTO LARGE RUN (GROUP ROTATIONS)
+//                              STABLE MERGE
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// Stable in-place merge of a small sorted run [first, middle) (m elements)
-// into a large sorted run [middle, last) (n elements) using O(1) extra memory.
-//
-// Keys are processed in groups of g ~ sqrt(m) elements, from the smallest to
-// the largest. For each group:
-//   - the data elements smaller than the largest key of the group are located
-//     with a binary search (they must be interleaved with this group),
-//   - the remaining keys are rotated past those data elements (one move per
-//     element, so each data element is moved once here),
-//   - the group is merged into that data segment with single-key rotations
-//     (each data element of the segment is moved once more).
-//
-// Cost: ~2*n + m*sqrt(m) moves and O(m*log(n)) comparisons, instead of the
-// ~n*log(m)/2 moves of the recursive rotation merge (merge_bufferless_ONlogN).
-// Use only when m*sqrt(m) is small compared to n (see use_small_run_merge).
-//
-// If a (too small for a buffered merge) external buffer of constructed elements
-// [buffer, buffer + buffer_size) is available, it is used to speed up the
-// rotations and the group merges once the remaining keys fit in it.
-template<class RandIt, class Compare, class RandItBuf>
-void merge_small_run_rotations
-   ( RandIt const first, RandIt const middle, RandIt const last, Compare comp
-   , RandItBuf const buffer, typename iter_size<RandIt>::type const buffer_size)
-{
-   typedef typename iter_size<RandIt>::type size_type;
-
-   //Both halves are never empty: the only caller (stable_merge) returns before
-   //if one of them is empty and the searches that trim the range leave at least
-   //one element in each half.
-   BOOST_MOVE_ADAPTIVE_SORT_INVARIANT(first != middle && middle != last);
-
-   size_type n_keys_left = size_type(middle - first);
-   size_type const l_group = ceil_sqrt(n_keys_left);
-
-   RandIt keys = first;    //remaining keys: [keys, keys + n_keys_left)
-   while(n_keys_left){
-      size_type const l_cur = min_value<size_type>(l_group, n_keys_left);
-      size_type const l_rest = size_type(n_keys_left - l_cur);
-      RandIt const group_end = keys + l_cur;
-      RandIt const keys_end  = keys + n_keys_left;
-      RandIt group_last = group_end;
-      --group_last;
-      //Data elements that must be placed before the largest key of the group
-      RandIt const data_end  = boost::movelib::lower_bound(keys_end, last, *group_last, comp);
-      //Move the remaining keys after those data elements: [group][data][rest keys]
-      RandIt const rest_keys = rotate_adaptive
-         (group_end, keys_end, data_end, l_rest, size_type(data_end - keys_end), buffer, buffer_size);
-      //Merge the group with its data segment
-      if(l_cur <= buffer_size){
-         range_xbuf<RandItBuf, size_type, move_op> rxbuf(buffer, buffer + buffer_size);
-         buffered_merge(keys, group_end, rest_keys, comp, rxbuf);
-      }
-      else{
-         //The group does not fit in the buffer. The input is unbalanced by
-         //construction, about sqrt(n_keys) vs whole data segment, so
-         //merge_bufferless_ON2 pays the squared term on the small group
-         //A recursive rotation merge would move more elements
-         merge_bufferless_ON2(keys, group_end, rest_keys, comp);
-      }
-      keys = rest_keys;
-      n_keys_left = l_rest;
-   }
-}
-
 // True if merging two consecutive runs of "len1" and "len2" elements with
-// merge_small_run_rotations is cheaper than the recursive rotation merge.
+// merge_adaptive_ONsqrtN is cheaper than the recursive rotation merge
+// (merge_bufferless_ONlogN). Neither length may be zero.
 //
-// merge_small_run_rotations moves ~2*l_large + 2*l_small^1.5 elements, while
+// merge_adaptive_ONsqrtN moves ~2*l_large + 2*l_small^1.5 elements, while
 // the recursive rotation merge moves ~l_large*log2(l_small)/2. The group
 // rotations win while l_small^1.5 stays small compared to l_large, that is
 //
@@ -789,7 +689,7 @@ void merge_small_run_rotations
 // l_small is the smaller length, so that quotient always truncates to zero and
 // the test would degenerate into "always true".
 template<class SizeType>
-inline bool use_small_run_merge(SizeType const len1, SizeType const len2)
+inline bool use_merge_ONsqrtN(SizeType const len1, SizeType const len2)
 {
    //Neither length is zero: the only caller (stable_merge) returns before if one
    //of the halves is empty, so the divisions below are always safe.
@@ -834,7 +734,7 @@ void stable_merge
       buffered_merge(first, middle, last, comp, xbuf);
       xbuf.clear();
    }
-   else if(use_small_run_merge(len1, len2)){
+   else if(use_merge_ONsqrtN(len1, len2)){
       //The external buffer (if any) is too small for a buffered merge, but it
       //can speed up rotations. Construct its elements so that they can be assigned.
       size_type const buffer_size = size_type(xbuf.capacity());
@@ -842,12 +742,12 @@ void stable_merge
          xbuf.initialize_until(buffer_size, *first);
       }
       if(len1 <= len2){
-         merge_small_run_rotations(first, middle, last, comp, xbuf.begin(), buffer_size);
+         merge_adaptive_ONsqrtN(first, middle, last, comp, xbuf.begin(), buffer_size);
       }
       else{
          //Mirror the problem: the small run is at the end. Merging the reversed
          //sequences with the inverse comparison yields the reversed stable merge.
-         merge_small_run_rotations
+         merge_adaptive_ONsqrtN
             ( (make_reverse_iterator)(last), (make_reverse_iterator)(middle)
             , (make_reverse_iterator)(first), inverse<Compare>(comp), xbuf.begin(), buffer_size);
       }

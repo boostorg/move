@@ -268,26 +268,26 @@ inline void adaptive_merge_rotation_merge
       xbuf.clear();
    }
    else if (l_min <= size_type(csqrt + csqrt/4u)) {
-      //Unbalaaced input: the short range is near sqrt(len)
+      //Unbalanced input: the short range is near sqrt(len)
       //merge_bufferless_ON2 pays the squared term on the short range alone.
       //A recursive rotation merge would move more elements
       merge_bufferless_ON2(first, middle, last, comp);
    }
    else {
       //A longer short range makes the squared term too expensive.
-      //merge_small_run_rotations trades it for more rotations by merging the
+      //merge_adaptive_ONsqrtN trades it for more rotations by merging the
       //short range in groups of sqrt(l_min), and it uses the additional memory,
       if (cap) {
          xbuf.clear();
          xbuf.initialize_until(cap, *first);
       }
       if (len1 <= len2) {
-         merge_small_run_rotations(first, middle, last, comp, xbuf.begin(), cap);
+         merge_adaptive_ONsqrtN(first, middle, last, comp, xbuf.begin(), cap);
       }
       else {
          //Mirror the problem: the short run is at the end. Merging the reversed
          //sequences with the inverse comparison yields the reversed stable merge.
-         merge_small_run_rotations
+         merge_adaptive_ONsqrtN
             ( (make_reverse_iterator)(last), (make_reverse_iterator)(middle)
             , (make_reverse_iterator)(first), inverse<Compare>(comp), xbuf.begin(), cap);
       }

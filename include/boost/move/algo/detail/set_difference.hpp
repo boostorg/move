@@ -27,7 +27,7 @@ template<class InputIt, class OutputIt>
 OutputIt copy(InputIt first, InputIt last, OutputIt result)
 {
    while (first != last) {
-      *result++ = *first;
+      *result = *first;
       ++result;
       ++first;
    }

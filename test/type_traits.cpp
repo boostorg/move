@@ -274,6 +274,63 @@ void test()
 
 }  //namespace std_pair_test
 
+namespace is_nothrow_swappable_test
+{
+
+//If the macro is defined, there are enough intrinsics and languages features
+#if defined(BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE)
+
+//Empty class with a move constructor that can throw: std::swap can throw
+struct empty_throwing_move
+{
+   empty_throwing_move() {}
+   empty_throwing_move(const empty_throwing_move&) {}
+   empty_throwing_move(empty_throwing_move&&) noexcept(false) {}
+   empty_throwing_move& operator=(const empty_throwing_move&) { return *this; }
+   empty_throwing_move& operator=(empty_throwing_move&&) noexcept(false) { return *this; }
+};
+
+//Moves are noexcept, but the swap found by argument dependent lookup can throw
+struct throwing_adl_swap
+{
+   int i;
+   friend void swap(throwing_adl_swap&, throwing_adl_swap&) noexcept(false) {}
+};
+
+//Moves can throw, but the swap found by argument dependent lookup is noexcept
+struct nothrow_adl_swap
+{
+   nothrow_adl_swap() {}
+   nothrow_adl_swap(const nothrow_adl_swap&) {}
+   nothrow_adl_swap(nothrow_adl_swap&&) noexcept(false) {}
+   nothrow_adl_swap& operator=(const nothrow_adl_swap&) { return *this; }
+   nothrow_adl_swap& operator=(nothrow_adl_swap&&) noexcept(false) { return *this; }
+   friend void swap(nothrow_adl_swap&, nothrow_adl_swap&) noexcept {}
+};
+
+#endif   //#if defined(BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE)
+
+void test()
+{
+   using boost::move_detail::is_nothrow_swappable;
+   BOOST_MOVE_STATIC_ASSERT((is_nothrow_swappable<int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_nothrow_swappable<int*>::value));
+   #if defined(BOOST_MOVE_IS_POD)
+      BOOST_MOVE_STATIC_ASSERT((is_nothrow_swappable<pod_struct>::value));
+   #endif
+   #if defined(BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE)
+      BOOST_MOVE_STATIC_ASSERT(!(is_nothrow_swappable<empty_throwing_move>::value));
+      BOOST_MOVE_STATIC_ASSERT(!(is_nothrow_swappable<throwing_adl_swap>::value));
+      BOOST_MOVE_STATIC_ASSERT((is_nothrow_swappable<nothrow_adl_swap>::value));
+      #if defined(BOOST_MOVE_TT_CXX11_IS_COPY_ASSIGNABLE) && !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
+         //Not swappable: the copy assignment is deleted and there is no move assignment
+         BOOST_MOVE_STATIC_ASSERT(!(is_nothrow_swappable<pod_deleted_copy_assign>::value));
+      #endif   //defined(BOOST_MOVE_TT_CXX11_IS_COPY_ASSIGNABLE) && !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
+   #endif   //BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE
+}
+
+}  //namespace is_nothrow_swappable_test
+
 int main()
 {
    trivially_memcopyable_test::test();
@@ -281,5 +338,6 @@ int main()
    trivial_but_not_pod_test::test();
    pod_with_deleted_member_test::test();
    std_pair_test::test();
+   is_nothrow_swappable_test::test();
    boost::report_errors();
 }

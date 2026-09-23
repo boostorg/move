@@ -1188,11 +1188,74 @@ struct is_nothrow_move_assignable
 //////////////////////////////////////
 //    is_nothrow_swappable
 //////////////////////////////////////
+#if !defined(BOOST_NO_CXX11_NOEXCEPT) && !defined(BOOST_NO_CXX11_DECLTYPE) &&\
+    !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
+#define BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE
+#endif
+
+}  //namespace move_detail {
+}  //namespace boost {
+
+#if defined(BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE)
+
+//Checks "swap(x, y)" as boost::adl_move_swap calls it ("using std::swap; swap(x, y);")
+//If argument dependent lookup finds "swap", its noexcept specification is used.
+//Otherwise std::swap is used (noexcept if T is nothrow move constructible and assignable).
+namespace boost_move_tt_swap {
+
+//Hides any swap declared in an enclosing namespace, so only
+//argument dependent lookup finds candidates for swap(x, y)
+void swap();
+
+template<class T>
+T& lvalue() BOOST_NOEXCEPT;
+
+template<class T>
+struct is_adl_swappable
+{
+   template<class U> static decltype((void)swap(lvalue<U>(), lvalue<U>()), char()) test(int);
+   template<class U> static char (&test(...))[2];
+
+   static const bool value = sizeof(test<T>(0)) == 1u;
+};
+
+template<class T, bool = is_adl_swappable<T>::value>
+struct is_nothrow_adl_swappable
+{
+   static const bool value = noexcept(swap(lvalue<T>(), lvalue<T>()));
+};
+
+template<class T>
+struct is_nothrow_adl_swappable<T, false>
+{
+   static const bool value = false;
+};
+
+}  //namespace boost_move_tt_swap {
+
+#endif   //#if defined(BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE)
+
+namespace boost {
+namespace move_detail {
+
 template<class T>
 struct is_nothrow_swappable
 {
-   static const bool value = is_empty<T>::value || is_pod<T>::value;
+   #if defined(BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE)
+   static const bool value = ::boost_move_tt_swap::is_adl_swappable<T>::value
+                           ? ::boost_move_tt_swap::is_nothrow_adl_swappable<T>::value
+                           : (is_nothrow_move_constructible<T>::value && is_nothrow_move_assignable<T>::value);
+   #else
+   //A swap function found by argument dependent lookup can not be detected
+   static const bool value = is_nothrow_move_constructible<T>::value && is_nothrow_move_assignable<T>::value;
+   #endif
 };
+
+//Arrays are swapped element by element
+template<class T, std::size_t N>
+struct is_nothrow_swappable<T[N]>
+   : is_nothrow_swappable<T>
+{};
 
 //////////////////////////////////////
 //       alignment_of

@@ -139,6 +139,7 @@ class adaptive_xbuf
                --m_size;
                m_ptr[m_size].~T();
             }
+            BOOST_MOVE_RETHROW
          }
          BOOST_MOVE_CATCH_END
       }

@@ -407,72 +407,87 @@
    #define BOOST_MOVE_IS_EMPTY_IMPL(T)    ::boost::move_detail::is_empty_nonintrinsic<T>::value
 #endif
 
+//Since C++11 a POD type can have deleted special members, so the is_pod shortcut
+//is valid only if the operation exists: each trait checks this first.
+#define BOOST_MOVE_TT_POD_OR(T, INTRINSIC)   (::boost::move_detail::is_pod<T>::value || (INTRINSIC))
+
 #ifdef BOOST_MOVE_HAS_TRIVIAL_COPY
-   #define BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T)   ::boost::move_detail::is_pod<T>::value ||\
-                                                          (::boost::move_detail::is_copy_constructible<T>::value &&\
-                                                           BOOST_MOVE_HAS_TRIVIAL_COPY(T))
+   #define BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T)   (::boost::move_detail::is_copy_constructible<T>::value &&\
+                                                            BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_COPY(T)))
 #else
-   #define BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T)   ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T)   (::boost::move_detail::is_copy_constructible<T>::value &&\
+                                                            ::boost::move_detail::is_pod<T>::value)
 #endif
 
 #ifdef BOOST_MOVE_HAS_TRIVIAL_CONSTRUCTOR
-   #define BOOST_MOVE_IS_TRIVIALLY_DEFAULT_CONSTRUCTIBLE(T)  BOOST_MOVE_HAS_TRIVIAL_CONSTRUCTOR(T) || ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_TRIVIALLY_DEFAULT_CONSTRUCTIBLE(T)  (::boost::move_detail::is_default_constructible<T>::value &&\
+                                                              BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_CONSTRUCTOR(T)))
 #else
-   #define BOOST_MOVE_IS_TRIVIALLY_DEFAULT_CONSTRUCTIBLE(T)  ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_TRIVIALLY_DEFAULT_CONSTRUCTIBLE(T)  (::boost::move_detail::is_default_constructible<T>::value &&\
+                                                              ::boost::move_detail::is_pod<T>::value)
 #endif
 
 #ifdef BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR
-   #define BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T)   BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T) || ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T)   (::boost::move_detail::is_move_constructible<T>::value &&\
+                                                            BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T)))
 #else
-   #define BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T)   ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T)   (::boost::move_detail::is_move_constructible<T>::value &&\
+                                                            ::boost::move_detail::is_pod<T>::value)
 #endif
 
 #ifdef BOOST_MOVE_HAS_TRIVIAL_ASSIGN
-   #define BOOST_MOVE_IS_TRIVIALLY_COPY_ASSIGNABLE(T) ::boost::move_detail::is_pod<T>::value ||\
-                                                      ( ::boost::move_detail::is_copy_assignable<T>::value &&\
-                                                         BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T))
+   #define BOOST_MOVE_IS_TRIVIALLY_COPY_ASSIGNABLE(T) (::boost::move_detail::is_copy_assignable<T>::value &&\
+                                                       BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_ASSIGN(T)))
 #else
-   #define BOOST_MOVE_IS_TRIVIALLY_COPY_ASSIGNABLE(T) ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_TRIVIALLY_COPY_ASSIGNABLE(T) (::boost::move_detail::is_copy_assignable<T>::value &&\
+                                                       ::boost::move_detail::is_pod<T>::value)
 #endif
 
 #ifdef BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN
-   #define BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T)  BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T) || ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T)  (::boost::move_detail::is_move_assignable<T>::value &&\
+                                                        BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T)))
 #else
-   #define BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T)  ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T)  (::boost::move_detail::is_move_assignable<T>::value &&\
+                                                        ::boost::move_detail::is_pod<T>::value)
 #endif
 
 #ifdef BOOST_MOVE_HAS_TRIVIAL_DESTRUCTOR
-   #define BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T)   BOOST_MOVE_HAS_TRIVIAL_DESTRUCTOR(T) || ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T)   BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_DESTRUCTOR(T))
 #else
    #define BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T)   ::boost::move_detail::is_pod<T>::value
 #endif
 
 #ifdef BOOST_MOVE_HAS_NOTHROW_CONSTRUCTOR
-   #define BOOST_MOVE_IS_NOTHROW_DEFAULT_CONSTRUCTIBLE(T)  BOOST_MOVE_HAS_NOTHROW_CONSTRUCTOR(T) || ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_NOTHROW_DEFAULT_CONSTRUCTIBLE(T)  (::boost::move_detail::is_default_constructible<T>::value &&\
+                                                            BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_NOTHROW_CONSTRUCTOR(T)))
 #else
-   #define BOOST_MOVE_IS_NOTHROW_DEFAULT_CONSTRUCTIBLE(T)  ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_NOTHROW_DEFAULT_CONSTRUCTIBLE(T)  BOOST_MOVE_IS_TRIVIALLY_DEFAULT_CONSTRUCTIBLE(T)
 #endif
 
 #ifdef BOOST_MOVE_HAS_NOTHROW_COPY
-   #define BOOST_MOVE_IS_NOTHROW_COPY_CONSTRUCTIBLE(T)   BOOST_MOVE_HAS_NOTHROW_COPY(T) || ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_NOTHROW_COPY_CONSTRUCTIBLE(T)   (::boost::move_detail::is_copy_constructible<T>::value &&\
+                                                          BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_NOTHROW_COPY(T)))
 #else
    #define BOOST_MOVE_IS_NOTHROW_COPY_CONSTRUCTIBLE(T)   BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T)
 #endif
 
 #ifdef BOOST_MOVE_HAS_NOTHROW_ASSIGN
-   #define BOOST_MOVE_IS_NOTHROW_COPY_ASSIGNABLE(T) BOOST_MOVE_HAS_NOTHROW_ASSIGN(T) || ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_NOTHROW_COPY_ASSIGNABLE(T) (::boost::move_detail::is_copy_assignable<T>::value &&\
+                                                     BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_NOTHROW_ASSIGN(T)))
 #else
    #define BOOST_MOVE_IS_NOTHROW_COPY_ASSIGNABLE(T) BOOST_MOVE_IS_TRIVIALLY_COPY_ASSIGNABLE(T)
 #endif
 
 #ifdef BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR
-   #define BOOST_MOVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE(T)   BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T) || ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE(T)   (::boost::move_detail::is_move_constructible<T>::value &&\
+                                                          BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T)))
 #else
    #define BOOST_MOVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE(T)   BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T)
 #endif
 
 #ifdef BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN
-   #define BOOST_MOVE_IS_NOTHROW_MOVE_ASSIGNABLE(T) BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T) || ::boost::move_detail::is_pod<T>::value
+   #define BOOST_MOVE_IS_NOTHROW_MOVE_ASSIGNABLE(T) (::boost::move_detail::is_move_assignable<T>::value &&\
+                                                     BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T)))
 #else
    #define BOOST_MOVE_IS_NOTHROW_MOVE_ASSIGNABLE(T) BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T)
 #endif
@@ -1026,6 +1041,66 @@ struct is_copy_assignable
    static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
 #else
    static const bool value = !has_boost_move_no_copy_constructor_or_assign_type<T>::value;
+#endif
+};
+
+//////////////////////////////////////
+//       is_default_constructible
+//       is_move_constructible
+//       is_move_assignable
+//////////////////////////////////////
+//Minimal existence checks, used to guard the is_pod shortcut of the trivial and nothrow traits
+#if defined(BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE) && !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+#define BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE
+#endif
+
+template <class T>
+struct is_default_constructible
+{
+#if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE)
+   typedef char yes_type;
+   struct no_type { char dummy[2]; };
+
+   template <class U>   static decltype((void)::new U(), yes_type()) test(int);
+   template <class>     static no_type test(...);
+
+   static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
+#else
+   static const bool value = true;
+#endif
+};
+
+template <class T>
+struct is_move_constructible
+{
+#if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE)
+   typedef char yes_type;
+   struct no_type { char dummy[2]; };
+
+   template <class U>   static U&& source();
+   template <class U>   static decltype((void)U(source<U>()), yes_type()) test(int);
+   template <class>     static no_type test(...);
+
+   static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
+#else
+   static const bool value = is_copy_constructible<T>::value;
+#endif
+};
+
+template <class T>
+struct is_move_assignable
+{
+#if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE)
+   typedef char yes_type;
+   struct no_type { char dummy[2]; };
+
+   template <class U>   static U&& source();
+   template <class U>   static decltype((void)(source<U&>() = source<U>()), yes_type()) test(int);
+   template <class>     static no_type test(...);
+
+   static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
+#else
+   static const bool value = is_copy_assignable<T>::value;
 #endif
 };
 

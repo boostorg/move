@@ -231,11 +231,20 @@ void test()
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_move_assignable<pod_deleted_move_assign>::value));
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_move_assignable<pod_deleted_move_assign>::value));
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_nothrow_move_assignable<pod_deleted_move_assign>::value));
-   //The other members of these types are still trivial
+   //The other members of these types are still trivial. Some compilers (e.g. GCC 4.8)
+   //do not report these types as POD, so check only if the intrinsic is available.
+   #if defined(BOOST_MOVE_HAS_TRIVIAL_COPY)
    BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_copy_constructible<pod_deleted_move_ctor>::value));
+   #endif
+   #if defined(BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN)
    BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_move_assignable<pod_deleted_move_ctor>::value));
+   #endif
+   #if defined(BOOST_MOVE_HAS_TRIVIAL_ASSIGN)
    BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_copy_assignable<pod_deleted_move_assign>::value));
+   #endif
+   #if defined(BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR)
    BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_move_constructible<pod_deleted_move_assign>::value));
+   #endif
    #endif
    #endif   //!defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) && !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
 }

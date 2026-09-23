@@ -948,8 +948,8 @@ void uninitialized_merge_with_right_placed
       }
       ++dest_first;
    }
-   d.release();
    merge_with_right_placed(first, last, original_r_first, r_first, r_last, comp);
+   d.release();
 }
 
 /// This is a helper function for the merge routines.

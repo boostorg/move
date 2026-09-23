@@ -1444,39 +1444,60 @@ BOOST_MOVE_STD_NS_END
 namespace boost {
 namespace move_detail {
 
+//////////////////////////////////////
+//    pair_member_trait
+//////////////////////////////////////
+// Workaround because some compiler intrinsics are ill-formed for reference types in C++03.
+template<template<class> class Trait, class T, bool ValueIfReference, bool = is_reference<T>::value>
+struct pair_member_trait
+{
+   BOOST_STATIC_CONSTEXPR bool value = Trait<T>::value;
+};
+
+template<template<class> class Trait, class T, bool ValueIfReference>
+struct pair_member_trait<Trait, T, ValueIfReference, true>
+{
+   BOOST_STATIC_CONSTEXPR bool value = ValueIfReference;
+};
+
+//The assignment of a pair assigns through a reference member and is deleted
+//if a member is const, so memcpy gives the same result only if no member is
+//a reference or const.
 template<class A, class B>
 struct is_trivially_copy_assignable<std::pair<A,B> >
 {
-   BOOST_STATIC_CONSTEXPR bool value = boost::move_detail::is_trivially_copy_assignable<A>::value &&
-                                       boost::move_detail::is_trivially_copy_assignable<B>::value;
+   BOOST_STATIC_CONSTEXPR bool value = !is_const<A>::value && !is_const<B>::value &&
+                                       pair_member_trait< ::boost::move_detail::is_trivially_copy_assignable, A, false>::value &&
+                                       pair_member_trait< ::boost::move_detail::is_trivially_copy_assignable, B, false>::value;
 };
 
 template<class A, class B>
 struct is_trivially_move_assignable<std::pair<A,B> >
 {
-   BOOST_STATIC_CONSTEXPR bool value = boost::move_detail::is_trivially_move_assignable<A>::value &&
-                                       boost::move_detail::is_trivially_move_assignable<B>::value;
+   BOOST_STATIC_CONSTEXPR bool value = !is_const<A>::value && !is_const<B>::value &&
+                                       pair_member_trait< ::boost::move_detail::is_trivially_move_assignable, A, false>::value &&
+                                       pair_member_trait< ::boost::move_detail::is_trivially_move_assignable, B, false>::value;
 };
 
 template<class A, class B>
 struct is_trivially_copy_constructible<std::pair<A,B> >
 {
-   BOOST_STATIC_CONSTEXPR bool value = boost::move_detail::is_trivially_copy_constructible<A>::value &&
-                                       boost::move_detail::is_trivially_copy_constructible<B>::value;
+   BOOST_STATIC_CONSTEXPR bool value = pair_member_trait< ::boost::move_detail::is_trivially_copy_constructible, A, true>::value &&
+                                       pair_member_trait< ::boost::move_detail::is_trivially_copy_constructible, B, true>::value;
 };
 
 template<class A, class B>
 struct is_trivially_move_constructible<std::pair<A,B> >
 {
-   BOOST_STATIC_CONSTEXPR bool value = boost::move_detail::is_trivially_move_constructible<A>::value &&
-                                       boost::move_detail::is_trivially_move_constructible<B>::value;
+   BOOST_STATIC_CONSTEXPR bool value = pair_member_trait< ::boost::move_detail::is_trivially_move_constructible, A, true>::value &&
+                                       pair_member_trait< ::boost::move_detail::is_trivially_move_constructible, B, true>::value;
 };
 
 template<class A, class B>
 struct is_trivially_destructible<std::pair<A,B> >
 {
-   BOOST_STATIC_CONSTEXPR bool value = boost::move_detail::is_trivially_destructible<A>::value &&
-                                       boost::move_detail::is_trivially_destructible<B>::value;
+   BOOST_STATIC_CONSTEXPR bool value = pair_member_trait< ::boost::move_detail::is_trivially_destructible, A, true>::value &&
+                                       pair_member_trait< ::boost::move_detail::is_trivially_destructible, B, true>::value;
 };
 
 template <class T1, class T2>

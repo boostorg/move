@@ -12,6 +12,7 @@
 #include <boost/move/detail/type_traits.hpp>
 #include <boost/move/core.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <utility>
 
 //
 //       pod_struct
@@ -241,11 +242,35 @@ void test()
 
 }  //namespace pod_with_deleted_member_test
 
+namespace std_pair_test
+{
+
+void test()
+{
+   using boost::move_detail::is_trivially_copy_assignable;
+   using boost::move_detail::is_trivially_move_assignable;
+   BOOST_MOVE_STATIC_ASSERT((is_trivially_copy_assignable<std::pair<int, int> >::value));
+   BOOST_MOVE_STATIC_ASSERT((is_trivially_move_assignable<std::pair<int, int> >::value));
+   //Assignment of a pair assigns through reference members
+   BOOST_MOVE_STATIC_ASSERT(!(is_trivially_copy_assignable<std::pair<int&, int> >::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_trivially_move_assignable<std::pair<int&, int> >::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_trivially_copy_assignable<std::pair<int, int&> >::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_trivially_move_assignable<std::pair<int, int&> >::value));
+   //Assignment of a pair with a const member is deleted
+   BOOST_MOVE_STATIC_ASSERT(!(is_trivially_copy_assignable<std::pair<const int, int> >::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_trivially_move_assignable<std::pair<const int, int> >::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_trivially_copy_assignable<std::pair<int, const int> >::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_trivially_move_assignable<std::pair<int, const int> >::value));
+}
+
+}  //namespace std_pair_test
+
 int main()
 {
    trivially_memcopyable_test::test();
    is_pod_test::test();
    trivial_but_not_pod_test::test();
    pod_with_deleted_member_test::test();
+   std_pair_test::test();
    boost::report_errors();
 }

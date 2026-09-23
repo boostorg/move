@@ -331,6 +331,57 @@ void test()
 
 }  //namespace is_nothrow_swappable_test
 
+namespace is_unsigned_test
+{
+
+enum unsigned_enum { unsigned_enum_value = 1u };
+enum signed_enum   { signed_enum_value = 1    };
+
+void test()
+{
+   using boost::move_detail::is_unsigned;
+   //Unsigned integer types and bool
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<bool>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<unsigned char>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<unsigned short>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<unsigned int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<unsigned long>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<const unsigned int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<volatile unsigned int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<std::size_t>::value));
+   #ifdef BOOST_HAS_LONG_LONG
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned< ::boost::ulong_long_type>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned< ::boost::long_long_type>::value));
+   #endif
+   #ifndef BOOST_NO_CXX11_CHAR16_T
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<char16_t>::value));
+   #endif
+   #ifndef BOOST_NO_CXX11_CHAR32_T
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<char32_t>::value));
+   #endif
+   //char and wchar_t depend on the platform
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<char>::value == (char(0) < char(-1))));
+   #ifndef BOOST_NO_INTRINSIC_WCHAR_T
+   BOOST_MOVE_STATIC_ASSERT((is_unsigned<wchar_t>::value == (wchar_t(0) < wchar_t(-1))));
+   #endif
+   //Everything else is not unsigned
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<signed char>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<short>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<long>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<float>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<double>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<long double>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<void>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<unsigned int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<unsigned int&>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<unsigned_enum>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<signed_enum>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_unsigned<trivial_but_not_pod>::value));
+}
+
+}  //namespace is_unsigned_test
+
 int main()
 {
    trivially_memcopyable_test::test();
@@ -339,5 +390,6 @@ int main()
    pod_with_deleted_member_test::test();
    std_pair_test::test();
    is_nothrow_swappable_test::test();
+   is_unsigned_test::test();
    boost::report_errors();
 }

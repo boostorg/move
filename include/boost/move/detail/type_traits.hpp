@@ -603,17 +603,33 @@ struct remove_cvref
 //////////////////////////
 //    is_unsigned
 //////////////////////////
-template<class T> struct is_unsigned_cv               { static const bool value = true; };
-template <>       struct is_unsigned_cv<signed char>  { static const bool value = false; };
-template <>       struct is_unsigned_cv<signed short> { static const bool value = false; };
-template <>       struct is_unsigned_cv<signed int>   { static const bool value = false; };
-template <>       struct is_unsigned_cv<signed long>  { static const bool value = false; };
+//Only unsigned integer types and bool are unsigned. char and wchar_t
+//are unsigned or signed depending on the platform.
+template<class T> struct is_unsigned_cv                  { static const bool value = false; };
+template <>       struct is_unsigned_cv<bool>            { static const bool value = true; };
+template <>       struct is_unsigned_cv<unsigned char>   { static const bool value = true; };
+template <>       struct is_unsigned_cv<unsigned short>  { static const bool value = true; };
+template <>       struct is_unsigned_cv<unsigned int>    { static const bool value = true; };
+template <>       struct is_unsigned_cv<unsigned long>   { static const bool value = true; };
+template <>       struct is_unsigned_cv<char>            { static const bool value = char(0) < char(-1); };
+#ifndef BOOST_NO_INTRINSIC_WCHAR_T
+template <>       struct is_unsigned_cv<wchar_t>         { static const bool value = wchar_t(0) < wchar_t(-1); };
+#endif
+#ifndef BOOST_NO_CXX11_CHAR16_T
+template <>       struct is_unsigned_cv<char16_t>        { static const bool value = true; };
+#endif
+#ifndef BOOST_NO_CXX11_CHAR32_T
+template <>       struct is_unsigned_cv<char32_t>        { static const bool value = true; };
+#endif
+#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811L
+template <>       struct is_unsigned_cv<char8_t>         { static const bool value = true; };
+#endif
 #ifdef BOOST_HAS_LONG_LONG
-template <>       struct is_unsigned_cv< ::boost::long_long_type > { static const bool value = false; };
+template <>       struct is_unsigned_cv< ::boost::ulong_long_type > { static const bool value = true; };
 #endif
 
 #ifdef BOOST_HAS_INT128
-template <>       struct is_unsigned_cv< ::boost::int128_type >    { static const bool value = false; };
+template <>       struct is_unsigned_cv< ::boost::uint128_type >    { static const bool value = true; };
 #endif
 
 template <class T>

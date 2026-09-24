@@ -85,7 +85,9 @@ struct deleter_types
 ////////////////////////////////////////////
 //          unique_ptr_data
 ////////////////////////////////////////////
-template <class P, class D, bool = bmupmu::is_unary_function<D>::value || bmupmu::is_reference<D>::value >
+//Deleter is stored as a base class (EBO) unless it's a function pointer, reference or final class
+template <class P, class D, bool = bmupmu::is_unary_function<D>::value || bmupmu::is_reference<D>::value ||
+                                   bmupmu::is_final<D>::value >
 struct unique_ptr_data
 {
    typedef typename deleter_types<D>::deleter_arg_type1  deleter_arg_type1;

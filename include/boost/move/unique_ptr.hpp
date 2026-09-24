@@ -501,6 +501,8 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
              ) BOOST_NOEXCEPT
       : m_data(p, ::boost::move(d2))
    {
+      //If D is a reference type, the stored reference would refer to the destroyed temporary d2
+      BOOST_MOVE_STATIC_ASSERT(!bmupmu::is_reference<D>::value);
       //If T is not an array type, element_type_t<Pointer> derives from T
       //it uses the default deleter and T has no virtual destructor, then you have a problem
       BOOST_MOVE_STATIC_ASSERT(( !bmupd::missing_virtual_destructor
@@ -511,7 +513,10 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!   and additionally <tt>get() == nullptr</tt>
    inline unique_ptr(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), BOOST_MOVE_SEEDOC(deleter_arg_type2) d2) BOOST_NOEXCEPT
       : m_data(pointer(), ::boost::move(d2))
-   {}
+   {
+      //If D is a reference type, the stored reference would refer to the destroyed temporary d2
+      BOOST_MOVE_STATIC_ASSERT(!bmupmu::is_reference<D>::value);
+   }
 
    //! <b>Requires</b>: If D is not a reference type, D shall satisfy the requirements of MoveConstructible.
    //! Construction of the deleter from an rvalue of type D shall not throw an exception.

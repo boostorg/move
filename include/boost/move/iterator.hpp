@@ -46,17 +46,48 @@ class move_iterator
    public:
    typedef It                                                              iterator_type;
    typedef typename boost::movelib::iterator_traits<iterator_type>::value_type        value_type;
+   private:
+   typedef typename boost::movelib::iterator_traits<iterator_type>::reference         base_reference;
+   typedef typename ::boost::move_detail::remove_reference<base_reference>::type      base_referenced;
+   public:
    #if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
-   typedef value_type &&                                                   reference;
+   //Reference: rvalue reference to the same (possibly const) type.
+   //Proxy returned by value: the proxy itself (LWG 2106)
+   typedef typename ::boost::move_detail::if_c
+      < !::boost::move_detail::is_same<base_reference, base_referenced>::value
+      , base_referenced &&
+      , base_reference >::type                                             reference;
    #else
-   typedef typename ::boost::move_detail::if_
-      < ::boost::has_move_emulation_enabled<value_type>
+   //Non-const lvalue reference to a type with move emulation: rv<T>&
+   //Otherwise (const lvalue, proxy or no move emulation): base reference, copies
+   typedef typename ::boost::move_detail::if_c
+      < ::boost::move_detail::is_lvalue_reference<base_reference>::value &&
+        ::boost::move_detail::is_same<base_referenced, value_type>::value &&
+        ::boost::has_move_emulation_enabled<value_type>::value
       , ::boost::rv<value_type>&
-      , value_type & >::type                                               reference;
+      , base_reference >::type                                             reference;
    #endif
    typedef It                                                              pointer;
    typedef typename boost::movelib::iterator_traits<iterator_type>::difference_type   difference_type;
    typedef typename boost::movelib::iterator_traits<iterator_type>::iterator_category iterator_category;
+
+   private:
+   //The dereferenced value is cast through a function parameter because MSVC
+   //creates a temporary for static_cast<T&&>(p[n]) and returns a dangling reference.
+   #if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+   template<class R>
+   BOOST_MOVE_FORCEINLINE static reference to_reference(R&& r)
+   {  return static_cast<reference>(r);  }
+   #else
+   template<class R>
+   BOOST_MOVE_FORCEINLINE static reference to_reference(R& r)
+   {  return static_cast<reference>(r);  }
+
+   template<class R>
+   BOOST_MOVE_FORCEINLINE static reference to_reference(const R& r)
+   {  return static_cast<reference>(r);  }
+   #endif
+   public:
 
    inline move_iterator()
       : m_it()
@@ -67,18 +98,16 @@ class move_iterator
    {}
 
    template <class U>
-   inline move_iterator(const move_iterator<U>& u)
-      :  m_it(u.m_it)
+   inline move_iterator(const move_iterator<U>& u
+      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename ::boost::move_detail::enable_if_convertible<U BOOST_MOVE_I It>::type* = 0))
+      :  m_it(u.base())
    {}
 
+   inline const iterator_type& base() const
+   {  return m_it;   }
+
    inline reference operator*() const
-   {
-      #if defined(BOOST_NO_CXX11_RVALUE_REFERENCES) || defined(BOOST_MOVE_OLD_RVALUE_REF_BINDING_RULES)
-      return *m_it;
-      #else
-      return ::boost::move(*m_it);
-      #endif
-   }
+   {  return move_iterator::to_reference(*m_it);  }
 
    inline pointer   operator->() const
    {  return m_it;   }
@@ -108,13 +137,7 @@ class move_iterator
    {  m_it -= n; return *this;   }
 
    inline reference operator[](difference_type n) const
-   {
-      #if defined(BOOST_NO_CXX11_RVALUE_REFERENCES) || defined(BOOST_MOVE_OLD_RVALUE_REF_BINDING_RULES)
-      return m_it[n];
-      #else
-      return ::boost::move(m_it[n]);
-      #endif
-   }
+   {  return move_iterator::to_reference(m_it[n]);  }
 
    inline friend bool operator==(const move_iterator& x, const move_iterator& y)
    {  return x.m_it == y.m_it;  }
@@ -143,6 +166,38 @@ class move_iterator
    private:
    It m_it;
 };
+
+//Comparison and difference between move iterators of different base iterator types
+//(e.g. move_iterator<T*> and move_iterator<const T*>). Move iterators of the same
+//type use the friend functions.
+template <class It1, class It2>
+inline bool operator==(const move_iterator<It1>& x, const move_iterator<It2>& y)
+{  return x.base() == y.base();  }
+
+template <class It1, class It2>
+inline bool operator!=(const move_iterator<It1>& x, const move_iterator<It2>& y)
+{  return x.base() != y.base();  }
+
+template <class It1, class It2>
+inline bool operator< (const move_iterator<It1>& x, const move_iterator<It2>& y)
+{  return x.base() < y.base();   }
+
+template <class It1, class It2>
+inline bool operator<=(const move_iterator<It1>& x, const move_iterator<It2>& y)
+{  return x.base() <= y.base();  }
+
+template <class It1, class It2>
+inline bool operator> (const move_iterator<It1>& x, const move_iterator<It2>& y)
+{  return x.base() > y.base();   }
+
+template <class It1, class It2>
+inline bool operator>=(const move_iterator<It1>& x, const move_iterator<It2>& y)
+{  return x.base() >= y.base();  }
+
+template <class It1, class It2>
+inline typename move_iterator<It1>::difference_type
+   operator-(const move_iterator<It1>& x, const move_iterator<It2>& y)
+{  return x.base() - y.base();   }
 
 //is_move_iterator
 namespace move_detail {

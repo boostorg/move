@@ -556,7 +556,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
       //If T is not an array type, U derives from T
       //it uses the default deleter and T has no virtual destructor, then you have a problem
       BOOST_MOVE_STATIC_ASSERT(( !bmupd::missing_virtual_destructor
-                            <D, typename unique_ptr<U, E>::pointer>::value ));
+                            <D, typename bmupd::get_element_type<typename unique_ptr<U, E>::pointer>::type>::value ));
    }
 
    //! <b>Requires</b>: The expression <tt>get_deleter()(get())</tt> shall be well formed, shall have well-defined behavior,

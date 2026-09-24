@@ -82,6 +82,11 @@ struct deleter_types
    #endif
 };
 
+#if defined(BOOST_MSVC) && (BOOST_MSVC < 1900)
+#  pragma warning (push)
+#  pragma warning (disable : 4512) //assignment operator could not be generated (reference deleter)
+#endif
+
 ////////////////////////////////////////////
 //          unique_ptr_data
 ////////////////////////////////////////////
@@ -118,6 +123,10 @@ struct unique_ptr_data
    D d;
    //Implicit copy operations: a user-declared one would disable BOOST_MOVE_TRIVIAL_ABI on unique_ptr
 };
+
+#if defined(BOOST_MSVC) && (BOOST_MSVC < 1900)
+#  pragma warning (pop)
+#endif
 
 template <class P, class D>
 struct unique_ptr_data<P, D, false>

@@ -31,7 +31,7 @@
 #include "unique_ptr_test_utils_beg.hpp"
 
 namespace bml = ::boost::movelib;
-namespace bmupmu = ::boost::move_upmu;
+namespace bmupmu = ::boost::move_detail;
 
 ////////////////////////////////
 //   unique_ptr_ctor_move_defdel

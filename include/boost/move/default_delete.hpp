@@ -21,7 +21,7 @@
 
 #include <boost/move/detail/config_begin.hpp>
 #include <boost/move/detail/workaround.hpp>
-#include <boost/move/detail/unique_ptr_meta_utils.hpp>
+#include <boost/move/detail/type_traits.hpp>
 #include <boost/move/utility_core.hpp>
 
 #include <cstddef>   //For std::size_t,std::nullptr_t
@@ -31,9 +31,16 @@
 
 namespace boost{
 // @cond
+namespace movelib {
+
+template <class T>
+struct default_delete;
+
+}  //namespace movelib {
+
 namespace move_upd {
 
-namespace bmupmu = ::boost::move_upmu;
+namespace bmupmu = ::boost::move_detail;
 
 ////////////////////////////////////////
 ////        enable_def_del
@@ -113,12 +120,12 @@ void call_delete(T *p, is_array_del<false>)
 
 template< class T, class U
         , bool enable =  def_del_compatible_cond< U, T>::value &&
-                        !move_upmu::is_array<T>::value &&
-                        !move_upmu::is_same<typename move_upmu::remove_cv<T>::type, void>::value &&
-                        !move_upmu::is_same<typename move_upmu::remove_cv<U>::type, typename move_upmu::remove_cv<T>::type>::value
+                        !move_detail::is_array<T>::value &&
+                        !move_detail::is_same<typename move_detail::remove_cv<T>::type, void>::value &&
+                        !move_detail::is_same<typename move_detail::remove_cv<U>::type, typename move_detail::remove_cv<T>::type>::value
         >
 struct missing_virtual_destructor_default_delete
-{  static const bool value = !move_upmu::has_virtual_destructor<T>::value;  };
+{  static const bool value = !move_detail::has_virtual_destructor<T>::value;  };
 
 template<class T, class U>
 struct missing_virtual_destructor_default_delete<T, U, false>
@@ -144,7 +151,7 @@ struct missing_virtual_destructor< ::boost::movelib::default_delete<T>, U >
 namespace movelib {
 
 namespace bmupd = boost::move_upd;
-namespace bmupmu = ::boost::move_upmu;
+namespace bmupmu = ::boost::move_detail;
 
 //!The class template <tt>default_delete</tt> serves as the default deleter
 //!(destruction policy) for the class template <tt>unique_ptr</tt>.

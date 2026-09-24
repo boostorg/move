@@ -21,7 +21,7 @@
 
 #include <boost/move/detail/config_begin.hpp>
 #include <boost/move/detail/workaround.hpp>  //forceinline
-#include <boost/move/detail/unique_ptr_meta_utils.hpp>
+#include <boost/move/detail/type_traits.hpp>
 #include <boost/move/default_delete.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/move/adl_move_swap.hpp>

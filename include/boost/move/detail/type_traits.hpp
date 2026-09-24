@@ -729,6 +729,83 @@ template <class T, std::size_t N>
 struct remove_all_extents<T[N]>
 {  typedef typename remove_all_extents<T>::type type;};
 
+//////////////////////////////////////
+//          remove_extent
+//////////////////////////////////////
+template<class T>
+struct remove_extent
+{
+   typedef T type;
+};
+
+template<class T>
+struct remove_extent<T[]>
+{
+   typedef T type;
+};
+
+template<class T, std::size_t N>
+struct remove_extent<T[N]>
+{
+   typedef T type;
+};
+
+//////////////////////////////////////
+//             extent
+//////////////////////////////////////
+template<class T, unsigned N = 0>
+struct extent
+{
+   static const std::size_t value = 0;
+};
+
+template<class T>
+struct extent<T[], 0>
+{
+   static const std::size_t value = 0;
+};
+
+template<class T, unsigned N>
+struct extent<T[], N>
+{
+   static const std::size_t value = extent<T, N-1>::value;
+};
+
+template<class T, std::size_t N>
+struct extent<T[N], 0>
+{
+   static const std::size_t value = N;
+};
+
+template<class T, std::size_t I, unsigned N>
+struct extent<T[I], N>
+{
+   static const std::size_t value = extent<T, N-1>::value;
+};
+
+//////////////////////////////////////
+//             pointer_type
+//////////////////////////////////////
+//D::pointer if it exists, otherwise remove_extent<T>::type*
+template <class T, class D, bool = has_pointer_type<D>::value>
+struct pointer_type_imp
+{
+    typedef typename D::pointer type;
+};
+
+template <class T, class D>
+struct pointer_type_imp<T, D, false>
+{
+    typedef T* type;
+};
+
+template <class T, class D>
+struct pointer_type
+{
+    typedef typename pointer_type_imp
+      <typename remove_extent<T>::type, typename remove_reference<D>::type>::type type;
+};
+
 //////////////////////////
 //       is_void
 //////////////////////////
@@ -858,6 +935,63 @@ struct is_class
    static const bool value = is_class_or_union<T>::value && ! is_union<T>::value;
 };
 
+//////////////////////////////////////
+//             is_final
+//////////////////////////////////////
+//A final class can not be derived from: detected with the compiler intrinsic.
+//Without the intrinsic the result is false, and a final class can not be used as a base.
+#if defined(BOOST_NO_CXX11_FINAL)
+#  define BOOST_MOVE_IS_FINAL(T) false
+#elif defined(__clang__)
+#  if __has_extension(is_final)
+#     define BOOST_MOVE_IS_FINAL(T) __is_final(T)
+#  endif
+#elif defined(BOOST_MSVC) && (BOOST_MSVC >= 1800)
+   //__is_sealed detects "final" only since VS2017, and __is_final never detects "sealed"
+#  define BOOST_MOVE_IS_FINAL(T) (__is_final(T) || __is_sealed(T))
+#elif defined(BOOST_MSVC) && (BOOST_MSVC >= 1700)
+   //VS2012 has no intrinsic that detects "final": __is_sealed only detects "sealed"
+#  define BOOST_MOVE_IS_FINAL(T) __is_sealed(T)
+#elif defined(BOOST_GCC) && (BOOST_GCC >= 40700)
+#  define BOOST_MOVE_IS_FINAL(T) __is_final(T)
+#endif
+
+#ifndef BOOST_MOVE_IS_FINAL
+#  define BOOST_MOVE_IS_FINAL(T) false
+#endif
+
+template<class T>
+struct is_final
+{
+   static const bool value = BOOST_MOVE_IS_FINAL(T);
+};
+
+//////////////////////////////////////
+//       has_virtual_destructor
+//////////////////////////////////////
+#if (defined(BOOST_MSVC) && defined(BOOST_MSVC_FULL_VER) && (BOOST_MSVC_FULL_VER >=140050215))\
+         || (defined(BOOST_INTEL) && defined(_MSC_VER) && (_MSC_VER >= 1500))
+#  define BOOST_MOVE_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#elif defined(BOOST_CLANG) && defined(__has_feature)
+#  if __has_feature(has_virtual_destructor)
+#     define BOOST_MOVE_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#  endif
+#elif defined(__GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3) && !defined(__GCCXML__))) && !defined(BOOST_CLANG)
+#  define BOOST_MOVE_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#elif defined(__ghs__) && (__GHS_VERSION_NUMBER >= 600)
+#  define BOOST_MOVE_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#elif defined(BOOST_CODEGEARC)
+#  define BOOST_MOVE_HAS_VIRTUAL_DESTRUCTOR(T) __has_virtual_destructor(T)
+#endif
+
+#ifdef BOOST_MOVE_HAS_VIRTUAL_DESTRUCTOR
+   template<class T>
+   struct has_virtual_destructor{   static const bool value = BOOST_MOVE_HAS_VIRTUAL_DESTRUCTOR(T);  };
+#else
+   //If no intrinsic is available you trust the programmer knows what is doing
+   template<class T>
+   struct has_virtual_destructor{   static const bool value = true;  };
+#endif
 
 //////////////////////////////////////
 //             is_arithmetic

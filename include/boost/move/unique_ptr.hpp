@@ -634,6 +634,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    inline BOOST_MOVE_DOC1ST(element_type&, typename bmupmu::add_lvalue_reference<element_type>::type)
       operator[](std::size_t i) const BOOST_NOEXCEPT
    {
+      BOOST_MOVE_STATIC_ASSERT((bmupmu::is_array<T>::value));
       assert( bmupmu::extent<T>::value == 0 || i < bmupmu::extent<T>::value );
       assert(m_data.m_p);
       return m_data.m_p[i];

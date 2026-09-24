@@ -448,7 +448,11 @@ class is_convertible
 #  if __has_extension(is_final)
 #     define BOOST_MOVE_UPMU_IS_FINAL(T) __is_final(T)
 #  endif
+#elif defined(BOOST_MSVC) && (BOOST_MSVC >= 1800)
+   //__is_sealed detects "final" only since VS2017, and __is_final never detects "sealed"
+#  define BOOST_MOVE_UPMU_IS_FINAL(T) (__is_final(T) || __is_sealed(T))
 #elif defined(BOOST_MSVC) && (BOOST_MSVC >= 1700)
+   //VS2012 has no intrinsic that detects "final": __is_sealed only detects "sealed"
 #  define BOOST_MOVE_UPMU_IS_FINAL(T) __is_sealed(T)
 #elif defined(BOOST_GCC) && (BOOST_GCC >= 40700)
 #  define BOOST_MOVE_UPMU_IS_FINAL(T) __is_final(T)
@@ -465,99 +469,42 @@ struct is_final
 };
 
 //////////////////////////////////////
-//       is_unary_function
+//          is_class_or_union
 //////////////////////////////////////
-#if defined(BOOST_MSVC) || defined(__BORLANDC_)
-#define BOOST_MOVE_TT_DECL __cdecl
-#else
-#define BOOST_MOVE_TT_DECL
+template<class T>
+struct is_class_or_union
+{
+   struct twochar { char dummy[2]; };
+   template <class U>
+   static char is_class_or_union_tester(void(U::*)(void));
+   template <class U>
+   static twochar is_class_or_union_tester(...);
+   static const bool value = sizeof(is_class_or_union_tester<T>(0)) == sizeof(char);
+};
+
+//////////////////////////////////////
+//             is_union
+//////////////////////////////////////
+//Detected with the compiler intrinsic. Without the intrinsic the result is false.
+#if defined(__clang__)
+#  if __has_extension(is_union)
+#     define BOOST_MOVE_UPMU_IS_UNION(T) __is_union(T)
+#  endif
+#elif defined(BOOST_MSVC) && defined(BOOST_MSVC_FULL_VER) && (BOOST_MSVC_FULL_VER >= 140050215)
+#  define BOOST_MOVE_UPMU_IS_UNION(T) __is_union(T)
+#elif defined(BOOST_GCC) && (BOOST_GCC >= 40300)
+#  define BOOST_MOVE_UPMU_IS_UNION(T) __is_union(T)
 #endif
 
-#if defined(_MSC_EXTENSIONS) && !defined(__BORLAND__) && !defined(_WIN64) && !defined(_M_ARM) && !defined(_M_ARM64) && !defined(UNDER_CE)
-#define BOOST_MOVE_TT_TEST_MSC_FUNC_SIGS
+#ifndef BOOST_MOVE_UPMU_IS_UNION
+#  define BOOST_MOVE_UPMU_IS_UNION(T) false
 #endif
 
-template <typename T>
-struct is_unary_function_impl
-{  static const bool value = false; };
-
-// avoid duplicate definitions of is_unary_function_impl
-#ifndef BOOST_MOVE_TT_TEST_MSC_FUNC_SIGS
-
-template <typename R>
-struct is_unary_function_impl<R (*)()>
-{  static const bool value = true;  };
-
-template <typename R>
-struct is_unary_function_impl<R (*)(...)>
-{  static const bool value = true;  };
-
-#else // BOOST_MOVE_TT_TEST_MSC_FUNC_SIGS
-
-template <typename R>
-struct is_unary_function_impl<R (__stdcall*)()>
-{  static const bool value = true;  };
-
-#ifndef _MANAGED
-
-template <typename R>
-struct is_unary_function_impl<R (__fastcall*)()>
-{  static const bool value = true;  };
-
-#endif
-
-template <typename R>
-struct is_unary_function_impl<R (__cdecl*)()>
-{  static const bool value = true;  };
-
-template <typename R>
-struct is_unary_function_impl<R (__cdecl*)(...)>
-{  static const bool value = true;  };
-
-#endif
-
-// avoid duplicate definitions of is_unary_function_impl
-#ifndef BOOST_MOVE_TT_TEST_MSC_FUNC_SIGS
-
-template <typename R, class T0>
-struct is_unary_function_impl<R (*)(T0)>
-{  static const bool value = true;  };
-
-template <typename R, class T0>
-struct is_unary_function_impl<R (*)(T0, ...)>
-{  static const bool value = true;  };
-
-#else // BOOST_MOVE_TT_TEST_MSC_FUNC_SIGS
-
-template <typename R, class T0>
-struct is_unary_function_impl<R (__stdcall*)(T0)>
-{  static const bool value = true;  };
-
-#ifndef _MANAGED
-
-template <typename R, class T0>
-struct is_unary_function_impl<R (__fastcall*)(T0)>
-{  static const bool value = true;  };
-
-#endif
-
-template <typename R, class T0>
-struct is_unary_function_impl<R (__cdecl*)(T0)>
-{  static const bool value = true;  };
-
-template <typename R, class T0>
-struct is_unary_function_impl<R (__cdecl*)(T0, ...)>
-{  static const bool value = true;  };
-
-#endif
-
-template <typename T>
-struct is_unary_function_impl<T&>
-{  static const bool value = false; };
-
-template<typename T>
-struct is_unary_function
-{  static const bool value = is_unary_function_impl<T>::value;   };
+template<class T>
+struct is_union
+{
+   static const bool value = BOOST_MOVE_UPMU_IS_UNION(T);
+};
 
 //////////////////////////////////////
 //       has_virtual_destructor

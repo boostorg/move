@@ -438,6 +438,33 @@ class is_convertible
 #endif
 
 //////////////////////////////////////
+//             is_final
+//////////////////////////////////////
+//A final class can not be derived from: detected with the compiler intrinsic.
+//Without the intrinsic the result is false, and a final class can not be used as a base.
+#if defined(BOOST_NO_CXX11_FINAL)
+#  define BOOST_MOVE_UPMU_IS_FINAL(T) false
+#elif defined(__clang__)
+#  if __has_extension(is_final)
+#     define BOOST_MOVE_UPMU_IS_FINAL(T) __is_final(T)
+#  endif
+#elif defined(BOOST_MSVC) && (BOOST_MSVC >= 1700)
+#  define BOOST_MOVE_UPMU_IS_FINAL(T) __is_sealed(T)
+#elif defined(BOOST_GCC) && (BOOST_GCC >= 40700)
+#  define BOOST_MOVE_UPMU_IS_FINAL(T) __is_final(T)
+#endif
+
+#ifndef BOOST_MOVE_UPMU_IS_FINAL
+#  define BOOST_MOVE_UPMU_IS_FINAL(T) false
+#endif
+
+template<class T>
+struct is_final
+{
+   static const bool value = BOOST_MOVE_UPMU_IS_FINAL(T);
+};
+
+//////////////////////////////////////
 //       is_unary_function
 //////////////////////////////////////
 #if defined(BOOST_MSVC) || defined(__BORLANDC_)

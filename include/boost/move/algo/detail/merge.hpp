@@ -319,7 +319,9 @@ template<class Unsigned>
 Unsigned ceil_sqrt(Unsigned const n)
 {
    Unsigned r = floor_sqrt(n);
-   return Unsigned(r + Unsigned((n%r) != 0));
+   //r*r can not overflow as r <= 2^(bits/2)-1.
+   //It also avoids a division (slow) that can also cause divice by zero
+   return Unsigned(r + Unsigned(Unsigned(r*r) != n));
 }
 
 //Modified version from "An Optimal In-Place Array Rotation Algorithm", Ching-Kuang Shene
@@ -1127,14 +1129,21 @@ void merge_adaptive_ONlogN(BidirectionalIterator first,
 //Precondition: both ranges are non-empty, so that the binary searches below
 //  always have somewhere to look.
 //
-//Complexity: with r1 = middle - first and r2 = last - middle,
+//Complexity: with r1 = middle - first, r2 = last - middle and g = ceil_sqrt(r1),
 //  - moves:       ~2*r2 + r1*sqrt(r1)
-//  - comparisons: O(r1*log(r2))
+//  - comparisons: ~g*log2(r2) for the binary searches, plus the group merges:
+//      - buffer_size >= g: each group is merged with buffered_merge, a linear
+//        merge, so the total is ~r1 + r2. A larger buffer does not reduce it.
+//      - buffer_size < g (or no buffer): the groups are merged with
+//        merge_bufferless_ON2, so the total is O(r1*log(r2)). Only a last
+//        group shorter than g can use the buffer, and its merge is linear.
 //
-// The comparison count is the same order as any bufferless merge, so the moves
-// are what makes this algorithm worth choosing: merge_bufferless_ONlogN moves
-// ~r2*log2(r1)/2 elements, which is more as soon as r1*sqrt(r1) is small
-// compared to r2.
+// Without a buffer the comparison count is the same order as any bufferless
+// merge, so the moves are what makes this algorithm worth choosing:
+// merge_bufferless_ONlogN moves ~r2*log2(r1)/2 elements, which is more as soon
+// as r1*sqrt(r1) is small compared to r2. With a buffer of g or more elements
+// the comparisons are ~r2, many more than r1*log2(r2) when r1 is much shorter
+// than r2.
 //
 // Measured with r1 = 2*ceil_sqrt(r2) and r2 from 1e4 to 1e6, the moves per
 // element stay at 2.07 to 2.15 while merge_bufferless_ONlogN grows from 4.04 to

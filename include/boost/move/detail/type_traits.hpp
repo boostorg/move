@@ -1548,10 +1548,12 @@ BOOST_MOVE_ALIGNED_STRUCT(16);
 BOOST_MOVE_ALIGNED_STRUCT(32);
 BOOST_MOVE_ALIGNED_STRUCT(64);
 BOOST_MOVE_ALIGNED_STRUCT(128);
+BOOST_MOVE_ALIGNED_STRUCT(256);
 BOOST_MOVE_ALIGNED_STRUCT(512);
 BOOST_MOVE_ALIGNED_STRUCT(1024);
 BOOST_MOVE_ALIGNED_STRUCT(2048);
 BOOST_MOVE_ALIGNED_STRUCT(4096);
+BOOST_MOVE_ALIGNED_STRUCT(8192);   //Maximum alignment supported by MSVC
 
 template<std::size_t Len, std::size_t Align>
 union aligned_union
@@ -1569,6 +1571,27 @@ struct aligned_storage_impl
 
 #elif !defined(BOOST_NO_ALIGNMENT)
 
+//These accept a template parameter, so any alignment supported by the compiler is available.
+//GCC and Clang accept it in the attribute also in C++03 (and GCC 4.9 limits alignas to 128).
+#if defined(__GNUC__)
+#  define BOOST_MOVE_TT_ALIGNED_DATA(A) __attribute__((__aligned__(A)))
+#elif !defined(BOOST_NO_CXX11_ALIGNAS)
+#  define BOOST_MOVE_TT_ALIGNED_DATA(A) alignas(A)
+#endif
+
+#if defined(BOOST_MOVE_TT_ALIGNED_DATA)
+
+template<std::size_t Len, std::size_t Align>
+struct aligned_struct
+{
+   BOOST_MOVE_TT_ALIGNED_DATA(Align) unsigned char data[Len];
+};
+
+#undef BOOST_MOVE_TT_ALIGNED_DATA
+
+#else //defined(BOOST_MOVE_TT_ALIGNED_DATA)
+
+//__declspec(align) and __attribute__((aligned)) need a literal value
 template<std::size_t Len, std::size_t Align>
 struct aligned_struct;
 
@@ -1580,7 +1603,7 @@ struct BOOST_ALIGNMENT(A) aligned_struct<Len, A>\
 };\
 //
 
-//Up to 4K alignment (typical page size)
+//Up to 8K alignment (maximum alignment supported by MSVC)
 BOOST_MOVE_ALIGNED_STORAGE_WITH_BOOST_ALIGNMENT(0x1)
 BOOST_MOVE_ALIGNED_STORAGE_WITH_BOOST_ALIGNMENT(0x2)
 BOOST_MOVE_ALIGNED_STORAGE_WITH_BOOST_ALIGNMENT(0x4)
@@ -1594,8 +1617,11 @@ BOOST_MOVE_ALIGNED_STORAGE_WITH_BOOST_ALIGNMENT(0x200)
 BOOST_MOVE_ALIGNED_STORAGE_WITH_BOOST_ALIGNMENT(0x400)
 BOOST_MOVE_ALIGNED_STORAGE_WITH_BOOST_ALIGNMENT(0x800)
 BOOST_MOVE_ALIGNED_STORAGE_WITH_BOOST_ALIGNMENT(0x1000)
+BOOST_MOVE_ALIGNED_STORAGE_WITH_BOOST_ALIGNMENT(0x2000)
 
 #undef BOOST_MOVE_ALIGNED_STORAGE_WITH_BOOST_ALIGNMENT
+
+#endif   //defined(BOOST_MOVE_TT_ALIGNED_DATA)
 
 // Workaround for bogus [-Wignored-attributes] warning on GCC 6.x/7.x: don't use a type that "directly" carries the alignment attribute.
 // See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82270

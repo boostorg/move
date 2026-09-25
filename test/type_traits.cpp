@@ -385,6 +385,65 @@ void test()
 
 }  //namespace is_unsigned_test
 
+namespace aligned_storage_test
+{
+
+template<class Storage, std::size_t Align>
+struct test_static_object
+{
+   static void test()
+   {
+      static Storage static_object;
+      BOOST_TEST(reinterpret_cast<std::size_t>(&static_object) % Align == 0);
+   }
+};
+
+template<std::size_t Len, std::size_t Align>
+void test_one()
+{
+   typedef typename boost::move_detail::aligned_storage<Len, Align>::type storage_t;
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::alignment_of<storage_t>::value >= Align));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::alignment_of<storage_t>::value % Align == 0));
+   BOOST_MOVE_STATIC_ASSERT((sizeof(storage_t) >= Len));
+   //The alignment of real objects: a local, an array element and a static object
+   storage_t local;
+   storage_t array[2];
+   BOOST_TEST(reinterpret_cast<std::size_t>(&local) % Align == 0);
+   BOOST_TEST(reinterpret_cast<std::size_t>(&array[1]) % Align == 0);
+   test_static_object<storage_t, Align>::test();
+}
+
+template<std::size_t Align>
+struct test_alignment
+{
+   static void test()
+   {
+      test_one<1, Align>();
+      test_one<Align, Align>();
+      test_one<Align + 1, Align>();
+      test_one<3 * Align, Align>();
+      test_alignment<Align * 2>::test();
+   }
+};
+
+//Alignments from 1 to 4096
+template<>
+struct test_alignment<4096*2>
+{
+   static void test() {}
+};
+
+void test()
+{
+   test_alignment<1>::test();
+   //Default alignment
+   typedef boost::move_detail::aligned_storage<sizeof(double)>::type default_storage_t;
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::alignment_of<default_storage_t>::value >=
+                             boost::move_detail::alignment_of<boost::move_detail::max_align_t>::value));
+}
+
+}  //namespace aligned_storage_test
+
 int main()
 {
    trivially_memcopyable_test::test();
@@ -394,5 +453,6 @@ int main()
    std_pair_test::test();
    is_nothrow_swappable_test::test();
    is_unsigned_test::test();
+   aligned_storage_test::test();
    boost::report_errors();
 }

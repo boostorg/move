@@ -11,6 +11,7 @@
 #ifndef BOOST_MOVE_MERGE_HPP
 #define BOOST_MOVE_MERGE_HPP
 
+#include <boost/move/detail/config_begin.hpp>
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/move/algo/detail/basic_op.hpp>
 #include <boost/move/detail/iterator_traits.hpp>
@@ -528,11 +529,9 @@ void op_merge_left( RandIt buf_first
                     , Compare comp
                     , Op op)
 {
-   bool is_range_1_left;
    RandIt first2 = last1;
-   for( 
-      ; (is_range_1_left = (first1 != last1)) && first2 != last2
-      ; ++buf_first){
+   bool is_range_1_left = first1 != last1;
+   for( ; is_range_1_left && first2 != last2; ++buf_first){
       if(comp(*first2, *first1)){
          op(first2, buf_first);
          ++first2;
@@ -540,6 +539,7 @@ void op_merge_left( RandIt buf_first
       else{
          op(first1, buf_first);
          ++first1;
+         is_range_1_left = first1 != last1;
       }
    }
    if(!is_range_1_left){
@@ -1189,5 +1189,7 @@ void merge_adaptive_ONsqrtN
 #if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))
 #pragma GCC diagnostic pop
 #endif
+
+#include <boost/move/detail/config_end.hpp>
 
 #endif   //#define BOOST_MOVE_MERGE_HPP

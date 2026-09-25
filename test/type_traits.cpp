@@ -65,7 +65,8 @@ struct pod_deleted_default_ctor
    int i;
 };
 
-#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+//MSVC 12.0 (Visual 2013) can not default the move operations
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_DEFAULTED_MOVES)
 
 struct pod_deleted_move_ctor
 {
@@ -87,7 +88,7 @@ struct pod_deleted_move_assign
    int i;
 };
 
-#endif   //!defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+#endif   //!defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_DEFAULTED_MOVES)
 
 #endif   //!defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) && !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
 
@@ -225,6 +226,7 @@ void test()
    //The move traits use the copy operation, like std traits, when there is no move operation
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_move_constructible<pod_deleted_copy_ctor>::value));
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_move_assignable<pod_deleted_copy_assign>::value));
+   #if !defined(BOOST_NO_CXX11_DEFAULTED_MOVES)
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_move_constructible<pod_deleted_move_ctor>::value));
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_move_constructible<pod_deleted_move_ctor>::value));
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_nothrow_move_constructible<pod_deleted_move_ctor>::value));
@@ -245,6 +247,7 @@ void test()
    #if defined(BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR)
    BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_move_constructible<pod_deleted_move_assign>::value));
    #endif
+   #endif   //!defined(BOOST_NO_CXX11_DEFAULTED_MOVES)
    #endif
    #endif   //!defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) && !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
 }

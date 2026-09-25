@@ -34,6 +34,15 @@ using boost::movelib::antistable;
 //How many buffer lengths are tried
 static const std::size_t BufferSlackCases = 3u;
 
+//A swap loses no value, so after a swap_op merge the buffer must still hold what it held.
+//(A function, not a constant condition, to avoid MSVC warning C4127)
+template<class Op>
+bool keeps_buffer_values(Op)
+{  return false;  }
+
+inline bool keeps_buffer_values(swap_op)
+{  return true;  }
+
 //Splits the "n" ordered positions in two sorted ranges following "mask"
 struct merge_case
 {
@@ -97,8 +106,7 @@ void test_op_merge_left_one(const merge_case &c, std::size_t l_buf, Op op, Compa
    c.expected(exp, range1_first);
    BOOST_TEST(std::equal(p, p+n_data, exp, same_element()));
    BOOST_TEST(arr.guards_intact());
-   //A swap loses no value, so the buffer must still hold what it held
-   if(boost::move_detail::is_same<Op, swap_op>::value){
+   if(keeps_buffer_values(op)){
       BOOST_TEST(is_buffer_permutation(p+n_data, l_buf));
    }
 }
@@ -155,7 +163,7 @@ void test_op_merge_right_one(const merge_case &c, std::size_t l_buf, Op op, Comp
    c.expected(exp, range1_first);
    BOOST_TEST(std::equal(p+l_buf, p+l_buf+n_data, exp, same_element()));
    BOOST_TEST(arr.guards_intact());
-   if(boost::move_detail::is_same<Op, swap_op>::value){
+   if(keeps_buffer_values(op)){
       BOOST_TEST(is_buffer_permutation(p, l_buf));
    }
 }

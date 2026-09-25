@@ -99,7 +99,9 @@
 #   define BOOST_MOVE_HAS_NOTHROW_ASSIGN(T)        (__has_nothrow_assign(T) || ::boost::move_detail::is_trivially_copy_assignable<T>::value)
 
 #   define BOOST_MOVE_IS_ENUM(T) __is_enum(T)
-#   if defined(_MSC_VER) && (_MSC_VER >= 1700)
+//MSVC 11.0 and 12.0 (Visual 2012 and 2013) __has_trivial_move_constructor/assign
+//return false for all types, even PODs
+#   if defined(_MSC_VER) && (_MSC_VER >= 1900)
 #       define BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T)   (__has_trivial_move_constructor(T) || ::boost::move_detail::is_pod<T>::value)
 #       define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T)        (__has_trivial_move_assign(T) || ::boost::move_detail::is_pod<T>::value)
 #   endif
@@ -1224,17 +1226,13 @@ struct is_copy_assignable
 //Minimal existence checks, used to guard the is_pod shortcut of the trivial and nothrow traits.
 //GCC 4.6 gives a hard error, not a substitution failure, for an abstract class.
 #if defined(BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE) && !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && \
-    !(defined(BOOST_GCC) && (BOOST_GCC < 40700))
+    !defined(BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS) && !(defined(BOOST_GCC) && (BOOST_GCC < 40700))
 #define BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE
 #endif
 
-#if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE)
-//The expression is tested in a parameter, as in is_copy_constructible: GCC 4.6 and 4.7
-//do not detect a deleted function when the expression is tested in the return type.
-//The tag has a std::size_t parameter: Clang rejects a narrowing sizeof to bool conversion.
-template<std::size_t> struct tt_sizeof_tag {};
-#endif
-
+//The expression is tested in a default template argument: GCC 4.7 does not detect
+//a deleted function in the return type, and MSVC 14.0 does not detect it in a
+//sizeof in a default function argument.
 template <class T>
 struct is_default_constructible
 {
@@ -1242,7 +1240,7 @@ struct is_default_constructible
    typedef char yes_type;
    struct no_type { char dummy[2]; };
 
-   template <class U>   static yes_type test(int, tt_sizeof_tag<sizeof(::new U())>* = 0);
+   template <class U, class = decltype(::new U())> static yes_type test(int);
    template <class>     static no_type test(...);
 
    static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
@@ -1259,7 +1257,7 @@ struct is_move_constructible
    struct no_type { char dummy[2]; };
 
    template <class U>   static U&& source();
-   template <class U>   static yes_type test(int, tt_sizeof_tag<sizeof(U(source<U>()))>* = 0);
+   template <class U, class = decltype(U(source<U>()))> static yes_type test(int);
    template <class>     static no_type test(...);
 
    static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
@@ -1276,7 +1274,7 @@ struct is_move_assignable
    struct no_type { char dummy[2]; };
 
    template <class U>   static U&& source();
-   template <class U>   static yes_type test(int, tt_sizeof_tag<sizeof(source<U&>() = source<U>())>* = 0);
+   template <class U, class = decltype(source<U&>() = source<U>())> static yes_type test(int);
    template <class>     static no_type test(...);
 
    static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);

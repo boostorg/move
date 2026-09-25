@@ -112,6 +112,7 @@
 //MSVC 12.0 (Visual 2013) __is_assignable ignores deleted assignment operators
 #  if defined(BOOST_MSVC) && (BOOST_MSVC >= 1900)
 #     define BOOST_MOVE_IS_ASSIGNABLE(T, U) __is_assignable(T, U)
+#     define BOOST_MOVE_IS_TRIVIALLY_COPYABLE(T) __is_trivially_copyable(T)
 #  endif
 #endif
 
@@ -194,6 +195,11 @@
 #     define BOOST_MOVE_HAS_NOTHROW_ASSIGN(T) (__has_nothrow_assign(T))
 #   endif
 
+//    BOOST_MOVE_IS_TRIVIALLY_COPYABLE
+#   if BOOST_MOVE_HAS_TRAIT(is_trivially_copyable)
+#     define BOOST_MOVE_IS_TRIVIALLY_COPYABLE(T) __is_trivially_copyable(T)
+#   endif
+
 #   if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
 
 //    BOOST_MOVE_IS_ASSIGNABLE (only with rvalue references, as with other compilers)
@@ -271,6 +277,10 @@
 // __is_assignable / __is_constructible implemented
 #     define BOOST_MOVE_IS_ASSIGNABLE(T, U)     __is_assignable(T, U)
 #     define BOOST_MOVE_IS_CONSTRUCTIBLE(T, U)  __is_constructible(T, U)
+#  endif
+
+#  if defined(BOOST_GCC) && (BOOST_GCC >= 50000)
+#     define BOOST_MOVE_IS_TRIVIALLY_COPYABLE(T) __is_trivially_copyable(T)
 #  endif
 
 #   define BOOST_MOVE_IS_ENUM(T) __is_enum(T)
@@ -479,6 +489,18 @@
    #define BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T)   BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_DESTRUCTOR(T))
 #else
    #define BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T)   ::boost::move_detail::is_pod<T>::value
+#endif
+
+//BOOST_MOVE_IS_TRIVIALLY_COPYABLE is only defined when the result is exact: the intrinsic,
+//or all the trivial copy, move and destructor intrinsics
+#if !defined(BOOST_MOVE_IS_TRIVIALLY_COPYABLE) && defined(BOOST_MOVE_HAS_TRIVIAL_COPY) && \
+    defined(BOOST_MOVE_HAS_TRIVIAL_ASSIGN) && defined(BOOST_MOVE_HAS_TRIVIAL_DESTRUCTOR) && \
+    defined(BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR) && defined(BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN)
+   #define BOOST_MOVE_IS_TRIVIALLY_COPYABLE(T)  (BOOST_MOVE_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T) &&\
+                                                 BOOST_MOVE_IS_TRIVIALLY_COPY_ASSIGNABLE(T)    &&\
+                                                 BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T) &&\
+                                                 BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T)    &&\
+                                                 BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T))
 #endif
 
 #ifdef BOOST_MOVE_HAS_NOTHROW_CONSTRUCTOR
@@ -1301,6 +1323,22 @@ struct is_assignable
 template<class T>
 struct is_trivially_destructible
 {  static const bool value = BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T); };
+
+//////////////////////////////////////
+//       is_trivially_copyable
+//////////////////////////////////////
+//The copy and move operations and the destructor are trivial, so objects can be copied
+//with memcpy and common ABIs pass them in registers. Exact only if BOOST_MOVE_IS_TRIVIALLY_COPYABLE
+//is defined, else it is true only for PODs.
+template<class T>
+struct is_trivially_copyable
+{
+#if defined(BOOST_MOVE_IS_TRIVIALLY_COPYABLE)
+   static const bool value = BOOST_MOVE_IS_TRIVIALLY_COPYABLE(T);
+#else
+   static const bool value = ::boost::move_detail::is_pod<T>::value;
+#endif
+};
 
 //////////////////////////////////////
 //       is_trivially_default_constructible

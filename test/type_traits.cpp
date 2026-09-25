@@ -385,6 +385,45 @@ void test()
 
 }  //namespace is_unsigned_test
 
+namespace is_trivially_copyable_test
+{
+
+struct user_copy
+{
+   user_copy() {}
+   user_copy(const user_copy &) {}
+};
+
+struct user_copy_assign
+{
+   user_copy_assign &operator=(const user_copy_assign &) { return *this; }
+};
+
+struct user_destructor
+{
+   ~user_destructor() {}
+};
+
+void test()
+{
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_copyable<int>::value));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_copyable<int*>::value));
+   #if defined(BOOST_MOVE_IS_POD)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_copyable<pod_struct>::value));
+   #endif
+   #if defined(BOOST_MOVE_IS_TRIVIALLY_COPYABLE)
+   //A user-provided default constructor does not affect it
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_copyable<trivial_but_not_pod>::value));
+   #endif
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_copyable<user_copy>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_copyable<user_copy_assign>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_copyable<user_destructor>::value));
+   //User-provided move operations (and a deleted or private copy constructor)
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_copyable<boost_move_type>::value));
+}
+
+}  //namespace is_trivially_copyable_test
+
 namespace aligned_storage_test
 {
 
@@ -453,6 +492,7 @@ int main()
    std_pair_test::test();
    is_nothrow_swappable_test::test();
    is_unsigned_test::test();
+   is_trivially_copyable_test::test();
    aligned_storage_test::test();
    boost::report_errors();
 }

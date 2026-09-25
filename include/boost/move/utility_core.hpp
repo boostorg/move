@@ -151,7 +151,7 @@
       >::type
          move_if_not_lvalue_reference(typename ::boost::move_detail::remove_reference<T>::type &x) BOOST_NOEXCEPT
    {
-      return move(x);
+      return ::boost::move(x);
    }
 
    }  //namespace boost

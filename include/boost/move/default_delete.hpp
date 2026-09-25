@@ -227,6 +227,8 @@ struct default_delete
    BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(void, typename bmupd::enable_defdel_call<U BOOST_MOVE_I T BOOST_MOVE_I void>::type)
       operator()(U* ptr) const BOOST_NOEXCEPT
    {
+      //T must not be (cv) void: deleting a pointer to void is undefined behavior
+      BOOST_MOVE_STATIC_ASSERT(( !bmupmu::is_void<element_type>::value ));
       //U must be a complete type
       BOOST_MOVE_STATIC_ASSERT(sizeof(U) > 0);
       //If T is not an array type, U derives from T
@@ -239,7 +241,11 @@ struct default_delete
    //! <b>Effects</b>: Same as <tt>(*this)(static_cast&lt;element_type*&gt;(nullptr))</tt>.
    //!
    BOOST_MOVE_CXX20_CONSTEXPR void operator()(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type)) const BOOST_NOEXCEPT
-   {  BOOST_MOVE_STATIC_ASSERT(sizeof(element_type) > 0);  }
+   {
+      //T must not be (cv) void: deleting a pointer to void is undefined behavior
+      BOOST_MOVE_STATIC_ASSERT(( !bmupmu::is_void<element_type>::value ));
+      BOOST_MOVE_STATIC_ASSERT(sizeof(element_type) > 0);
+   }
 };
 
 }  //namespace movelib {

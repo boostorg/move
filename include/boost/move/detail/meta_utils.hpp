@@ -302,7 +302,12 @@ class is_convertible
 template <class T, class U>
 class is_convertible
 {
+   #if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+   //T&& is an rvalue when T is not a reference and an lvalue when T is an lvalue reference
+   typedef T&& t_reference;
+   #else
    typedef typename add_lvalue_reference<T>::type t_reference;
+   #endif
    typedef char true_t;
    class false_t { char dummy[2]; };
    static false_t dispatch(...);

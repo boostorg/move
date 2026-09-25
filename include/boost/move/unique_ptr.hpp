@@ -257,48 +257,18 @@ struct unique_deleter_is_initializable
    : bmupmu::is_same<D, E>
 {};
 
-template <class T, class U>
-class is_rvalue_convertible
-{
-   #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-   typedef typename bmupmu::remove_reference<T>::type&& t_from;
-   #else
-   typedef typename bmupmu::if_c
-      < ::boost::has_move_emulation_enabled<T>::value && !bmupmu::is_reference<T>::value
-      , ::boost::rv<T>&
-      , typename bmupmu::add_lvalue_reference<T>::type
-      >::type t_from;
-   #endif
-
-   typedef char true_t;
-   class false_t { char dummy[2]; };
-   static false_t dispatch(...);
-   static true_t  dispatch(U);
-   static t_from trigger();
-   public:
-   static const bool value = sizeof(dispatch(trigger())) == sizeof(true_t);
-};
-
 template<class D, class E>
 struct unique_deleter_is_initializable<D, E, false>
 {
    #if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
-   //Clang has some problems with is_rvalue_convertible with non-copyable types
-   //so use intrinsic if available
-   #if defined(BOOST_CLANG)
-      #if __has_feature(is_convertible_to)
-      static const bool value = __is_convertible_to(E, D);
-      #else
-      static const bool value = is_rvalue_convertible<E, D>::value;
-      #endif
-   #else
-   static const bool value = is_rvalue_convertible<E, D>::value;
-   #endif
+   //is_convertible<E, D> checks an rvalue of type E when E is not a reference,
+   //and an lvalue when E is an lvalue reference, as the standard requires
+   static const bool value = bmupmu::is_convertible<E, D>::value;
 
    #else //!defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
    //No hope for compilers with move emulation for now. In several compilers is_convertible
    // leads to errors, so just move the Deleter and see if the conversion works
-   static const bool value = true;  /*is_rvalue_convertible<E, D>::value*/
+   static const bool value = true;
    #endif
 };
 

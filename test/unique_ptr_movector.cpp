@@ -496,6 +496,56 @@ void test()
 }  //namespace unique_ptr_ctor_move_sourcesink{
 
 ////////////////////////////////
+//   unique_ptr_ctor_move_convert_deleter_category
+////////////////////////////////
+//The deleter is constructed from an lvalue when E is a reference, and from an rvalue
+//(rv<E>& in C++03) when E is not a reference.
+namespace unique_ptr_ctor_move_convert_deleter_category{
+
+class src_del
+{
+   BOOST_COPYABLE_AND_MOVABLE(src_del)
+   public:
+   src_del() {}
+   src_del(const src_del &) {}
+   src_del(BOOST_RV_REF(src_del)) {}
+   src_del& operator=(BOOST_COPY_ASSIGN_REF(src_del)) { return *this; }
+   src_del& operator=(BOOST_RV_REF(src_del)) { return *this; }
+   void operator()(int *p) const { delete p; }
+};
+
+//Records if it was constructed from an lvalue or from an rvalue src_del
+struct category_del
+{
+   category_del() : from_lvalue(false), from_rvalue(false) {}
+   category_del(const src_del &) : from_lvalue(true), from_rvalue(false) {}
+   category_del(BOOST_RV_REF(src_del)) : from_lvalue(false), from_rvalue(true) {}
+   void operator()(int *p) const { delete p; }
+   bool from_lvalue, from_rvalue;
+};
+
+void test()
+{
+   //E = src_del&: constructed from an lvalue
+   {
+   src_del d;
+   bml::unique_ptr<int, src_del&> s(new int(3), d);
+   bml::unique_ptr<int, category_del> p(boost::move(s));
+   BOOST_TEST(!s && p && *p == 3);
+   BOOST_TEST(p.get_deleter().from_lvalue && !p.get_deleter().from_rvalue);
+   }
+   //E = src_del: constructed from an rvalue (rv<src_del>& in C++03)
+   {
+   bml::unique_ptr<int, src_del> s(new int(4));
+   bml::unique_ptr<int, category_del> p(boost::move(s));
+   BOOST_TEST(!s && p && *p == 4);
+   BOOST_TEST(!p.get_deleter().from_lvalue && p.get_deleter().from_rvalue);
+   }
+}
+
+}  //namespace unique_ptr_ctor_move_convert_deleter_category{
+
+////////////////////////////////
 //             main
 ////////////////////////////////
 int main()
@@ -508,6 +558,7 @@ int main()
    unique_ptr_ctor_move_convert_movedel::test();
    unique_ptr_ctor_move_convert_dfctrdelref::test();
    unique_ptr_ctor_move_sourcesink::test();
+   unique_ptr_ctor_move_convert_deleter_category::test();
 
    //Test results
    return boost::report_errors();

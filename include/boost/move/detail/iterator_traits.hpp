@@ -108,8 +108,21 @@ struct iter_value<T*>
    typedef T type;
 };
 
+//Remove cv qualifiers, as in C++20
 template<class T>
 struct iter_value<const T*>
+{
+   typedef T type;
+};
+
+template<class T>
+struct iter_value<volatile T*>
+{
+   typedef T type;
+};
+
+template<class T>
+struct iter_value<const volatile T*>
 {
    typedef T type;
 };
@@ -154,6 +167,26 @@ struct iterator_traits<const T*>
    typedef T                                 value_type;
    typedef const T*                          pointer;
    typedef const T&                          reference;
+   typedef std::random_access_iterator_tag   iterator_category;
+};
+
+template<class T>
+struct iterator_traits<volatile T*>
+{
+   typedef std::ptrdiff_t                    difference_type;
+   typedef T                                 value_type;
+   typedef volatile T*                       pointer;
+   typedef volatile T&                       reference;
+   typedef std::random_access_iterator_tag   iterator_category;
+};
+
+template<class T>
+struct iterator_traits<const volatile T*>
+{
+   typedef std::ptrdiff_t                    difference_type;
+   typedef T                                 value_type;
+   typedef const volatile T*                 pointer;
+   typedef const volatile T&                 reference;
    typedef std::random_access_iterator_tag   iterator_category;
 };
 

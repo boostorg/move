@@ -107,6 +107,10 @@
 #     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T) (__is_nothrow_assignable(T&, T&&))
 #     define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T) (__is_nothrow_constructible(T, T&&))
 #  endif
+//MSVC 12.0 (Visual 2013) __is_assignable ignores deleted assignment operators
+#  if defined(BOOST_MSVC) && (BOOST_MSVC >= 1900)
+#     define BOOST_MOVE_IS_ASSIGNABLE(T, U) __is_assignable(T, U)
+#  endif
 #endif
 
 #if defined(BOOST_CLANG)
@@ -188,6 +192,11 @@
 #     define BOOST_MOVE_HAS_NOTHROW_ASSIGN(T) (__has_nothrow_assign(T))
 #   endif
 
+//    BOOST_MOVE_IS_ASSIGNABLE
+#   if BOOST_MOVE_HAS_TRAIT(is_assignable)
+#     define BOOST_MOVE_IS_ASSIGNABLE(T, U) __is_assignable(T, U)
+#   endif
+
 //    BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR
 #   if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) 
 
@@ -255,87 +264,11 @@
 #   define BOOST_MOVE_HAS_NOTHROW_COPY(T) ((__has_nothrow_copy(T) BOOST_MOVE_INTEL_TT_OPTS))
 #   define BOOST_MOVE_HAS_NOTHROW_ASSIGN(T) ((__has_nothrow_assign(T) BOOST_MOVE_INTEL_TT_OPTS))
 
-#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
-
-   template <typename T>
-   T && boost_move_tt_declval() BOOST_NOEXCEPT;
-
-#  if defined(BOOST_GCC) && (BOOST_GCC >= 80000)
+#  if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_SFINAE_EXPR) && \
+      defined(BOOST_GCC) && (BOOST_GCC >= 80000)
 // __is_assignable / __is_constructible implemented
 #     define BOOST_MOVE_IS_ASSIGNABLE(T, U)     __is_assignable(T, U)
 #     define BOOST_MOVE_IS_CONSTRUCTIBLE(T, U)  __is_constructible(T, U)
-#  else
-
-   template<typename Tt, typename Ut>
-   class boost_move_tt_is_assignable
-   {
-      struct twochar {  char dummy[2]; };
-      template < class T
-               , class U
-               , class = decltype(boost_move_tt_declval<T>() = boost_move_tt_declval<U>())
-               > static char test(int);
-
-      template<class, class> static twochar test(...);
-
-      public:
-      static const bool value = sizeof(test<Tt, Ut>(0)) == sizeof(char);
-   };
-
-   template<typename Tt, typename Ut>
-   class boost_move_tt_is_constructible
-   {
-      struct twochar {  char dummy[2]; };
-      template < class T
-               , class U
-               , class = decltype(T(boost_move_tt_declval<U>()))
-               > static char test(int);
-
-      template<class, class> static twochar test(...);
-
-      public:
-      static const bool value = sizeof(test<Tt, Ut>(0)) == sizeof(char);
-   };
-
-#     define BOOST_MOVE_IS_ASSIGNABLE(T, U)     boost_move_tt_is_assignable<T,U>::value
-#     define BOOST_MOVE_IS_CONSTRUCTIBLE(T, U)  boost_move_tt_is_constructible<T, U>::value
-
-#  endif
-
-   template <typename T, typename U, bool = BOOST_MOVE_IS_ASSIGNABLE(T, U)>
-   struct boost_move_tt_is_nothrow_assignable
-   {
-      static const bool value = false;
-   };
-
-   template <typename T, typename U>
-   struct boost_move_tt_is_nothrow_assignable<T, U, true>
-   {
-      #if !defined(BOOST_NO_CXX11_NOEXCEPT)
-      static const bool value = noexcept(boost_move_tt_declval<T>() = boost_move_tt_declval<U>());
-      #else
-      static const bool value = false;
-      #endif
-   };
-
-   template <typename T, typename U, bool = BOOST_MOVE_IS_CONSTRUCTIBLE(T, U)>
-   struct boost_move_tt_is_nothrow_constructible
-   {
-      static const bool value = false;
-   };
-
-   template <typename T, typename U>
-   struct boost_move_tt_is_nothrow_constructible<T, U, true>
-   {
-      #if !defined(BOOST_NO_CXX11_NOEXCEPT)
-      static const bool value = noexcept(T(boost_move_tt_declval<U>()));
-      #else
-      static const bool value = false;
-      #endif
-   };
-
-#     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T)       boost_move_tt_is_nothrow_assignable<T, T&&>::value
-#     define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T)  boost_move_tt_is_nothrow_constructible<T, T&&>::value
-
 #  endif
 
 #   define BOOST_MOVE_IS_ENUM(T) __is_enum(T)
@@ -384,6 +317,95 @@
 #endif
 
 //Fallback definitions
+
+//Expression SFINAE fallbacks for the traits that have no intrinsic.
+//BOOST_MOVE_IS_ASSIGNABLE and BOOST_MOVE_IS_CONSTRUCTIBLE are only defined
+//when the result is exact (intrinsic or expression SFINAE).
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
+#define BOOST_MOVE_TT_CXX11_SFINAE_EXPR
+
+   template <typename T>
+   T && boost_move_tt_declval() BOOST_NOEXCEPT;
+
+#  if !defined(BOOST_MOVE_IS_ASSIGNABLE)
+   template<typename Tt, typename Ut>
+   class boost_move_tt_is_assignable
+   {
+      struct twochar {  char dummy[2]; };
+      template < class T
+               , class U
+               , class = decltype(boost_move_tt_declval<T>() = boost_move_tt_declval<U>())
+               > static char test(int);
+
+      template<class, class> static twochar test(...);
+
+      public:
+      static const bool value = sizeof(test<Tt, Ut>(0)) == sizeof(char);
+   };
+
+#     define BOOST_MOVE_IS_ASSIGNABLE(T, U)     boost_move_tt_is_assignable<T,U>::value
+#  endif   //!BOOST_MOVE_IS_ASSIGNABLE
+
+#  if !defined(BOOST_MOVE_IS_CONSTRUCTIBLE)
+   template<typename Tt, typename Ut>
+   class boost_move_tt_is_constructible
+   {
+      struct twochar {  char dummy[2]; };
+      template < class T
+               , class U
+               , class = decltype(T(boost_move_tt_declval<U>()))
+               > static char test(int);
+
+      template<class, class> static twochar test(...);
+
+      public:
+      static const bool value = sizeof(test<Tt, Ut>(0)) == sizeof(char);
+   };
+
+#     define BOOST_MOVE_IS_CONSTRUCTIBLE(T, U)  boost_move_tt_is_constructible<T, U>::value
+#  endif   //!BOOST_MOVE_IS_CONSTRUCTIBLE
+
+#  if !defined(BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN)
+   template <typename T, typename U, bool = BOOST_MOVE_IS_ASSIGNABLE(T, U)>
+   struct boost_move_tt_is_nothrow_assignable
+   {
+      static const bool value = false;
+   };
+
+   template <typename T, typename U>
+   struct boost_move_tt_is_nothrow_assignable<T, U, true>
+   {
+      #if !defined(BOOST_NO_CXX11_NOEXCEPT)
+      static const bool value = noexcept(boost_move_tt_declval<T>() = boost_move_tt_declval<U>());
+      #else
+      static const bool value = false;
+      #endif
+   };
+
+#     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T)       boost_move_tt_is_nothrow_assignable<T, T&&>::value
+#  endif   //!BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN
+
+#  if !defined(BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR)
+   template <typename T, typename U, bool = BOOST_MOVE_IS_CONSTRUCTIBLE(T, U)>
+   struct boost_move_tt_is_nothrow_constructible
+   {
+      static const bool value = false;
+   };
+
+   template <typename T, typename U>
+   struct boost_move_tt_is_nothrow_constructible<T, U, true>
+   {
+      #if !defined(BOOST_NO_CXX11_NOEXCEPT)
+      static const bool value = noexcept(T(boost_move_tt_declval<U>()));
+      #else
+      static const bool value = false;
+      #endif
+   };
+
+#     define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T)  boost_move_tt_is_nothrow_constructible<T, T&&>::value
+#  endif   //!BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR
+
+#endif   //BOOST_MOVE_TT_CXX11_SFINAE_EXPR
 
 #ifdef BOOST_MOVE_IS_UNION
    #define BOOST_MOVE_IS_UNION_IMPL(T) BOOST_MOVE_IS_UNION(T)
@@ -1199,9 +1221,18 @@ struct is_copy_assignable
 //       is_move_constructible
 //       is_move_assignable
 //////////////////////////////////////
-//Minimal existence checks, used to guard the is_pod shortcut of the trivial and nothrow traits
-#if defined(BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE) && !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+//Minimal existence checks, used to guard the is_pod shortcut of the trivial and nothrow traits.
+//GCC 4.6 gives a hard error, not a substitution failure, for an abstract class.
+#if defined(BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE) && !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && \
+    !(defined(BOOST_GCC) && (BOOST_GCC < 40700))
 #define BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE
+#endif
+
+#if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE)
+//The expression is tested in a parameter, as in is_copy_constructible: GCC 4.6 and 4.7
+//do not detect a deleted function when the expression is tested in the return type.
+//The tag has a std::size_t parameter: Clang rejects a narrowing sizeof to bool conversion.
+template<std::size_t> struct tt_sizeof_tag {};
 #endif
 
 template <class T>
@@ -1211,7 +1242,7 @@ struct is_default_constructible
    typedef char yes_type;
    struct no_type { char dummy[2]; };
 
-   template <class U>   static decltype((void)::new U(), yes_type()) test(int);
+   template <class U>   static yes_type test(int, tt_sizeof_tag<sizeof(::new U())>* = 0);
    template <class>     static no_type test(...);
 
    static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
@@ -1228,7 +1259,7 @@ struct is_move_constructible
    struct no_type { char dummy[2]; };
 
    template <class U>   static U&& source();
-   template <class U>   static decltype((void)U(source<U>()), yes_type()) test(int);
+   template <class U>   static yes_type test(int, tt_sizeof_tag<sizeof(U(source<U>()))>* = 0);
    template <class>     static no_type test(...);
 
    static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
@@ -1245,7 +1276,7 @@ struct is_move_assignable
    struct no_type { char dummy[2]; };
 
    template <class U>   static U&& source();
-   template <class U>   static decltype((void)(source<U&>() = source<U>()), yes_type()) test(int);
+   template <class U>   static yes_type test(int, tt_sizeof_tag<sizeof(source<U&>() = source<U>())>* = 0);
    template <class>     static no_type test(...);
 
    static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
@@ -1253,6 +1284,18 @@ struct is_move_assignable
    static const bool value = is_copy_assignable<T>::value;
 #endif
 };
+
+//////////////////////////////////////
+//       is_assignable
+//////////////////////////////////////
+//Only defined when BOOST_MOVE_IS_ASSIGNABLE is defined (the result is exact)
+#if defined(BOOST_MOVE_IS_ASSIGNABLE)
+
+template <class T, class U>
+struct is_assignable
+{  static const bool value = BOOST_MOVE_IS_ASSIGNABLE(T, U); };
+
+#endif   //BOOST_MOVE_IS_ASSIGNABLE
 
 //////////////////////////////////////
 //       is_trivially_destructible

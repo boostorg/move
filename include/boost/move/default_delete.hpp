@@ -107,13 +107,13 @@ struct is_array_del
 {};
 
 template<class T>
-void call_delete(T *p, is_array_del<true>)
+BOOST_MOVE_CXX20_CONSTEXPR void call_delete(T *p, is_array_del<true>)
 {
    delete [] p;
 }
 
 template<class T>
-void call_delete(T *p, is_array_del<false>)
+BOOST_MOVE_CXX20_CONSTEXPR void call_delete(T *p, is_array_del<false>)
 {
    delete p;
 }
@@ -190,7 +190,7 @@ struct default_delete
    //!   - If T is not an array type and U* is implicitly convertible to T*.
    //!   - If T is an array type and U* is a more CV qualified pointer to remove_extent&lt;T&gt;::type.
    template <class U>
-   default_delete(const default_delete<U>&
+   BOOST_MOVE_CXX20_CONSTEXPR default_delete(const default_delete<U>&
       BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_def_del<U BOOST_MOVE_I T>::type* =0)
       ) BOOST_NOEXCEPT
    {
@@ -205,7 +205,7 @@ struct default_delete
    //!   - If T is not an array type and U* is implicitly convertible to T*.
    //!   - If T is an array type and U* is a more CV qualified pointer to remove_extent&lt;T&gt;::type.
    template <class U>
-   BOOST_MOVE_DOC1ST(default_delete&, 
+   BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(default_delete&, 
       typename bmupd::enable_def_del<U BOOST_MOVE_I T BOOST_MOVE_I default_delete &>::type)
       operator=(const default_delete<U>&) BOOST_NOEXCEPT
    {
@@ -224,7 +224,7 @@ struct default_delete
    //!      - T is an array type, and remove_cv&lt;U&gt;::type is the same type as
    //!         remove_cv&lt;remove_extent&lt;T&gt;::type&gt;::type and U* is convertible to remove_extent&lt;T&gt;::type*.
    template <class U>
-   BOOST_MOVE_DOC1ST(void, typename bmupd::enable_defdel_call<U BOOST_MOVE_I T BOOST_MOVE_I void>::type)
+   BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(void, typename bmupd::enable_defdel_call<U BOOST_MOVE_I T BOOST_MOVE_I void>::type)
       operator()(U* ptr) const BOOST_NOEXCEPT
    {
       //U must be a complete type
@@ -238,7 +238,7 @@ struct default_delete
 
    //! <b>Effects</b>: Same as <tt>(*this)(static_cast&lt;element_type*&gt;(nullptr))</tt>.
    //!
-   void operator()(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type)) const BOOST_NOEXCEPT
+   BOOST_MOVE_CXX20_CONSTEXPR void operator()(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type)) const BOOST_NOEXCEPT
    {  BOOST_MOVE_STATIC_ASSERT(sizeof(element_type) > 0);  }
 };
 

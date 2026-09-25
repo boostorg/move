@@ -102,7 +102,7 @@ namespace movelib {
 //!
 //! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new T(std::forward&lt;Args&gt;(args)...))</tt>.
 template<class T, class... Args>
-inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
+inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)
       make_unique(BOOST_FWD_REF(Args)... args)
 {  return unique_ptr<T>(new T(::boost::forward<Args>(args)...));  }
@@ -137,7 +137,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //!
 //! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new T)</tt> (default initialization)
 template<class T>
-inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
+inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)
       make_unique_definit()
 {
@@ -160,7 +160,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //!
 //! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new remove_extent_t&lt;T&gt;[n]())</tt> (value initialization)
 template<class T>
-inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
+inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_unknown_bound)
       make_unique(std::size_t n)
 {
@@ -186,7 +186,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //!
 //! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new remove_extent_t&lt;T&gt;[n])</tt> (default initialization)
 template<class T>
-inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
+inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_unknown_bound)
       make_unique_definit(std::size_t n)
 {

@@ -812,7 +812,8 @@ Special thanks to:
    be consistent when passing across translation units. Define `BOOST_MOVE_DISABLE_TRIVIAL_ABI` to keep the
    old calling convention.
 *  `move_iterator` now correctly handles proxy and const reference types.
-*  Fixed `unique_ptr` bugs that were non-standard. Added constexpr and other later standard features.
+*  Fixed `unique_ptr` bugs that were non-standard.
+*  Added full constexpr support to `unique_ptr` in C++20 mode.
 
 [endsect]
 

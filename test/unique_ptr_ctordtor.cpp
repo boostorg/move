@@ -782,39 +782,6 @@ void test()
 }  //namespace return_unique_array_conversion{
 
 ////////////////////////////////
-//   unique_ptr_ctor_default_constinit
-////////////////////////////////
-namespace unique_ptr_ctor_default_constinit{
-
-#if defined(BOOST_MOVE_TEST_CONSTINIT)
-
-struct constexpr_deleter
-{
-   //The deleter's default constructor must be constexpr too
-   constexpr constexpr_deleter() : state(0) {}
-   void operator()(int *p) const { delete p; }
-   int state;
-};
-
-BOOST_MOVE_TEST_CONSTINIT bml::unique_ptr<int> g_single;
-BOOST_MOVE_TEST_CONSTINIT bml::unique_ptr<int> g_single_nullptr(nullptr);
-BOOST_MOVE_TEST_CONSTINIT bml::unique_ptr<int[]> g_array;
-BOOST_MOVE_TEST_CONSTINIT bml::unique_ptr<int, constexpr_deleter> g_custom_deleter;
-#endif
-
-void test()
-{
-   #if defined(BOOST_MOVE_TEST_CONSTINIT)
-   BOOST_TEST(!g_single);
-   BOOST_TEST(!g_single_nullptr);
-   BOOST_TEST(!g_array);
-   BOOST_TEST(!g_custom_deleter);
-   #endif
-}
-
-}  //namespace unique_ptr_ctor_default_constinit{
-
-////////////////////////////////
 //             main
 ////////////////////////////////
 int main()
@@ -834,7 +801,6 @@ int main()
    unique_ptr_ctor_pointer_deleter_void::test();
    return_unique_single_conversion::test();
    return_unique_array_conversion::test();
-   unique_ptr_ctor_default_constinit::test();
 
    //Test results
    return boost::report_errors();

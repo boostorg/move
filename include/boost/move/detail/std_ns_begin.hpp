@@ -35,6 +35,7 @@
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1915)
+   #define BOOST_MOVE_STD_NS_MSVC_WARNING_PUSH
    #pragma warning (push)
    #pragma warning (disable : 4643) // Forward declaring 'X' in namespace std is not permitted by the C++ Standard
 #endif

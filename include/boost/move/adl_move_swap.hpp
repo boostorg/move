@@ -187,7 +187,7 @@ BOOST_MOVE_FORCEINLINE void swap_proxy(T& x, T& y
 namespace boost_move_adl_swap{
 
 template<class T>
-BOOST_MOVE_FORCEINLINE void swap_proxy(T& x, T& y)
+BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR void swap_proxy(T& x, T& y)
 {
    using std::swap;
    swap(x, y);
@@ -200,7 +200,7 @@ BOOST_MOVE_FORCEINLINE void swap_proxy(T& x, T& y)
 namespace boost_move_adl_swap{
 
 template<class T, std::size_t N>
-void swap_proxy(T (& x)[N], T (& y)[N])
+BOOST_MOVE_CXX20_CONSTEXPR void swap_proxy(T (& x)[N], T (& y)[N])
 {
    for (std::size_t i = 0; i < N; ++i){
       ::boost_move_adl_swap::swap_proxy(x[i], y[i]);
@@ -224,7 +224,7 @@ namespace boost{
 //!   -  Otherwise a move-based swap is called, equivalent to: 
 //!      <code>T t(::boost::move(x)); x = ::boost::move(y); y = ::boost::move(t);</code>.
 template<class T>
-BOOST_MOVE_FORCEINLINE void adl_move_swap(T& x, T& y)
+BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR void adl_move_swap(T& x, T& y)
 {
    ::boost_move_adl_swap::swap_proxy(x, y);
 }

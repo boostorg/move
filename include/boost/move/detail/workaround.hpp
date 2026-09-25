@@ -164,6 +164,15 @@ template<unsigned> struct static_assert_test {};
 #endif
 #endif
 
+//BOOST_MOVE_CXX20_CONSTEXPR expands to "constexpr" when the C++20 constexpr rules are available:
+#if defined(__cpp_constexpr) && (__cpp_constexpr >= 201907L) && \
+    defined(__cpp_constexpr_dynamic_alloc) && (__cpp_constexpr_dynamic_alloc >= 201907L)
+#  define BOOST_MOVE_HAS_CXX20_CONSTEXPR
+#  define BOOST_MOVE_CXX20_CONSTEXPR constexpr
+#else
+#  define BOOST_MOVE_CXX20_CONSTEXPR
+#endif
+
 //BOOST_MOVE_TEST_CONSTINIT is defined, for tests only, when the compiler can check that a
 //variable is constant initialized (a C++11 constexpr constructor is really constexpr):
 //C++20 "constinit", or the Clang and GCC (>= 10) extensions available in C++11 mode.

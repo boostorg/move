@@ -114,8 +114,46 @@ void test_union_deleter()
    BOOST_TEST(deleted == 2);
 }
 
+//Deleter with a non-const member function
+struct stateful_deleter
+{
+   mutable int calls;
+   stateful_deleter() : calls(0) {}
+   void operator()(int *p) const { delete p; ++calls; }
+   void touch() { ++calls; }
+};
+
+//get_deleter() const returns const D&: if D is a reference type
+//the result is (A&), the result is A& (not const)
+void test_const_get_deleter()
+{
+   stateful_deleter sd;
+   {
+      const boost::movelib::unique_ptr<int, stateful_deleter&> p(new int(1), sd);
+      stateful_deleter &r = p.get_deleter();   //Non-const reference from a const unique_ptr
+      BOOST_TEST(&r == &sd);
+      r.touch();
+      BOOST_TEST(sd.calls == 1);
+   }
+   BOOST_TEST(sd.calls == 2);
+
+   const stateful_deleter csd;
+   {
+      const boost::movelib::unique_ptr<int, const stateful_deleter&> p(0, csd);
+      const stateful_deleter &r = p.get_deleter();
+      BOOST_TEST(&r == &csd);
+   }
+   {
+      //Non-reference deleter: a const unique_ptr gives a const reference
+      const boost::movelib::unique_ptr<int, stateful_deleter> p;
+      const stateful_deleter &r = p.get_deleter();
+      BOOST_TEST(r.calls == 0);
+   }
+}
+
 int main()
 {
+   test_const_get_deleter();
    #if defined(BOOST_MOVE_TEST_FINAL_DELETER)
    test_final_deleter();
    #endif

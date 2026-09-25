@@ -68,7 +68,10 @@ template <class D>
 struct deleter_types
 {
    typedef typename bmupmu::add_lvalue_reference<D>::type            del_ref;
-   typedef typename bmupmu::add_const_lvalue_reference<D>::type      del_cref;
+   //const D&: if D is a reference type, "const" does not apply to it (A& stays A&)
+   typedef typename bmupmu::if_c
+      < bmupmu::is_lvalue_reference<D>::value, D
+      , typename bmupmu::add_const_lvalue_reference<D>::type>::type  del_cref;
    #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
    typedef typename bmupmu::if_c
       < bmupmu::is_lvalue_reference<D>::value, D, del_cref >::type   deleter_arg_type1;
@@ -678,7 +681,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
 
    //! <b>Returns</b>: A reference to the stored deleter.
    //!
-   inline BOOST_MOVE_DOC1ST(const D&, typename bmupmu::add_const_lvalue_reference<D>::type)
+   inline BOOST_MOVE_DOC1ST(const D&, typename bmupd::deleter_types<D>::del_cref)
       get_deleter() const BOOST_NOEXCEPT
    {  return m_data.deleter();  }
 

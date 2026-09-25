@@ -118,7 +118,8 @@ const double QPFHolder<Dummy>::nanosecs_per_tic = get_nsec_per_tic();
 BOOST_MOVE_FORCEINLINE boost::uint64_t nsec_clock() BOOST_NOEXCEPT
 {
    double nanosecs_per_tic = QPFHolder<0>::nanosecs_per_tic;
-   
+   if (BOOST_UNLIKELY(nanosecs_per_tic == 0))
+      nanosecs_per_tic = QPFHolder<0>::get_nsec_per_tic();
    long long pcount;
    //According to MS documentation:
    //"On systems that run Windows XP or later, the function will always succeed and will thus never return zero"

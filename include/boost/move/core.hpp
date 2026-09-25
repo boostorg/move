@@ -461,13 +461,21 @@
          return x;
       }
 
+      template <class T>
+      struct move_return_rvalue
+      {  typedef T&& type;  };
+
+      template <class T>
+      struct move_return_rvalue<T&>
+      {  typedef T&& type;  };
+
       template <class Ret, class T>
       BOOST_MOVE_FORCEINLINE typename ::boost::move_detail::enable_if_c
          < !::boost::move_detail::is_lvalue_reference<Ret>::value
-         , Ret && >::type
+         , typename move_return_rvalue<T>::type >::type
             move_return(T&& t) BOOST_NOEXCEPT
       {
-         return static_cast< Ret&& >(t);
+         return static_cast< typename move_return_rvalue<T>::type >(t);
       }
 
       }  //namespace move_detail {

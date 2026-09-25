@@ -102,7 +102,7 @@ struct unique_ptr_data
    typedef typename deleter_types<D>::del_ref            del_ref;
    typedef typename deleter_types<D>::del_cref           del_cref;
 
-   inline unique_ptr_data() BOOST_NOEXCEPT
+   inline BOOST_CONSTEXPR unique_ptr_data() BOOST_NOEXCEPT
       : m_p(), d()
    {}
 
@@ -139,7 +139,8 @@ struct unique_ptr_data<P, D, false>
    typedef typename deleter_types<D>::del_ref            del_ref;
    typedef typename deleter_types<D>::del_cref           del_cref;
 
-   inline unique_ptr_data() BOOST_NOEXCEPT
+   //constexpr: unique_ptr's default and nullptr constructors are constexpr
+   inline BOOST_CONSTEXPR unique_ptr_data() BOOST_NOEXCEPT
       : D(), m_p()
    {}
 

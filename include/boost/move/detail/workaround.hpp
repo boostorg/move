@@ -164,4 +164,19 @@ template<unsigned> struct static_assert_test {};
 #endif
 #endif
 
+//BOOST_MOVE_TEST_CONSTINIT is defined, for tests only, when the compiler can check that a
+//variable is constant initialized (a C++11 constexpr constructor is really constexpr):
+//C++20 "constinit", or the Clang and GCC (>= 10) extensions available in C++11 mode.
+#if !defined(BOOST_NO_CXX11_CONSTEXPR)
+#  if defined(__cpp_constinit) && (__cpp_constinit >= 201907L)
+#     define BOOST_MOVE_TEST_CONSTINIT constinit
+#  elif defined(__clang__) && defined(__has_cpp_attribute)
+#     if __has_cpp_attribute(clang::require_constant_initialization)
+#        define BOOST_MOVE_TEST_CONSTINIT [[clang::require_constant_initialization]]
+#     endif
+#  elif defined(BOOST_GCC) && (BOOST_GCC >= 100000)
+#     define BOOST_MOVE_TEST_CONSTINIT __constinit
+#  endif
+#endif
+
 #endif   //#ifndef BOOST_MOVE_DETAIL_WORKAROUND_HPP

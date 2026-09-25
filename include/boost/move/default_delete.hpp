@@ -164,7 +164,7 @@ struct default_delete
    //!
    BOOST_CONSTEXPR default_delete()
    //Avoid "defaulted on its first declaration must not have an exception-specification" error for GCC 4.6
-   #if !defined(BOOST_GCC) || (BOOST_GCC < 40600 && BOOST_GCC >= 40700) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #if !defined(BOOST_GCC) || (BOOST_GCC < 40600 || BOOST_GCC >= 40700) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
    BOOST_NOEXCEPT
    #endif
    #if !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS) || defined(BOOST_MOVE_DOXYGEN_INVOKED)

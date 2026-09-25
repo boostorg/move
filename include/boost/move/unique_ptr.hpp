@@ -243,9 +243,23 @@ struct unique_moveconvert_assignable<T[], D, U[N], E>
    : unique_moveconvert_assignable<T[], D, U[], E>
 {};
 
+template<class D, class E>
+struct unique_deleter_is_assignable
+{
+   #if defined(BOOST_MOVE_IS_ASSIGNABLE)
+   //E&& is an rvalue when E is not a reference and an lvalue when E is an lvalue reference
+   static const bool value = bmupmu::is_assignable<D&, E&&>::value;
+   #else
+   //Without a reliable trait, just assign the deleter and see if the assignment works
+   static const bool value = true;
+   #endif
+};
+
 template<class T, class D, class U, class E, class Type = bmupmu::nat>
 struct enable_up_moveconv_assign
-   : bmupmu::enable_if_c<unique_moveconvert_assignable<T, D, U, E>::value, Type>
+   : bmupmu::enable_if_c
+      < unique_moveconvert_assignable<T, D, U, E>::value && unique_deleter_is_assignable<D, E>::value
+      , Type>
 {};
 
 ////////////////////////////////////////
@@ -574,8 +588,9 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!   deleter from an lvalue of type E shall be well-formed and shall not throw an exception.
    //!
    //! <b>Remarks</b>: This operator shall not participate in overload resolution unless:
-   //!   - <tt>unique_ptr&lt;U, E&gt;::pointer</tt> is implicitly convertible to pointer and
-   //!   - U is not an array type.
+   //!   - <tt>unique_ptr&lt;U, E&gt;::pointer</tt> is implicitly convertible to pointer,
+   //!   - U is not an array type, and
+   //!   - <tt>is_assignable&lt;D&, E&&&gt;::value</tt> is true.
    //!
    //! <b>Effects</b>: Transfers ownership from u to *this as if by calling <tt>reset(u.release())</tt> followed by
    //!   <tt>get_deleter() = std::forward&lt;E&gt;(u.get_deleter())</tt>.

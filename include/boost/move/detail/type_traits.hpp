@@ -192,14 +192,14 @@
 #     define BOOST_MOVE_HAS_NOTHROW_ASSIGN(T) (__has_nothrow_assign(T))
 #   endif
 
-//    BOOST_MOVE_IS_ASSIGNABLE
+#   if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+
+//    BOOST_MOVE_IS_ASSIGNABLE (only with rvalue references, as with other compilers)
 #   if BOOST_MOVE_HAS_TRAIT(is_assignable)
 #     define BOOST_MOVE_IS_ASSIGNABLE(T, U) __is_assignable(T, U)
 #   endif
 
 //    BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR
-#   if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) 
-
 #   if BOOST_MOVE_HAS_TRAIT(is_constructible) && BOOST_MOVE_HAS_TRAIT(is_trivially_constructible)
 #     define BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T) (__is_constructible(T, T&&) && __is_trivially_constructible(T, T&&))
 #   elif BOOST_MOVE_HAS_TRAIT(has_trivial_move_constructor)
@@ -319,8 +319,8 @@
 //Fallback definitions
 
 //Expression SFINAE fallbacks for the traits that have no intrinsic.
-//BOOST_MOVE_IS_ASSIGNABLE and BOOST_MOVE_IS_CONSTRUCTIBLE are only defined
-//when the result is exact (intrinsic or expression SFINAE).
+//BOOST_MOVE_IS_ASSIGNABLE and BOOST_MOVE_IS_CONSTRUCTIBLE are only defined when rvalue
+//references are available and the result is exact (intrinsic or expression SFINAE).
 #if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
 #define BOOST_MOVE_TT_CXX11_SFINAE_EXPR
 
@@ -1288,7 +1288,7 @@ struct is_move_assignable
 //////////////////////////////////////
 //       is_assignable
 //////////////////////////////////////
-//Only defined when BOOST_MOVE_IS_ASSIGNABLE is defined (the result is exact)
+//Only defined when BOOST_MOVE_IS_ASSIGNABLE is defined (rvalue references and an exact result)
 #if defined(BOOST_MOVE_IS_ASSIGNABLE)
 
 template <class T, class U>

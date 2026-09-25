@@ -424,6 +424,42 @@ void test()
 }  //unique_ptr_asgn_move_copydelref
 
 ////////////////////////////////
+//   unique_ptr_asgn_move_convert_nonassignable_del
+////////////////////////////////
+//The converting assignment does not participate if is_assignable<D&, E&&> is false.
+namespace unique_ptr_asgn_move_convert_nonassignable_del{
+
+#if defined(BOOST_MOVE_IS_ASSIGNABLE)
+
+struct src_del
+{
+   src_del() {}
+   void operator()(int *p) const { delete p; }
+};
+
+//Constructible, but not assignable, from src_del
+struct dst_del
+{
+   dst_del() {}
+   dst_del(const src_del &) {}
+   dst_del &operator=(const src_del &) = delete;
+   void operator()(int *p) const { delete p; }
+};
+
+#endif
+
+void test()
+{
+   #if defined(BOOST_MOVE_IS_ASSIGNABLE)
+   bml::unique_ptr<int, dst_del> p;
+   p = bml::unique_ptr<int, src_del>(new int(1));
+   BOOST_TEST(p && *p == 1);
+   #endif
+}
+
+}  //namespace unique_ptr_asgn_move_convert_nonassignable_del{
+
+////////////////////////////////
 //             main
 ////////////////////////////////
 int main()
@@ -435,6 +471,7 @@ int main()
    unique_ptr_asgn_move_defdel::test();
    unique_ptr_asgn_move_movedel::test();
    unique_ptr_asgn_move_copydelref::test();
+   unique_ptr_asgn_move_convert_nonassignable_del::test();
 
    //Test results
    return boost::report_errors();

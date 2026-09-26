@@ -173,6 +173,21 @@ template<unsigned> struct static_assert_test {};
 #  define BOOST_MOVE_CXX20_CONSTEXPR
 #endif
 
+//BOOST_MOVE_HAS_CXX20_CONSTEXPR_ARRAY_VINIT is defined when value-initialized arrays ("new T[n]()")
+//can be evaluated in a constant expression. BOOST_MOVE_CXX20_CONSTEXPR_ARRAY_VINIT expands to "constexpr"
+//in that case, and marks functions that value-initialize arrays. Failing compilers:
+//  - MSVC (tested 19.29 to 19.51) can not evaluate them in a constant expression.
+//  - Clang 10 crashes (ICE) when it evaluates them with a runtime bound. The evaluation is done
+//    even for a variable with a constexpr destructor in a non-constexpr function.
+#if defined(BOOST_MOVE_HAS_CXX20_CONSTEXPR) && !defined(BOOST_MSVC) && !(defined(__clang__) && \
+    ((!defined(__apple_build_version__) && (__clang_major__ < 11)) || \
+     ( defined(__apple_build_version__) && (__clang_major__ < 13))))
+#  define BOOST_MOVE_HAS_CXX20_CONSTEXPR_ARRAY_VINIT
+#  define BOOST_MOVE_CXX20_CONSTEXPR_ARRAY_VINIT constexpr
+#else
+#  define BOOST_MOVE_CXX20_CONSTEXPR_ARRAY_VINIT
+#endif
+
 //BOOST_MOVE_TEST_CONSTINIT is defined, for tests only, when the compiler can check that a
 //variable is constant initialized (a C++11 constexpr constructor is really constexpr):
 //C++20 "constinit", or the Clang and GCC (>= 10) extensions available in C++11 mode.

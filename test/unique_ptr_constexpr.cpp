@@ -111,13 +111,9 @@ constexpr bool test_array()
    return ok && a[0] == 4 && a[1] == 5;
 }
 
-//Value-initialized arrays ("new T[n]()", used by make_unique<T[]>). MSVC (tested 19.29 to 19.51)
-//can not evaluate them in a constant expression
-#if !defined(BOOST_MSVC)
-#define BOOST_MOVE_TEST_CONSTEXPR_ARRAY_VALUE_INIT
-#endif
-
-constexpr bool test_array_value_init()
+//Value-initialized arrays ("new T[n]()", used by make_unique<T[]>). Only constexpr
+//for compilers that support them (see BOOST_MOVE_HAS_CXX20_CONSTEXPR_ARRAY_VINIT)
+BOOST_MOVE_CXX20_CONSTEXPR_ARRAY_VINIT bool test_array_value_init()
 {
    bml::unique_ptr<int[]> a(new int[2]());
    bml::unique_ptr<int[]> m = bml::make_unique<int[]>(4);
@@ -243,9 +239,9 @@ BOOST_MOVE_STATIC_ASSERT((create_and_destroy<int[], bml::default_delete<int[]> >
 BOOST_MOVE_STATIC_ASSERT((create_and_destroy<int, nonconstexpr_call_deleter>()));
 BOOST_MOVE_STATIC_ASSERT(test_single());
 BOOST_MOVE_STATIC_ASSERT(test_array());
-#if defined(BOOST_MOVE_TEST_CONSTEXPR_ARRAY_VALUE_INIT)
+#if defined(BOOST_MOVE_HAS_CXX20_CONSTEXPR_ARRAY_VINIT)
 BOOST_MOVE_STATIC_ASSERT(test_array_value_init());
-#endif   //BOOST_MOVE_TEST_CONSTEXPR_ARRAY_VALUE_INIT
+#endif   //BOOST_MOVE_HAS_CXX20_CONSTEXPR_ARRAY_VINIT
 BOOST_MOVE_STATIC_ASSERT(test_move_and_swap());
 #if defined(BOOST_MOVE_TEST_CONSTEXPR_VIRTUAL_DTOR)
 BOOST_MOVE_STATIC_ASSERT(test_conversion());

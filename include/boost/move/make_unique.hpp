@@ -160,7 +160,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
 //!
 //! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new remove_extent_t&lt;T&gt;[n]())</tt> (value initialization)
 template<class T>
-inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(unique_ptr<T>, 
+inline BOOST_MOVE_CXX20_CONSTEXPR_ARRAY_VINIT BOOST_MOVE_DOC1ST(unique_ptr<T>,
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_unknown_bound)
       make_unique(std::size_t n)
 {

@@ -35,6 +35,10 @@ doxygen autodoc
                               \"BOOST_MOVE_DOC1ST(T1, T2)=T1\" \\
                               \"BOOST_MOVE_DOCIGN(T1) \"\\
                               \"BOOST_MOVE_FORCEINLINE=inline\" \\
+                              \"BOOST_CONSTEXPR=constexpr\" \\
+                              \"BOOST_MOVE_CXX20_CONSTEXPR=constexpr\" \\
+                              \"BOOST_MOVE_CXX20_CONSTEXPR_ARRAY_VINIT=constexpr\" \\
+                              \"BOOST_MOVE_TRIVIAL_ABI=\" \\
                   "
    ;
 

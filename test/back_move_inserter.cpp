@@ -17,6 +17,7 @@
 #include <boost/container/list.hpp>
 #include <boost/container/stable_vector.hpp>
 #include "../example/movable.hpp"
+#include <algorithm>   //std::copy
 
 template<class Container>
 int move_test()

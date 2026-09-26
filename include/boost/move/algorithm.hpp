@@ -28,10 +28,100 @@
 #include <boost/move/iterator.hpp>
 #include <boost/move/algo/move.hpp>
 
-#include <algorithm> //copy, copy_backward
-#include <memory>    //uninitialized_copy
+#include <boost/move/detail/iterator_traits.hpp>
+#include <boost/move/detail/addressof.hpp>
+#include <boost/move/detail/type_traits.hpp>
+#include <cstring>   //memmove
+#include <new>       //placement new
 
 namespace boost {
+
+/// @cond
+
+namespace move_detail {
+
+//Copy and uninitialized copy loops, so that <algorithm> and <memory> are not needed.
+//Pointers to trivially copyable types are copied with memmove, as std::copy does.
+//(not volatile types: memmove can not be used with them)
+template<class T>
+struct is_memmove_copy_assignable
+{
+   static const bool value = is_trivially_copy_assignable<T>::value &&
+                             is_same<T, typename remove_cv<T>::type>::value;
+};
+
+template<class T>
+struct is_memmove_copy_constructible
+{
+   static const bool value = is_trivially_copy_constructible<T>::value &&
+                             is_same<T, typename remove_cv<T>::type>::value;
+};
+
+template<class T>
+inline T* memmove_range(const T* f, const T* l, T* r)
+{
+   const std::size_t n = static_cast<std::size_t>(l - f);
+   if (n){
+      //void pointers: T can be trivially copyable but not trivially assignable
+      //(uninitialized copy), which some compilers warn about (-Wclass-memaccess)
+      std::memmove(static_cast<void*>(r), static_cast<const void*>(f), n*sizeof(T));
+   }
+   return r + n;
+}
+
+template<class I, class F>
+inline F copy_range(I f, I l, F r)
+{
+   for (; f != l; ++r, ++f){
+      *r = *f;
+   }
+   return r;
+}
+
+template<class T>
+inline typename enable_if_c<is_memmove_copy_assignable<T>::value, T*>::type
+   copy_range(T* f, T* l, T* r)
+{  return ::boost::move_detail::memmove_range<T>(f, l, r);  }
+
+template<class T>
+inline typename enable_if_c<is_memmove_copy_assignable<T>::value, T*>::type
+   copy_range(const T* f, const T* l, T* r)
+{  return ::boost::move_detail::memmove_range<T>(f, l, r);  }
+
+template<class I, class F>
+inline F uninitialized_copy_range(I f, I l, F r)
+{
+   typedef typename ::boost::movelib::iterator_traits<F>::value_type value_type;
+
+   F back = r;
+   BOOST_MOVE_TRY{
+      for (; f != l; ++r, ++f){
+         ::new(static_cast<void*>(::boost::move_detail::addressof(*r))) value_type(*f);
+      }
+   }
+   BOOST_MOVE_CATCH(...){
+      for (; back != r; ++back){
+         ::boost::move_detail::addressof(*back)->~value_type();
+      }
+      BOOST_MOVE_RETHROW;
+   }
+   BOOST_MOVE_CATCH_END
+   return r;
+}
+
+template<class T>
+inline typename enable_if_c<is_memmove_copy_constructible<T>::value, T*>::type
+   uninitialized_copy_range(T* f, T* l, T* r)
+{  return ::boost::move_detail::memmove_range<T>(f, l, r);  }
+
+template<class T>
+inline typename enable_if_c<is_memmove_copy_constructible<T>::value, T*>::type
+   uninitialized_copy_range(const T* f, const T* l, T* r)
+{  return ::boost::move_detail::memmove_range<T>(f, l, r);  }
+
+}  //namespace move_detail {
+
+/// @endcond
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -135,7 +225,7 @@ inline F uninitialized_copy_or_move(I f, I l, F r
    /// @endcond
    )
 {
-   return std::uninitialized_copy(f, l, r);
+   return ::boost::move_detail::uninitialized_copy_range(f, l, r);
 }
 
 //! <b>Effects</b>:
@@ -158,7 +248,7 @@ inline F copy_or_move(I f, I l, F r
    /// @endcond
    )
 {
-   return std::copy(f, l, r);
+   return ::boost::move_detail::copy_range(f, l, r);
 }
 
 }  //namespace boost {

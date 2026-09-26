@@ -25,6 +25,7 @@
 #include <boost/move/default_delete.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/move/adl_move_swap.hpp>
+#include <boost/move/traits.hpp>
 #include <cassert>
 
 #include <cstddef>   //For std::nullptr_t and std::size_t
@@ -867,6 +868,23 @@ inline BOOST_MOVE_CXX20_CONSTEXPR bool operator>=(BOOST_MOVE_DOC0PTR(bmupd::null
 {  return !(bmupd::nullptr_type() < x);  }
 
 }  //namespace movelib {
+
+#ifndef BOOST_MOVE_DOXYGEN_INVOKED
+
+//A moved-from unique_ptr stores a null pointer and does not call the deleter when it is destroyed.
+//The destructor only destroys the pointer and the deleter members.
+template <class T, class D>
+struct has_trivial_destructor_after_move< ::boost::movelib::unique_ptr<T, D> >
+{
+   BOOST_STATIC_CONSTEXPR bool value =
+      ::boost::move_detail::is_trivially_destructible
+         <typename ::boost::move_detail::pointer_type<T, D>::type>::value &&
+      ( ::boost::move_detail::is_lvalue_reference<D>::value ||
+        ::boost::has_trivial_destructor_after_move<D>::value );
+};
+
+#endif   //#ifndef BOOST_MOVE_DOXYGEN_INVOKED
+
 }  //namespace boost{
 
 #include <boost/move/detail/config_end.hpp>

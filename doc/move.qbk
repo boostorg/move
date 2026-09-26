@@ -1044,6 +1044,9 @@ Special thanks to:
 *  Fixed `unique_ptr` bugs that were non-standard.
 *  Added full constexpr support to `unique_ptr` in C++20 mode.
 *  Added a documentation chapter for `unique_ptr` ([link move.unique_ptr Smart pointer unique_ptr]).
+*  `has_trivial_destructor_after_move` is now true for `unique_ptr` when the pointer type is trivially
+   destructible and the deleter is a reference or has a trivial destructor after move. Containers such as
+   `boost::container::vector` then do not destroy moved-from `unique_ptr` elements.
 
 [endsect]
 

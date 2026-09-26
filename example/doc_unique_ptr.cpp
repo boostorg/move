@@ -132,13 +132,14 @@ void deleter_example()
 //[unique_ptr_conversion_example
 struct base
 {
+   base() : id(0) {}
    virtual ~base() {}
-   virtual int id() const { return 0; }
+   int id;
 };
 
 struct derived : base
 {
-   virtual int id() const { return 1; }
+   derived() { id = 1; }
 };
 
 void conversion_example()
@@ -146,7 +147,7 @@ void conversion_example()
    bml::unique_ptr<derived> d = bml::make_unique<derived>();
    //A unique_ptr to a derived class converts to a unique_ptr to a base class
    bml::unique_ptr<base> b(boost::move(d));
-   assert(!d && b->id() == 1);
+   assert(!d && b->id == 1);
 
    //A unique_ptr to an array converts to a unique_ptr to an array of more cv-qualified elements
    bml::unique_ptr<int[]> a(new int[2]);

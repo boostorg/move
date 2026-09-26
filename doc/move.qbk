@@ -533,6 +533,235 @@ willing to use move iterators.
 
 [endsect]
 
+[section:unique_ptr Smart pointer unique_ptr]
+
+[import ../example/doc_unique_ptr.cpp]
+
+[classref boost::movelib::unique_ptr boost::movelib::unique_ptr] is a smart pointer with exclusive
+ownership, equivalent to `std::unique_ptr`. It owns an object through a pointer and deletes the object
+when the `unique_ptr` is destroyed. A `unique_ptr` can be moved but it can not be copied, so only one
+`unique_ptr` owns a given object. It works with C++03 compilers, where the move semantics are emulated
+by [*Boost.Move], and with C++11 and later compilers, where it uses rvalue references.
+
+The library has three headers:
+
+*  [headerref boost/move/unique_ptr.hpp]: the class template `unique_ptr`.
+*  [headerref boost/move/default_delete.hpp]: the default deleter
+   [classref boost::movelib::default_delete default_delete]. `unique_ptr.hpp` includes it.
+*  [headerref boost/move/make_unique.hpp]: the creation functions (`make_unique` and others).
+   It is a separate header because in C++03 it uses the preprocessor to emulate variadic
+   templates, and this makes the compilation slower.
+
+All the names are in the namespace `boost::movelib`. The examples use this namespace alias:
+
+[c++]
+
+   namespace bml = ::boost::movelib;
+
+[section:unique_ptr_basic Basic use]
+
+The interface is the same as the interface of `std::unique_ptr`:
+
+*  The constructors take ownership of a pointer. The default and the `nullptr` constructors
+   make an empty `unique_ptr`.
+*  The move constructor and the move assignment transfer the ownership. The source `unique_ptr`
+   becomes empty.
+*  `get()` returns the stored pointer, `operator*` and `operator->` give access to the object and
+   `explicit operator bool` is true if the `unique_ptr` owns an object.
+*  `reset(p)` deletes the owned object and takes ownership of `p`. `release()` returns the pointer
+   and the `unique_ptr` does not own the object after the call.
+*  `swap` exchanges the pointers and the deleters of two `unique_ptr` objects.
+*  The comparison operators compare the stored pointers, or a stored pointer with `nullptr`.
+
+[unique_ptr_basic_example]
+
+In C++03 compilers, write the code as in the example:
+
+*  Use `boost::move` to transfer the ownership from a named `unique_ptr`. A temporary (for example,
+   the result of a function) is moved without `boost::move`.
+*  A function can return a local `unique_ptr` with `return boost::move(local);` or with
+   `return BOOST_MOVE_RET(bml::unique_ptr<T>, local);`
+   (see [link move.move_return Implicit Move when returning a local object]). A C++11 compiler does
+   the move without these.
+*  A function that takes the ownership can take a `unique_ptr` by value. A function that can take
+   the ownership, but does not always do so, can take a `BOOST_RV_REF(bml::unique_ptr<T>)` parameter.
+*  A literal `0` can be used where C++11 code uses `nullptr`, for example in `p = 0;`.
+
+[endsect]
+
+[section:unique_ptr_arrays Arrays]
+
+`unique_ptr<T[]>` owns an array created with `new[]`, and its default deleter uses `delete[]`.
+The interface for arrays has these differences:
+
+*  `operator[]` gives access to the elements. `operator*` and `operator->` are not available.
+*  The constructors and `reset` do not accept a pointer to a derived type, because the element
+   size of the array would be incorrect. They accept a pointer to a less cv-qualified type
+   (for example, `unique_ptr<const T[]>` takes a `T*`).
+
+[unique_ptr_array_example]
+
+As an extension, `unique_ptr<T[N]>` (an array of known bound) is also an array `unique_ptr`: it owns
+the result of `new T[N]`, `operator[]` asserts that the index is less than `N`, and `unique_ptr<T[N]>`
+converts to `unique_ptr<T[]>`. `std::unique_ptr<T[N]>` is not an array `unique_ptr`: it uses the
+single-object interface, so it can not take ownership of `new T[N]`.
+
+[endsect]
+
+[section:unique_ptr_make_unique Creation functions]
+
+[headerref boost/move/make_unique.hpp] has these functions. They return a `unique_ptr` that owns
+the new object. It is not necessary to write `new`, and there is no memory leak if an exception
+is thrown between the allocation and the construction of the `unique_ptr`.
+
+[table
+   [[Function]                                       [Creates]]
+   [[`make_unique<T>(args...)`]                      [`new T(args...)`]]
+   [[`make_unique_definit<T>()`]                     [`new T` (default initialization)]]
+   [[`make_unique<T[]>(n)`]                          [`new T[n]()` (value initialization: for example, zero for `int`)]]
+   [[`make_unique_definit<T[]>(n)`]                  [`new T[n]` (default initialization)]]
+   [[`make_unique_nothrow<T>(args...)`]              [`new (std::nothrow) T(args...)`]]
+   [[`make_unique_nothrow_definit<T>()`]             [`new (std::nothrow) T`]]
+   [[`make_unique_nothrow<T[]>(n)`]                  [`new (std::nothrow) T[n]()`]]
+   [[`make_unique_nothrow_definit<T[]>(n)`]          [`new (std::nothrow) T[n]`]]
+]
+
+*  The `definit` functions are equivalent to C++20's `std::make_unique_for_overwrite`. Use them when
+   the values are set after the construction, because they do not set the values of trivial types.
+*  The `nothrow` functions do not throw `std::bad_alloc`. If the allocation fails, they return an
+   empty `unique_ptr`.
+*  As in the standard, the functions are not available for arrays of known bound (`T[N]`).
+
+[endsect]
+
+[section:unique_ptr_deleters Custom deleters]
+
+The second template parameter `D` of `unique_ptr<T, D>` is the deleter: the function object that
+`unique_ptr` calls to destroy the owned object. The default is `default_delete<T>`, which calls
+`delete` (or `delete[]` for arrays). A custom deleter can release other resources, for example
+a handle of a C library:
+
+[unique_ptr_deleter_example]
+
+*  The deleter can be a function object type, a function pointer type, or an lvalue reference to
+   a function object. With a reference, the `unique_ptr` uses the deleter object of the caller,
+   and `get_deleter()` returns that reference.
+*  A deleter class without data members uses no storage: `sizeof(unique_ptr<T, D>)` is equal to
+   `sizeof(T*)`. A `final` or `union` deleter is stored as a data member.
+*  If `D` has a nested type `D::pointer`, it is the type of the stored pointer
+   (`unique_ptr<T, D>::pointer`), otherwise the stored pointer is `T*`. This makes it possible to
+   own a resource that is not identified by a raw pointer, for example a handle type that
+   satisfies the requirements of NullablePointer.
+
+[endsect]
+
+[section:unique_ptr_conversions Conversions]
+
+A `unique_ptr<U, E>` rvalue converts to a `unique_ptr<T, D>` if `U*` converts to `T*` and the deleter
+`E` converts to `D`. For arrays, the element types must be the same except for the cv-qualification:
+
+[unique_ptr_conversion_example]
+
+When the object is deleted through a pointer to a base class, the base class must have a virtual
+destructor. When the compiler gives the necessary information (a `has_virtual_destructor` intrinsic),
+[*Boost.Move] detects this error at compile time: a `unique_ptr` with a `default_delete` does not compile
+if a pointer to a derived class is converted to a pointer to a base class without a virtual destructor.
+`std::unique_ptr` compiles this code, and the program has undefined behavior.
+
+[c++]
+
+   struct no_virtual_dtor_base {};
+   struct derived2 : no_virtual_dtor_base {};
+
+   bml::unique_ptr<no_virtual_dtor_base> p(new derived2);   //Compilation error
+
+[endsect]
+
+[section:unique_ptr_containers Containers of unique_ptr]
+
+A `unique_ptr` can be stored in a container that supports move semantics. In C++03 compilers, the
+standard containers do not support move semantics, so use the [*Boost.Container] containers:
+
+[unique_ptr_container_example]
+
+[endsect]
+
+[section:unique_ptr_constexpr constexpr support]
+
+*  In C++11 and later compilers, the default constructor and the `nullptr` constructor are
+   `constexpr`. So a `unique_ptr` object with static storage duration is constant-initialized, and it
+   is not affected by the order of dynamic initialization.
+*  In C++20 compilers that support `constexpr` destructors and dynamic memory allocation in constant
+   expressions, all the operations of `unique_ptr` and `default_delete` and the functions
+   `make_unique` and `make_unique_definit` are `constexpr`. This is the same `constexpr` support as
+   C++23's `std::unique_ptr`, but it is available in C++20. The `nothrow` creation functions are not
+   `constexpr`.
+
+[c++]
+
+   constexpr bool test()
+   {
+      bml::unique_ptr<int> p = bml::make_unique<int>(1);
+      p.reset(new int(2));
+      return *p == 2;
+   }  //p deletes the int in the constant evaluation
+
+   static_assert(test(), "");
+
+[endsect]
+
+[section:unique_ptr_abi Calling convention]
+
+When the compiler supports the `trivial_abi` attribute (Clang targeting the Itanium C++ ABI),
+`unique_ptr` has this attribute. Then, if the pointer is a raw pointer and the deleter is trivially
+copyable, the compiler passes a `unique_ptr` to a function and returns it from a function in registers,
+as it does for a raw pointer.
+
+This changes the calling convention of functions that take or return a `unique_ptr` by value. All the
+translation units that pass a `unique_ptr` between them must use the same convention. To keep the
+previous calling convention, define `BOOST_MOVE_DISABLE_TRIVIAL_ABI` in all of them.
+
+[endsect]
+
+[section:unique_ptr_differences Improvements over std::unique_ptr and other differences]
+
+[*Improvements]
+
+*  [*C++03 support]: it works with C++03 compilers (see [link move.unique_ptr.unique_ptr_basic Basic use]).
+*  [*C++23 constexpr support in C++20]: all the operations are `constexpr` in C++20, but
+   `std::unique_ptr` is `constexpr` only from C++23
+   (see [link move.unique_ptr.unique_ptr_constexpr constexpr support]).
+*  [*Creation functions in all language versions]: `make_unique` is available in C++03 and C++11
+   (`std::make_unique` is C++14), and `make_unique_definit` is available before C++20 (it is equivalent
+   to C++20's `std::make_unique_for_overwrite`). The `nothrow` creation functions have no standard
+   equivalent (see [link move.unique_ptr.unique_ptr_make_unique Creation functions]).
+*  [*Arrays of known bound]: the standard has no support for `unique_ptr<T[N]>`.
+   In [*Boost.Move], `unique_ptr<T[N]>` is an array
+   `unique_ptr` that owns a `T*`, and `operator[]` asserts that the index is less than `N`
+   (see [link move.unique_ptr.unique_ptr_arrays Arrays]).
+*  [*Compile-time check of virtual destructors]: a pointer to a derived class without a virtual destructor
+   in its base class is detected at compile time. With `std::unique_ptr` the program has undefined
+   behavior (see [link move.unique_ptr.unique_ptr_conversions Conversions]).
+*  [*Passed in registers]: with Clang (Itanium C++ ABI), `unique_ptr` has the `trivial_abi` attribute by
+   default, so it is passed and returned in registers. The standard library implementations do not do
+   this by default (see [link move.unique_ptr.unique_ptr_abi Calling convention]).
+*  [*Light headers]: the headers include only `<cassert>` and `<cstddef>` from the standard library.
+   `std::unique_ptr` needs `<memory>`, which is a large header.
+
+[*Other differences]
+
+*  The relational operators (`<`, `<=`, `>` and `>=`) of two `unique_ptr` objects use the `<` operator
+   of the pointers, not `std::less`. This avoids a dependency on the `<functional>` and `<type_traits>`
+   headers. On all the platforms supported by Boost, the `<` operator of raw pointers gives a strict
+   weak order.
+*  There is no `std::hash` specialization and no stream output operator (`operator<<`).
+*  `boost::movelib::unique_ptr` and `std::unique_ptr` are different types. They do not convert to
+   each other, but ownership can be transferred with `release()`.
+
+[endsect]
+
+[endsect]
+
 [section:emulation_limitations Emulation limitations]
 
 Like any emulation effort, the library has some limitations users should take in
@@ -700,7 +929,7 @@ This different behaviour is a side-effect of the move emulation that can't be ea
 
 [endsect]
 
-[section:how_the_library_works How the library works]
+[section:how_the_library_works How the move emulation works in C++03]
 
 [*Boost.Move] is based on macros that are expanded to true rvalue references in C++0x compilers
 and emulated rvalue reference classes and conversion operators in C++03 compilers.
@@ -814,6 +1043,7 @@ Special thanks to:
 *  `move_iterator` now correctly handles proxy and const reference types.
 *  Fixed `unique_ptr` bugs that were non-standard.
 *  Added full constexpr support to `unique_ptr` in C++20 mode.
+*  Added a documentation chapter for `unique_ptr` ([link move.unique_ptr Smart pointer unique_ptr]).
 
 [endsect]
 

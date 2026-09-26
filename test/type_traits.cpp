@@ -424,6 +424,30 @@ void test()
 
 }  //namespace is_trivially_copyable_test
 
+namespace overaligned_type_test
+{
+
+#if !defined(BOOST_NO_ALIGNMENT)
+//MSVC 14.0 rejects over-aligned types passed through an ellipsis (C2718)
+struct BOOST_ALIGNMENT(64) overaligned_type
+{
+   int i;
+};
+#endif
+
+void test()
+{
+   #if !defined(BOOST_NO_ALIGNMENT)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_copy_constructible<overaligned_type>::value));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_copy_assignable<overaligned_type>::value));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_move_constructible<overaligned_type>::value));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_move_assignable<overaligned_type>::value));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_default_constructible<overaligned_type>::value));
+   #endif
+}
+
+}  //namespace overaligned_type_test
+
 namespace aligned_storage_test
 {
 
@@ -493,6 +517,7 @@ int main()
    is_nothrow_swappable_test::test();
    is_unsigned_test::test();
    is_trivially_copyable_test::test();
+   overaligned_type_test::test();
    aligned_storage_test::test();
    boost::report_errors();
 }

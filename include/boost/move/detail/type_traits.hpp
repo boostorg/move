@@ -1191,15 +1191,21 @@ struct is_copy_constructible
    // https://connect.microsoft.com/VisualStudio/feedback/details/800328/std-is-copy-constructible-is-broken
    #if defined(BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE)
       template<class U> static typename add_reference<U>::type source();
+      #if !defined(BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS) && !(defined(BOOST_GCC) && (BOOST_GCC < 40700))
+      //T is an explicit template argument, so no object is passed through the ellipsis:
+      //MSVC 14.0 rejects ellipsis for over-aligned types (C2718), and
+      //GCC 4.6 gives wrong results
+      template <class U, class = decltype(U(source<U>()))>
+      static yes_type test(int);
+      template <class>
       static no_type test(...);
-      #ifdef BOOST_NO_CXX11_DECLTYPE
-         template <class U>
-         static yes_type test(U&, bool_<sizeof(U(source<U>()))>* = 0);
+      static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
       #else
-         template <class U>
-         static yes_type test(U&, decltype(U(source<U>()))* = 0);
-      #endif
+      static no_type test(...);
+      template <class U>
+      static yes_type test(U&, decltype(U(source<U>()))* = 0);
       static const bool value = sizeof(test(source<T>())) == sizeof(yes_type);
+      #endif
    #else
    static const bool value = !has_boost_move_no_copy_constructor_or_assign_type<T>::value;
    #endif

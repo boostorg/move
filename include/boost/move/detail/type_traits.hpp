@@ -1229,24 +1229,28 @@ struct has_boost_move_no_copy_constructor_or_assign_type
 };
 
 //////////////////////////////////////
-//       is_copy_constructible
+//    BOOST_MOVE_TT_CXX11_DELETED_FUNCTION_SFINAE
 //////////////////////////////////////
+//Deleted (and inaccessible) functions can be detected with decltype in SFINAE contexts:
+// - Intel gives a hard error ("function *function_name* cannot be referenced -- it is a deleted function")
+// - MSVC 12.0 (Visual 2013) does not detect deleted special members. See:
+//   https://connect.microsoft.com/VisualStudio/feedback/details/800328/std-is-copy-constructible-is-broken
 #if !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) && !defined(BOOST_NO_CXX11_DECLTYPE) \
    && !defined(BOOST_INTEL_CXX_VERSION) && \
       !(defined(BOOST_MSVC) && _MSC_VER == 1800)
+#define BOOST_MOVE_TT_CXX11_DELETED_FUNCTION_SFINAE
+#endif
+
+//////////////////////////////////////
+//       is_copy_constructible
+//////////////////////////////////////
+#if defined(BOOST_MOVE_TT_CXX11_DELETED_FUNCTION_SFINAE)
 #define BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE
 #endif
 
 template<class T, bool = is_void<T>::value>
 struct is_copy_constructible_impl
 {
-   // Intel compiler has problems with SFINAE for copy constructors and deleted functions:
-   //
-   // error: function *function_name* cannot be referenced -- it is a deleted function
-   // static yes_type test(U&, decltype(U(boost::declval<U&>()))* = 0);
-   //                                                        ^ 
-   // MSVC 12.0 (Visual 2013) has problems when the copy constructor has been deleted. See:
-   // https://connect.microsoft.com/VisualStudio/feedback/details/800328/std-is-copy-constructible-is-broken
    #if defined(BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE)
       //The copy is made from a const lvalue, as std::is_copy_constructible does
       template<class U> static typename add_const_reference<U>::type source();
@@ -1286,23 +1290,13 @@ struct is_copy_constructible
 //////////////////////////////////////
 //       is_copy_assignable
 //////////////////////////////////////
-#if !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) && !defined(BOOST_NO_CXX11_DECLTYPE) \
-   && !defined(BOOST_INTEL_CXX_VERSION) && \
-      !(defined(BOOST_MSVC) && _MSC_VER == 1800)
+#if defined(BOOST_MOVE_TT_CXX11_DELETED_FUNCTION_SFINAE)
 #define BOOST_MOVE_TT_CXX11_IS_COPY_ASSIGNABLE
 #endif
 
 template <class T>
 struct is_copy_assignable
 {
-// Intel compiler has problems with SFINAE for copy constructors and deleted functions:
-//
-// error: function *function_name* cannot be referenced -- it is a deleted function
-// static boost::type_traits::yes_type test(T1&, decltype(T1(boost::declval<T1&>()))* = 0);
-//                                                        ^ 
-//
-// MSVC 12.0 (Visual 2013) has problems when the copy constructor has been deleted. See:
-// https://connect.microsoft.com/VisualStudio/feedback/details/800328/std-is-copy-constructible-is-broken
 #if defined(BOOST_MOVE_TT_CXX11_IS_COPY_ASSIGNABLE)
    typedef char yes_type;
    struct no_type { char dummy[2]; };
@@ -1327,7 +1321,7 @@ struct is_copy_assignable
 //////////////////////////////////////
 //Minimal existence checks, used to guard the is_pod shortcut of the trivial and nothrow traits.
 //GCC 4.6 gives a hard error, not a substitution failure, for an abstract class.
-#if defined(BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE) && !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && \
+#if defined(BOOST_MOVE_TT_CXX11_DELETED_FUNCTION_SFINAE) && !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && \
     !defined(BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS) && !(defined(BOOST_GCC) && (BOOST_GCC < 40700))
 #define BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE
 #endif

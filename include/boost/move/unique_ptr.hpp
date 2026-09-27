@@ -241,6 +241,19 @@ struct enable_up_ptr
 #define BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS
 #endif
 
+//operator* is noexcept if the dereference of pointer is noexcept (LWG 2762).
+//GCC 4.6 evaluates the exception specification when the class is instantiated,
+//which is an error for pointers that can not be dereferenced (e.g. void*).
+#if !defined(BOOST_NO_CXX11_NOEXCEPT) && !(defined(BOOST_GCC) && (BOOST_GCC < 40700))
+#define BOOST_MOVE_UNIQUE_PTR_CONDITIONAL_DEREF_NOEXCEPT
+#endif
+
+#if defined(BOOST_MOVE_UNIQUE_PTR_CONDITIONAL_DEREF_NOEXCEPT)
+#define BOOST_MOVE_UNIQUE_PTR_DEREF_NOEXCEPT noexcept(noexcept(*::boost::move_detail::declval<pointer>()))
+#else
+#define BOOST_MOVE_UNIQUE_PTR_DEREF_NOEXCEPT BOOST_NOEXCEPT
+#endif
+
 //The constructors that value-initialize the deleter require a default constructible
 //deleter that is not a pointer or a reference
 template<class D>
@@ -741,13 +754,16 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!
    //! <b>Returns</b>: <tt>*get()</tt>.
    //!
+   //! <b>Throws</b>: Nothing unless <tt>*get()</tt> throws.
+   //!
    //! <b>Remarks</b>: If T is an array type, this operator shall not participate in overload resolution.
    //!   If the compiler does not support default template arguments for function templates, the program is ill-formed instead.
+   //!   The exception specification is <tt>noexcept(noexcept(*declval&lt;pointer&gt;()))</tt> (C++23, LWG 2762).
    #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
    template<class TT = T, class = typename bmupmu::enable_if_c<!bmupmu::is_array<TT>::value>::type>
    #endif
    BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(element_type&, typename bmupmu::add_lvalue_reference<element_type>::type)
-      operator*() const BOOST_NOEXCEPT
+      operator*() const BOOST_MOVE_UNIQUE_PTR_DEREF_NOEXCEPT
    {
       BOOST_MOVE_STATIC_ASSERT((!bmupmu::is_array<T>::value));
       return *m_data.m_p;

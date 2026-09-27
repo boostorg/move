@@ -38,6 +38,21 @@ namespace bml = ::boost::movelib;
 
 namespace unique_ptr_observers_dereference{
 
+//A pointer whose dereference can throw
+struct throwing_deref_ptr
+{
+   throwing_deref_ptr() : p() {}
+   throwing_deref_ptr(int *q) : p(q) {}
+   int& operator*() const { return *p; }
+   int *p;
+};
+
+struct throwing_deref_deleter
+{
+   typedef throwing_deref_ptr pointer;
+   void operator()(throwing_deref_ptr q) const { delete q.p; }
+};
+
 void test()
 {
    //Single unique_ptr
@@ -63,6 +78,13 @@ void test()
    BOOST_TEST(p[0] == 3);
    BOOST_TEST(p[1] == 4);
    }
+   #if !defined(BOOST_NO_CXX11_NOEXCEPT)
+   BOOST_MOVE_STATIC_ASSERT(( noexcept(*::boost::move_detail::declval<const bml::unique_ptr<int>&>()) ));
+   #endif
+   #if defined(BOOST_MOVE_UNIQUE_PTR_CONDITIONAL_DEREF_NOEXCEPT)
+   //operator* is noexcept if the dereference of pointer is noexcept (LWG 2762)
+   BOOST_MOVE_STATIC_ASSERT(( !noexcept(*::boost::move_detail::declval<const bml::unique_ptr<int, throwing_deref_deleter>&>()) ));
+   #endif
 }
 
 }  //namespace unique_ptr_observers_dereference{

@@ -155,6 +155,18 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
     return unique_ptr<T>(new (*boost::move_detail::nothrow_holder<>::pnothrow)T);
 }
 
+//! <b>Remarks</b>: This function shall not participate in overload resolution unless T is not an array.
+//!
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new T)</tt> (default initialization). Same as
+//!   <tt>make_unique_definit&lt;T&gt;()</tt> and C++20's <tt>std::make_unique_for_overwrite&lt;T&gt;()</tt>.
+template<class T>
+inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(unique_ptr<T>,
+   typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)
+      make_unique_for_overwrite()
+{
+    return unique_ptr<T>(new T);
+}
+
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of 
 //!   unknown bound.
 //!
@@ -207,6 +219,20 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
     return unique_ptr<T>(new (*boost::move_detail::nothrow_holder<>::pnothrow) U[n]);
 }
 
+//! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of
+//!   unknown bound.
+//!
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new remove_extent_t&lt;T&gt;[n])</tt> (default initialization). Same as
+//!   <tt>make_unique_definit&lt;T&gt;(n)</tt> and C++20's <tt>std::make_unique_for_overwrite&lt;T&gt;(n)</tt>.
+template<class T>
+inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(unique_ptr<T>,
+   typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_unknown_bound)
+      make_unique_for_overwrite(std::size_t n)
+{
+    typedef typename ::boost::move_detail::remove_extent<T>::type U;
+    return unique_ptr<T>(new U[n]);
+}
+
 #if !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is
@@ -222,6 +248,13 @@ template<class T, class... Args>
 inline BOOST_MOVE_DOC1ST(unspecified, 
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_known_bound)
       make_unique_definit(BOOST_FWD_REF(Args) ...) = delete;
+
+//! <b>Remarks</b>: This function shall not participate in overload resolution unless T is
+//!   an array of known bound.
+template<class T, class... Args>
+inline BOOST_MOVE_DOC1ST(unspecified,
+   typename ::boost::move_detail::unique_ptr_if<T>::t_is_array_of_known_bound)
+      make_unique_for_overwrite(BOOST_FWD_REF(Args) ...) = delete;
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is
 //!   an array of known bound.

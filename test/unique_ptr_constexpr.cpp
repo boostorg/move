@@ -188,7 +188,12 @@ constexpr bool test_make_unique()
    bml::unique_ptr<int[]> ua = bml::make_unique_definit<int[]>(2);
    ua[0] = 1;
    ua[1] = 2;
-   return *p == 9 && d->x == 3 && d->y == 4 && *u == 11 && ua[0] + ua[1] == 3;
+   bml::unique_ptr<int> o = bml::make_unique_for_overwrite<int>();
+   *o = 12;
+   bml::unique_ptr<int[]> oa = bml::make_unique_for_overwrite<int[]>(2);
+   oa[0] = 3;
+   oa[1] = 4;
+   return *p == 9 && d->x == 3 && d->y == 4 && *u == 11 && ua[0] + ua[1] == 3 && *o == 12 && oa[0] + oa[1] == 7;
 }
 
 

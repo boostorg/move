@@ -628,6 +628,8 @@ is thrown between the allocation and the construction of the `unique_ptr`.
 
 *  The `definit` functions are equivalent to C++20's `std::make_unique_for_overwrite`. Use them when
    the values are set after the construction, because they do not set the values of trivial types.
+   `make_unique_for_overwrite<T>()` and `make_unique_for_overwrite<T[]>(n)` are also available,
+   for compatibility.
 *  The `nothrow` functions do not throw `std::bad_alloc`. If the allocation fails, they return an
    empty `unique_ptr`.
 *  As in the standard, the functions are not available for arrays of known bound (`T[N]`).
@@ -732,8 +734,8 @@ previous calling convention, define `BOOST_MOVE_DISABLE_TRIVIAL_ABI` in all of t
    `std::unique_ptr` is `constexpr` only from C++23
    (see [link move.unique_ptr.unique_ptr_constexpr constexpr support]).
 *  [*Creation functions in all language versions]: `make_unique` is available in C++03 and C++11
-   (`std::make_unique` is C++14), and `make_unique_definit` is available before C++20 (it is equivalent
-   to C++20's `std::make_unique_for_overwrite`). The `nothrow` creation functions have no standard
+   (`std::make_unique` is C++14), and `make_unique_for_overwrite` (also named `make_unique_definit`)
+   is available before C++20. The `nothrow` creation functions have no standard
    equivalent (see [link move.unique_ptr.unique_ptr_make_unique Creation functions]).
 *  [*Arrays of known bound]: the standard has no support for `unique_ptr<T[N]>`.
    In [*Boost.Move], `unique_ptr<T[N]>` is an array
@@ -1054,6 +1056,7 @@ Special thanks to:
       destructible and the deleter is a reference or has a trivial destructor after move. Containers such as
       `boost::container::vector` then do not destroy moved-from `unique_ptr` elements.
    *  Added limited `hash_value` support for `unique_ptr`, so that it can be used with `boost::hash` and [*Boost.Unordered].
+   *  Added `make_unique_for_overwrite`, the C++20 name of `make_unique_definit`.
 
 [endsect]
 

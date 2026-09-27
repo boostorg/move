@@ -472,7 +472,8 @@
 #endif
 
 #ifdef BOOST_MOVE_HAS_TRIVIAL_DESTRUCTOR
-   #define BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T)   BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_DESTRUCTOR(T))
+   #define BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T)   (::boost::move_detail::is_destructible<T>::value &&\
+                                                      BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_DESTRUCTOR(T)))
 #else
    #define BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T)   ::boost::move_detail::is_pod<T>::value
 #endif
@@ -1318,6 +1319,7 @@ struct is_copy_assignable
 //       is_default_constructible
 //       is_move_constructible
 //       is_move_assignable
+//       is_destructible
 //////////////////////////////////////
 //Minimal existence checks of special member functions (they are not deleted or inaccessible), used to
 //guard the is_pod shortcut and the intrinsics of the trivial and nothrow traits. Without
@@ -1333,6 +1335,7 @@ struct is_copy_assignable
 #define BOOST_MOVE_TT_CXX11_IS_DEFAULT_CONSTRUCTIBLE
 #define BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE
 #define BOOST_MOVE_TT_CXX11_IS_MOVE_ASSIGNABLE
+#define BOOST_MOVE_TT_CXX11_IS_DESTRUCTIBLE
 #endif
 
 //The expression is tested in a default template argument: GCC 4.7 does not detect
@@ -1353,6 +1356,36 @@ struct is_default_constructible
    static const bool value = true;
 #endif
 };
+
+//The destructor is not deleted or inaccessible (references are always destructible).
+//Some intrinsics (e.g. GCC's __has_trivial_destructor) are true for deleted destructors.
+template <class T, bool = is_reference<T>::value>
+struct is_destructible_impl
+{
+#if defined(BOOST_MOVE_TT_CXX11_IS_DESTRUCTIBLE)
+   typedef char yes_type;
+   struct no_type { char dummy[2]; };
+
+   template <class U>   static U& source();
+   template <class U, class = decltype(source<U>().~U())> static yes_type test(int);
+   template <class>     static no_type test(...);
+
+   static const bool value = sizeof(test<typename remove_all_extents<T>::type>(0)) == sizeof(yes_type);
+#else
+   static const bool value = true;
+#endif
+};
+
+template <class T>
+struct is_destructible_impl<T, true>
+{
+   static const bool value = true;
+};
+
+template <class T>
+struct is_destructible
+   : is_destructible_impl<T>
+{};
 
 template <class T>
 struct is_move_constructible
@@ -1403,9 +1436,10 @@ struct is_assignable
 //////////////////////////////////////
 //       is_trivially_destructible
 //////////////////////////////////////
+//References are trivially destructible (some intrinsics, e.g. MSVC 9.0's, are false for them)
 template<class T>
 struct is_trivially_destructible
-{  static const bool value = BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T); };
+{  static const bool value = is_reference<T>::value || BOOST_MOVE_IS_TRIVIALLY_DESTRUCTIBLE(T); };
 
 //////////////////////////////////////
 //       is_trivially_copyable

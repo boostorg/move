@@ -731,6 +731,31 @@ void test()
 
 }  //namespace alignment_of_abstract_test
 
+namespace destructible_test
+{
+
+#if !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)
+struct deleted_dtor
+{
+   ~deleted_dtor() = delete;
+};
+#endif
+
+void test()
+{
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_destructible<int>::value));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_destructible<int&>::value));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_destructible<int[3]>::value));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_destructible<pod_struct>::value));
+   #if defined(BOOST_MOVE_TT_CXX11_IS_DESTRUCTIBLE)
+   //Some intrinsics report deleted destructors as trivial
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_destructible<deleted_dtor>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_destructible<deleted_dtor[2]>::value));
+   #endif
+}
+
+}  //namespace destructible_test
+
 int main()
 {
    trivially_memcopyable_test::test();
@@ -750,5 +775,6 @@ int main()
    is_convertible_test::test();
    is_copy_constructible_test::test();
    alignment_of_abstract_test::test();
+   destructible_test::test();
    return boost::report_errors();
 }

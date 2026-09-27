@@ -47,6 +47,11 @@
 
 namespace boost{
 // @cond
+
+//Forward declaration of Boost.ContainerHash's hash (boost/container_hash/hash_fwd.hpp),
+//used by hash_value(const unique_ptr&) without a dependency on Boost.ContainerHash
+template<class T> struct hash;
+
 namespace move_upd {
 
 ////////////////////////////////////////////
@@ -906,6 +911,16 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
 template <class T, class D>
 inline BOOST_MOVE_CXX20_CONSTEXPR void swap(unique_ptr<T, D> &x, unique_ptr<T, D> &y) BOOST_NOEXCEPT
 {  x.swap(y); }
+
+//! <b>Returns</b>: <tt>boost::hash&lt;typename unique_ptr&lt;T, D&gt;::pointer&gt;()(x.get())</tt>, the same value as
+//!   <tt>std::hash</tt> gives for <tt>std::unique_ptr</tt>. <tt>boost::hash</tt> and the containers that use it
+//!   (e.g. Boost.Unordered) find this function with argument-dependent lookup.
+//!
+//! <b>Note</b>: This header does not include Boost.ContainerHash, so a direct call to this function
+//!   requires the definition of <tt>boost::hash</tt> (<tt>boost/container_hash/hash.hpp</tt>).
+template <class T, class D>
+inline std::size_t hash_value(const unique_ptr<T, D> &x)
+{  return ::boost::hash<typename unique_ptr<T, D>::pointer>()(x.get());  }
 
 //! <b>Returns</b>: <tt>x.get() == y.get()</tt>.
 //!

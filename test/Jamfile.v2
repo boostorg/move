@@ -12,6 +12,8 @@ import testing ;
 project : requirements
     <library>/boost/core//boost_core
     <library>/boost/container//boost_container
+    <library>/boost/container_hash//boost_container_hash
+    <library>/boost/unordered//boost_unordered
     ;
 
 rule test_all

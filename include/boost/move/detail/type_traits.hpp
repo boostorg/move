@@ -1673,6 +1673,10 @@ struct alignment_logic
 #if defined(BOOST_MSVC) && (BOOST_MSVC >= 1400)
 //alignment_of_hack can't have members of an abstract type: use __alignof for them
 template< typename T, bool = __is_abstract(T) >
+#elif !defined(BOOST_MOVE_ALIGNMENT_OF) && defined(__GNUC__)
+//alignment_of_hack can't have members of an abstract type: use __alignof__ for them.
+//__alignof__ only gives a wrong result (the preferred alignment) for scalar types
+template< typename T, bool = __is_abstract(T) >
 #else
 template< typename T >
 #endif
@@ -1696,6 +1700,12 @@ struct alignment_of_impl<T, true>
 #elif !defined(BOOST_MOVE_ALIGNMENT_OF)
    : alignment_logic< sizeof(alignment_of_hack<T>) - 2*sizeof(T), sizeof(T)>
 {};
+
+#if defined(__GNUC__)
+template< typename T >
+struct alignment_of_impl<T, true>
+{  static const std::size_t value = __alignof__(T);  };
+#endif
 #else
 {  static const std::size_t value = BOOST_MOVE_ALIGNMENT_OF(T);  };
 #endif

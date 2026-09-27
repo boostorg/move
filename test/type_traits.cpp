@@ -580,6 +580,155 @@ void test()
 
 }  //namespace aligned_storage_test
 
+namespace assignable_test
+{
+
+void test()
+{
+   //const objects, arrays and void can't be assigned
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<const int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<const int&>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<int[3]>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<void>::value));
+   BOOST_MOVE_STATIC_ASSERT( (boost::move_detail::is_copy_assignable<int&>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_move_assignable<const int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_move_assignable<int[3]>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_assignable<const int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_assignable<int[3]>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_move_assignable<const int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_move_assignable<int[3]>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_nothrow_copy_assignable<const int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_nothrow_move_assignable<int[3]>::value));
+}
+
+}  //namespace assignable_test
+
+namespace make_unsigned_test
+{
+
+void test()
+{
+   using boost::move_detail::is_same;
+   using boost::move_detail::make_unsigned;
+   BOOST_MOVE_STATIC_ASSERT((is_same<make_unsigned<char>::type, unsigned char>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_same<make_unsigned<signed char>::type, unsigned char>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_same<make_unsigned<unsigned char>::type, unsigned char>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_same<make_unsigned<int>::type, unsigned int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_same<make_unsigned<unsigned int>::type, unsigned int>::value));
+   //cv-qualifiers are kept
+   BOOST_MOVE_STATIC_ASSERT((is_same<make_unsigned<const int>::type, const unsigned int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_same<make_unsigned<volatile short>::type, volatile unsigned short>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_same<make_unsigned<const volatile long>::type, const volatile unsigned long>::value));
+   //Character types map to the unsigned integer type of the same size
+   BOOST_MOVE_STATIC_ASSERT((sizeof(make_unsigned<wchar_t>::type) == sizeof(wchar_t)));
+   BOOST_MOVE_STATIC_ASSERT((make_unsigned<wchar_t>::type(-1) > 0u));
+   #ifndef BOOST_NO_CXX11_CHAR16_T
+   BOOST_MOVE_STATIC_ASSERT((is_same<make_unsigned<char16_t>::type, unsigned short>::value));
+   #endif
+   #ifndef BOOST_NO_CXX11_CHAR32_T
+   BOOST_MOVE_STATIC_ASSERT((sizeof(make_unsigned<char32_t>::type) == sizeof(char32_t)));
+   BOOST_MOVE_STATIC_ASSERT((make_unsigned<char32_t>::type(-1) > 0u));
+   #endif
+   #if defined(__cpp_char8_t) && __cpp_char8_t >= 201811L
+   BOOST_MOVE_STATIC_ASSERT((is_same<make_unsigned<char8_t>::type, unsigned char>::value));
+   #endif
+}
+
+}  //namespace make_unsigned_test
+
+namespace is_function_test
+{
+
+struct cls { void mem(); };
+
+void test()
+{
+   using boost::move_detail::is_function;
+   BOOST_MOVE_STATIC_ASSERT(( is_function<void()>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_function<int(int, ...)>::value));
+   #if !defined(BOOST_NO_CXX11_REF_QUALIFIERS)
+   //Qualified function types can't be referenced
+   BOOST_MOVE_STATIC_ASSERT(( is_function<void() const>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_function<void() const volatile>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_function<void() &>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_function<void() const &&>::value));
+   #endif
+   BOOST_MOVE_STATIC_ASSERT((!is_function<int>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_function<const int>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_function<void>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_function<int[3]>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_function<int[]>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_function<void(*)()>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_function<void (cls::*)()>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_function<cls>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_function<int&>::value));
+}
+
+}  //namespace is_function_test
+
+namespace is_convertible_test
+{
+
+void test()
+{
+   using boost::move_detail::is_convertible;
+   //Any (cv) void converts to any (cv) void
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<void, void>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<const void, void>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<void, const volatile void>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<int, void>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<void, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<int, long>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<int*, const int*>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<const int*, int*>::value));
+}
+
+}  //namespace is_convertible_test
+
+namespace is_copy_constructible_test
+{
+
+//Only a copy constructor from a non-const lvalue
+struct nonconst_copy
+{
+   nonconst_copy() {}
+   nonconst_copy(nonconst_copy&) {}
+};
+
+void test()
+{
+   using boost::move_detail::is_copy_constructible;
+   BOOST_MOVE_STATIC_ASSERT(!(is_copy_constructible<void>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_copy_constructible<const void>::value));
+   BOOST_MOVE_STATIC_ASSERT( (is_copy_constructible<int>::value));
+   BOOST_MOVE_STATIC_ASSERT( (is_copy_constructible<const int>::value));
+   BOOST_MOVE_STATIC_ASSERT( (is_copy_constructible<int&>::value));
+   #if defined(BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE)
+   //The copy is made from a const lvalue
+   BOOST_MOVE_STATIC_ASSERT(!(is_copy_constructible<nonconst_copy>::value));
+   #endif
+}
+
+}  //namespace is_copy_constructible_test
+
+namespace alignment_of_abstract_test
+{
+
+struct abstract_t
+{
+   virtual void f() = 0;
+   virtual ~abstract_t() {}
+};
+
+void test()
+{
+   //The alignment of an abstract class can be obtained (it contains a pointer to the vtable)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::alignment_of<abstract_t>::value %
+                             boost::move_detail::alignment_of<void*>::value == 0));
+}
+
+}  //namespace alignment_of_abstract_test
+
 int main()
 {
    trivially_memcopyable_test::test();
@@ -593,5 +742,11 @@ int main()
    is_trivially_copyable_test::test();
    overaligned_type_test::test();
    aligned_storage_test::test();
+   assignable_test::test();
+   make_unsigned_test::test();
+   is_function_test::test();
+   is_convertible_test::test();
+   is_copy_constructible_test::test();
+   alignment_of_abstract_test::test();
    return boost::report_errors();
 }

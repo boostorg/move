@@ -673,8 +673,38 @@ struct is_unsigned
 //////////////////////////
 //    make_unsigned
 //////////////////////////
+//Unsigned integer type with the same size as a character type
+template <class T>
+struct make_unsigned_same_size
+{
+   typedef typename if_c< sizeof(T) == sizeof(unsigned char),  unsigned char
+         , typename if_c< sizeof(T) == sizeof(unsigned short), unsigned short
+         , typename if_c< sizeof(T) == sizeof(unsigned int),   unsigned int
+         #ifdef BOOST_HAS_LONG_LONG
+         , typename if_c< sizeof(T) == sizeof(unsigned long),  unsigned long
+         , ::boost::ulong_long_type
+         >::type
+         #else
+         , unsigned long
+         #endif
+         >::type >::type >::type type;
+};
+
 template <class T>
 struct make_unsigned_impl                                         {  typedef T type;   };
+template <> struct make_unsigned_impl<char>                       {  typedef unsigned char  type; };
+#ifndef BOOST_NO_INTRINSIC_WCHAR_T
+template <> struct make_unsigned_impl<wchar_t>                    {  typedef make_unsigned_same_size<wchar_t>::type  type; };
+#endif
+#ifndef BOOST_NO_CXX11_CHAR16_T
+template <> struct make_unsigned_impl<char16_t>                   {  typedef make_unsigned_same_size<char16_t>::type type; };
+#endif
+#ifndef BOOST_NO_CXX11_CHAR32_T
+template <> struct make_unsigned_impl<char32_t>                   {  typedef make_unsigned_same_size<char32_t>::type type; };
+#endif
+#if defined(__cpp_char8_t) && __cpp_char8_t >= 201811L
+template <> struct make_unsigned_impl<char8_t>                    {  typedef unsigned char  type; };
+#endif
 template <> struct make_unsigned_impl<signed char>                {  typedef unsigned char  type; };
 template <> struct make_unsigned_impl<signed short>               {  typedef unsigned short type; };
 template <> struct make_unsigned_impl<signed int>                 {  typedef unsigned int   type; };
@@ -688,10 +718,23 @@ template <> struct make_unsigned_impl< ::boost::int128_type > { typedef ::boost:
 #endif
 
 
+//Keep cv-qualifiers
 template <class T>
 struct make_unsigned
-   : make_unsigned_impl<typename remove_cv<T>::type>
+   : make_unsigned_impl<T>
 {};
+
+template <class T>
+struct make_unsigned<const T>
+{  typedef const typename make_unsigned_impl<T>::type type;   };
+
+template <class T>
+struct make_unsigned<volatile T>
+{  typedef volatile typename make_unsigned_impl<T>::type type;   };
+
+template <class T>
+struct make_unsigned<const volatile T>
+{  typedef const volatile typename make_unsigned_impl<T>::type type;   };
 
 //////////////////////////
 //    is_floating_point
@@ -911,6 +954,31 @@ struct is_null_pointer
 //////////////////////////////////////
 //          is_function
 //////////////////////////////////////
+#if !defined(BOOST_MSVC) || (BOOST_MSVC >= 1900)
+
+//Only function types and reference types can't be const-qualified, so "const T"
+//is not const for them. This does not form a reference to T, so it also works
+//for qualified function types (e.g. "void() const"), that can't be referenced.
+#if defined(BOOST_MSVC)
+#pragma warning (push)
+#pragma warning (disable : 4180) //qualifier applied to function type has no meaning; ignored
+#endif
+
+template <class T, bool = is_reference<T>::value>
+struct is_function_impl
+{  static const bool value = !is_const<const T>::value; };
+
+template <class T>
+struct is_function_impl<T, true>
+{  static const bool value = false; };
+
+#if defined(BOOST_MSVC)
+#pragma warning (pop)
+#endif
+
+#else //!defined(BOOST_MSVC) || (BOOST_MSVC >= 1900)
+
+//Older MSVC versions apply "const" to function types, and they don't support qualified function types.
 //Inspired by libc++, thanks to Howard Hinnant
 //For a function to pointer an lvalue of function type T can be implicitly converted to a prvalue
 //pointer to that function. This does not apply to non-static member functions because lvalues
@@ -929,17 +997,21 @@ struct is_reference_convertible_to_pointer
 // - void (to avoid forming a reference to void later)
 // - references (e.g.: filtering reference to functions)
 // - nullptr_t (convertible to pointer)
+// - arrays (convertible to pointer, and a reference to an unbounded array is an error in old compilers)
 template < class T
          , bool Filter = is_class_or_union<T>::value  ||
                          is_void<T>::value            ||
                          is_reference<T>::value       ||
-                         is_nullptr_t<T>::value       >
+                         is_nullptr_t<T>::value       ||
+                         is_array<T>::value           >
 struct is_function_impl
 {  static const bool value = is_reference_convertible_to_pointer<T>::value; };
 
 template <class T>
 struct is_function_impl<T, true>
 {  static const bool value = false; };
+
+#endif   //!defined(BOOST_MSVC) || (BOOST_MSVC >= 1900)
 
 template <class T>
 struct is_function
@@ -1165,8 +1237,8 @@ struct has_boost_move_no_copy_constructor_or_assign_type
 #define BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE
 #endif
 
-template<class T>
-struct is_copy_constructible
+template<class T, bool = is_void<T>::value>
+struct is_copy_constructible_impl
 {
    // Intel compiler has problems with SFINAE for copy constructors and deleted functions:
    //
@@ -1176,7 +1248,8 @@ struct is_copy_constructible
    // MSVC 12.0 (Visual 2013) has problems when the copy constructor has been deleted. See:
    // https://connect.microsoft.com/VisualStudio/feedback/details/800328/std-is-copy-constructible-is-broken
    #if defined(BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE)
-      template<class U> static typename add_reference<U>::type source();
+      //The copy is made from a const lvalue, as std::is_copy_constructible does
+      template<class U> static typename add_const_reference<U>::type source();
       #if !defined(BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS) && !(defined(BOOST_GCC) && (BOOST_GCC < 40700))
       //T is an explicit template argument, so no object is passed through the ellipsis:
       //MSVC 14.0 rejects ellipsis for over-aligned types (C2718), and
@@ -1189,13 +1262,25 @@ struct is_copy_constructible
       #else
       static no_type test(...);
       template <class U>
-      static yes_type test(U&, decltype(U(source<U>()))* = 0);
+      static yes_type test(const U&, decltype(U(source<U>()))* = 0);
       static const bool value = sizeof(test(source<T>())) == sizeof(yes_type);
       #endif
    #else
    static const bool value = !has_boost_move_no_copy_constructor_or_assign_type<T>::value;
    #endif
 };
+
+//void can't be copied (and "const void&" can't be formed)
+template<class T>
+struct is_copy_constructible_impl<T, true>
+{
+   static const bool value = false;
+};
+
+template<class T>
+struct is_copy_constructible
+   : is_copy_constructible_impl<T>
+{};
 
 
 //////////////////////////////////////
@@ -1228,7 +1313,10 @@ struct is_copy_assignable
 
    static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
 #else
-   static const bool value = !has_boost_move_no_copy_constructor_or_assign_type<T>::value;
+   //const objects, arrays and void can't be assigned
+   typedef typename remove_reference<T>::type no_ref_t;
+   static const bool value = !is_const<no_ref_t>::value && !is_array<no_ref_t>::value && !is_void<T>::value &&
+                             !has_boost_move_no_copy_constructor_or_assign_type<T>::value;
 #endif
 };
 
@@ -1545,7 +1633,12 @@ template <unsigned A, unsigned S>
 struct alignment_logic
 {  static const std::size_t value = A < S ? A : S; };
 
+#if defined(BOOST_MSVC) && (BOOST_MSVC >= 1400)
+//alignment_of_hack can't have members of an abstract type: use __alignof for them
+template< typename T, bool = __is_abstract(T) >
+#else
 template< typename T >
+#endif
 struct alignment_of_impl
 #if defined(BOOST_MSVC) && (BOOST_MSVC >= 1400)
     // With MSVC both the native __alignof operator
@@ -1553,6 +1646,16 @@ struct alignment_of_impl
     // Using a combination of the two seems to make the most of a bad job:
    : alignment_logic< sizeof(alignment_of_hack<T>) - 2*sizeof(T), __alignof(T)>
 {};
+
+template< typename T >
+struct alignment_of_impl<T, true>
+#if (BOOST_MSVC >= 1910)
+{  static const std::size_t value = __alignof(T);  };
+#else
+//MSVC 14.0 and older can't use __alignof with abstract classes: the largest
+//power of two that divides sizeof(T) is a multiple of the alignment of T
+{  static const std::size_t value = sizeof(T) & (~sizeof(T) + 1u);  };
+#endif
 #elif !defined(BOOST_MOVE_ALIGNMENT_OF)
    : alignment_logic< sizeof(alignment_of_hack<T>) - 2*sizeof(T), sizeof(T)>
 {};

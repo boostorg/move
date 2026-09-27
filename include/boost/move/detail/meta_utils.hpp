@@ -270,7 +270,7 @@ struct has_pointer_type
 //use intrinsic since in MSVC
 //overaligned types can't go through ellipsis
 template <class T, class U>
-struct is_convertible
+struct is_convertible_impl
 {
    static const bool value = __is_convertible_to(T, U);
 };
@@ -284,7 +284,7 @@ template <class T>
 T&& is_convertible_declval() BOOST_NOEXCEPT;
 
 template <class T, class U>
-class is_convertible
+class is_convertible_impl
 {
    typedef char true_t;
    class false_t { char dummy[2]; };
@@ -300,7 +300,7 @@ class is_convertible
 #else
 
 template <class T, class U>
-class is_convertible
+class is_convertible_impl
 {
    #if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
    //T&& is an rvalue when T is not a reference and an lvalue when T is an lvalue reference
@@ -318,6 +318,32 @@ class is_convertible
 };
 
 #endif
+
+template <class T> struct is_convertible_cv_void                      {  static const bool value = false; };
+template <>        struct is_convertible_cv_void<void>                {  static const bool value = true;  };
+template <>        struct is_convertible_cv_void<const void>          {  static const bool value = true;  };
+template <>        struct is_convertible_cv_void<volatile void>       {  static const bool value = true;  };
+template <>        struct is_convertible_cv_void<const volatile void> {  static const bool value = true;  };
+
+//void can't be passed or converted as an expression: any (cv) void converts
+//to any (cv) void, and void and non-void types are not convertible.
+template < class T, class U
+         , bool = is_convertible_cv_void<T>::value || is_convertible_cv_void<U>::value>
+struct is_convertible_void_filter
+   : is_convertible_impl<T, U>
+{};
+
+template <class T, class U>
+struct is_convertible_void_filter<T, U, true>
+{
+   static const bool value = is_convertible_cv_void<T>::value && is_convertible_cv_void<U>::value;
+};
+
+template <class T, class U>
+struct is_convertible
+   : is_convertible_void_filter<T, U>
+{};
+
 
 template <class T, class U, bool IsSame = is_same<T, U>::value>
 struct is_same_or_convertible

@@ -61,6 +61,17 @@ class movable_swap_member : public swap_stats
    friend void swap(movable_swap_member &, movable_swap_member &)    { ++friend_swap_calls; }
 };
 
+//Movable class with a member swap, but no swap found by ADL
+class movable_only_member_swap : public swap_stats
+{
+   BOOST_MOVABLE_BUT_NOT_COPYABLE(movable_only_member_swap)
+   public:
+   movable_only_member_swap()                                                  {}
+   movable_only_member_swap(BOOST_RV_REF(movable_only_member_swap))            { ++move_cnstor_calls; }
+   movable_only_member_swap & operator=(BOOST_RV_REF(movable_only_member_swap)){ ++move_assign_calls; return *this; }
+   void swap(movable_only_member_swap &)                                       { ++member_swap_calls; }
+};
+
 class copyable : public swap_stats
 {
    public:
@@ -83,6 +94,53 @@ class no_swap : public swap_stats
    friend bool operator!=(const no_swap &x, const no_swap &y) {  return !(x==y); }
 };
 
+namespace adl_ns {
+
+//A pointer to this class has a swap found by ADL, it must be called
+struct ptr_swap_class {};
+
+//A class with no swap found by ADL, swapped with moves
+struct value_class
+{
+   int i;
+};
+
+unsigned int ptr_swap_calls = 0;
+
+void swap(ptr_swap_class *&x, ptr_swap_class *&y)
+{
+   ptr_swap_class *const t = x; x = y; y = t;
+   ++ptr_swap_calls;
+}
+
+enum enum_type { enum_a, enum_b };
+
+}  //namespace adl_ns {
+
+#if defined(BOOST_MOVE_HAS_CXX20_CONSTEXPR)
+
+//Types with no swap found by ADL are swapped in constant expressions, as std::swap is not called
+//(it is not constexpr in some C++20 standard libraries)
+constexpr bool test_constexpr_swap()
+{
+   int i = 1, j = 2;
+   ::boost::adl_move_swap(i, j);
+   int *pi = &i, *pj = &j;
+   ::boost::adl_move_swap(pi, pj);
+   adl_ns::enum_type ea = adl_ns::enum_a, eb = adl_ns::enum_b;
+   ::boost::adl_move_swap(ea, eb);
+   adl_ns::value_class va = {1}, vb = {2};
+   ::boost::adl_move_swap(va, vb);
+   int ia[2] = {1, 2}, ib[2] = {3, 4};
+   ::boost::adl_move_swap(ia, ib);
+   return i == 2 && j == 1 && pi == &j && pj == &i && ea == adl_ns::enum_b && eb == adl_ns::enum_a &&
+          va.i == 2 && vb.i == 1 && ia[0] == 3 && ia[1] == 4 && ib[0] == 1 && ib[1] == 2;
+}
+
+BOOST_MOVE_STATIC_ASSERT(test_constexpr_swap());
+
+#endif   //#if defined(BOOST_MOVE_HAS_CXX20_CONSTEXPR)
+
 
 int main()
 {
@@ -90,19 +148,7 @@ int main()
       movable x, y;
       swap_stats::reset_stats();
       ::boost::adl_move_swap(x, y);
-      #if defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
-      //In non rvalue reference compilers,
-      //movable classes with no swap() member uses
-      //boost::move() to implement swap.
-      BOOST_TEST(swap_stats::friend_swap_calls == 0);
-      BOOST_TEST(swap_stats::member_swap_calls == 0);
-      BOOST_TEST(swap_stats::member_swap_calls == 0);
-      BOOST_TEST(swap_stats::move_cnstor_calls == 1);
-      BOOST_TEST(swap_stats::move_assign_calls == 2);
-      BOOST_TEST(swap_stats::copy_cnstor_calls == 0);
-      BOOST_TEST(swap_stats::copy_assign_calls == 0);
-      #else
-      //In compilers with rvalue references, this should call friend swap via ADL
+      //This should call friend swap via ADL (in all C++ standards)
       BOOST_TEST(swap_stats::friend_swap_calls == 1);
       BOOST_TEST(swap_stats::member_swap_calls == 0);
       BOOST_TEST(swap_stats::member_swap_calls == 0);
@@ -110,31 +156,30 @@ int main()
       BOOST_TEST(swap_stats::move_assign_calls == 0);
       BOOST_TEST(swap_stats::copy_cnstor_calls == 0);
       BOOST_TEST(swap_stats::copy_assign_calls == 0);
-      #endif
    }
    {  //movable_swap_member
       movable_swap_member x, y;
       swap_stats::reset_stats();
       ::boost::adl_move_swap(x, y);
-      #if defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
-      //In non rvalue reference compilers,
-      //movable classes with no swap() member uses
-      //boost::move() to implement swap.
-      BOOST_TEST(swap_stats::friend_swap_calls == 0);
-      BOOST_TEST(swap_stats::member_swap_calls == 1);
-      BOOST_TEST(swap_stats::move_cnstor_calls == 0);
-      BOOST_TEST(swap_stats::move_assign_calls == 0);
-      BOOST_TEST(swap_stats::copy_cnstor_calls == 0);
-      BOOST_TEST(swap_stats::copy_assign_calls == 0);
-      #else
-      //In compilers with rvalue references, this should call friend swap via ADL
+      //This should call friend swap via ADL (in all C++ standards)
       BOOST_TEST(swap_stats::friend_swap_calls == 1);
       BOOST_TEST(swap_stats::member_swap_calls == 0);
       BOOST_TEST(swap_stats::move_cnstor_calls == 0);
       BOOST_TEST(swap_stats::move_assign_calls == 0);
       BOOST_TEST(swap_stats::copy_cnstor_calls == 0);
       BOOST_TEST(swap_stats::copy_assign_calls == 0);
-      #endif
+   }
+   {  //movable_only_member_swap
+      movable_only_member_swap x, y;
+      swap_stats::reset_stats();
+      ::boost::adl_move_swap(x, y);
+      //No swap found by ADL: move-based swap (in all C++ standards), the member swap is not called
+      BOOST_TEST(swap_stats::friend_swap_calls == 0);
+      BOOST_TEST(swap_stats::member_swap_calls == 0);
+      BOOST_TEST(swap_stats::move_cnstor_calls == 1);
+      BOOST_TEST(swap_stats::move_assign_calls == 2);
+      BOOST_TEST(swap_stats::copy_cnstor_calls == 0);
+      BOOST_TEST(swap_stats::copy_assign_calls == 0);
    }
    {  //copyable
       copyable x, y;
@@ -152,7 +197,7 @@ int main()
       no_swap x(1), y(2), x_back(x), y_back(y);
       swap_stats::reset_stats();
       ::boost::adl_move_swap(x, y);
-      //This should call std::swap which uses copies
+      //No swap found by ADL: move-based swap, which uses copies (the member swap is not called)
       BOOST_TEST(swap_stats::friend_swap_calls == 0);
       BOOST_TEST(swap_stats::member_swap_calls == 0);
       BOOST_TEST(swap_stats::move_cnstor_calls == 0);
@@ -163,5 +208,26 @@ int main()
       BOOST_TEST(y == x_back);
       BOOST_TEST(x != y);
    }
+   {  //scalar types
+      int i = 1, j = 2;
+      ::boost::adl_move_swap(i, j);
+      BOOST_TEST(i == 2 && j == 1);
+      int *pi = &i, *pj = &j;
+      ::boost::adl_move_swap(pi, pj);
+      BOOST_TEST(pi == &j && pj == &i);
+      adl_ns::enum_type ea = adl_ns::enum_a, eb = adl_ns::enum_b;
+      ::boost::adl_move_swap(ea, eb);
+      BOOST_TEST(ea == adl_ns::enum_b && eb == adl_ns::enum_a);
+   }
+   {  //pointer with a swap found by ADL
+      adl_ns::ptr_swap_class a, b;
+      adl_ns::ptr_swap_class *pa = &a, *pb = &b;
+      ::boost::adl_move_swap(pa, pb);
+      BOOST_TEST(adl_ns::ptr_swap_calls == 1);
+      BOOST_TEST(pa == &b && pb == &a);
+   }
+   #if defined(BOOST_MOVE_HAS_CXX20_CONSTEXPR)
+   BOOST_TEST(test_constexpr_swap());
+   #endif
    return ::boost::report_errors();
 }

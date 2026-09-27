@@ -20,6 +20,7 @@
 #include <boost/move/algo/detail/search.hpp>
 #include <boost/move/detail/iterator_to_raw_pointer.hpp>
 #include <boost/move/detail/reverse_iterator.hpp>
+#include <boost/move/detail/type_traits.hpp>
 #include <cassert>
 #include <climits>
 #include <cstddef>
@@ -147,28 +148,54 @@ class adaptive_xbuf
    }
 
    private:
-   template<class RIt>
-   inline static bool is_raw_ptr(RIt)
+   //Additional objects can be stored only if the buffer is a raw pointer
+   typedef ::boost::move_detail::integral_constant
+      < bool, ::boost::move_detail::is_same<RandRawIt, T*>::value>   is_raw_ptr_t;
+
+   template<class U>
+   inline static uintptr_t align_up(uintptr_t u_addr)
+   {
+      const uintptr_t u_align = ::boost::move_detail::alignment_of<U>::value;
+      return ((u_addr + u_align - 1u)/u_align)*u_align;
+   }
+
+   template<class U>
+   bool priv_supports_aligned_trailing(size_type sz, size_type trail_count, ::boost::move_detail::true_type) const
+   {
+      if(m_capacity && sz <= m_capacity){
+         uintptr_t const u_addr_base = uintptr_t(m_ptr);
+         uintptr_t const u_addr_sz = align_up<U>(u_addr_base + sz*sizeof(T));
+         uintptr_t const u_addr_cp = u_addr_base + m_capacity*sizeof(T);
+         return (u_addr_cp >= u_addr_sz) && ((u_addr_cp - u_addr_sz)/sizeof(U) >= trail_count);
+      }
+      return false;
+   }
+
+   template<class U>
+   inline bool priv_supports_aligned_trailing(size_type, size_type, ::boost::move_detail::false_type) const
    {
       return false;
    }
 
-   inline static bool is_raw_ptr(T*)
+   template<class U>
+   inline U *priv_aligned_trailing(size_type pos, ::boost::move_detail::true_type) const
    {
-      return true;
+      return (U*)align_up<U>(uintptr_t(m_ptr) + pos*sizeof(T));
+   }
+
+   template<class U>
+   inline U *priv_aligned_trailing(size_type, ::boost::move_detail::false_type) const
+   {
+      //Only called if supports_aligned_trailing returned true
+      assert(false);
+      return 0;
    }
 
    public:
    template<class U>
-   bool supports_aligned_trailing(size_type sz, size_type trail_count) const
+   inline bool supports_aligned_trailing(size_type sz, size_type trail_count) const
    {
-      if(this->is_raw_ptr(this->data()) && m_capacity){
-         uintptr_t u_addr_sz = uintptr_t(&*(this->data()+sz));
-         uintptr_t u_addr_cp = uintptr_t(&*(this->data()+this->capacity()));
-         u_addr_sz = ((u_addr_sz + sizeof(U)-1)/sizeof(U))*sizeof(U);
-         return (u_addr_cp >= u_addr_sz) && ((u_addr_cp - u_addr_sz)/sizeof(U) >= trail_count);
-      }
-      return false;
+      return this->template priv_supports_aligned_trailing<U>(sz, trail_count, is_raw_ptr_t());
    }
 
    template<class U>
@@ -180,9 +207,7 @@ class adaptive_xbuf
    template<class U>
    inline U *aligned_trailing(size_type pos) const
    {
-      uintptr_t u_addr = uintptr_t(&*(this->data()+pos));
-      u_addr = ((u_addr + sizeof(U)-1)/sizeof(U))*sizeof(U);
-      return (U*)u_addr;
+      return this->template priv_aligned_trailing<U>(pos, is_raw_ptr_t());
    }
 
    inline ~adaptive_xbuf()

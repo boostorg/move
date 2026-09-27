@@ -334,6 +334,77 @@ void test()
 
 }  //namespace is_nothrow_swappable_test
 
+namespace is_adl_swappable_test
+{
+
+struct no_swap {};
+
+//swap found by argument dependent lookup (hidden friend)
+struct friend_swap
+{
+   friend void swap(friend_swap&, friend_swap&) {}
+};
+
+//swap found by argument dependent lookup (namespace scope)
+struct ns_swap {};
+void swap(ns_swap&, ns_swap&) {}
+
+//swap that returns a value
+struct int_swap {};
+int swap(int_swap&, int_swap&) { return 0; }
+
+//Generic swap found by argument dependent lookup
+template<class T>
+struct tmpl {};
+
+template<class T>
+void swap(tmpl<T>&, tmpl<T>&) {}
+
+//swap for pointers to a class, found by argument dependent lookup
+struct ptr_swap {};
+void swap(ptr_swap*&, ptr_swap*&) {}
+
+//swap of a base class, found by argument dependent lookup for the derived class
+struct base_swap {};
+void swap(base_swap&, base_swap&) {}
+struct derived_swap : base_swap {};
+
+//A swap that is not callable as swap(x, y)
+struct other_swap {};
+void swap(other_swap&, int) {}
+
+enum enum_type { enum_value };
+
+}  //namespace is_adl_swappable_test
+
+//A swap declared in an enclosing namespace is not found by argument dependent lookup
+void swap(is_adl_swappable_test::no_swap&, is_adl_swappable_test::no_swap&) {}
+
+namespace is_adl_swappable_test
+{
+
+void test()
+{
+   using boost::move_detail::is_adl_swappable;
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_swappable<int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_swappable<int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_swappable<enum_type>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_swappable<no_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_swappable<no_swap*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_swappable<other_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_swappable<ptr_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<friend_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<ns_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<int_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable< tmpl<int> >::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<ptr_swap*>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<derived_swap>::value));
+   //std::swap is found for types associated with namespace std
+   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable< std::pair<int, int> >::value));
+}
+
+}  //namespace is_adl_swappable_test
+
 namespace is_unsigned_test
 {
 
@@ -432,6 +503,8 @@ namespace overaligned_type_test
 struct BOOST_ALIGNMENT(64) overaligned_type
 {
    int i;
+   //Fills the alignment, to avoid padding warnings (MSVC C4324)
+   char padding[64 - sizeof(int)];
 };
 #endif
 
@@ -515,9 +588,10 @@ int main()
    pod_with_deleted_member_test::test();
    std_pair_test::test();
    is_nothrow_swappable_test::test();
+   is_adl_swappable_test::test();
    is_unsigned_test::test();
    is_trivially_copyable_test::test();
    overaligned_type_test::test();
    aligned_storage_test::test();
-   boost::report_errors();
+   return boost::report_errors();
 }

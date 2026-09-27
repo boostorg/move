@@ -1417,20 +1417,23 @@ struct is_nothrow_move_assignable
 }  //namespace move_detail {
 }  //namespace boost {
 
-#if defined(BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE)
-
-//Checks "swap(x, y)" as boost::adl_move_swap calls it ("using std::swap; swap(x, y);")
-//If argument dependent lookup finds "swap", its noexcept specification is used.
-//Otherwise std::swap is used (noexcept if T is nothrow move constructible and assignable).
+//////////////////////////////////////
+//    is_adl_swappable
+//////////////////////////////////////
+//Checks "swap(x, y)" as boost::adl_move_swap calls it ("using std::swap; swap(x, y);"),
+//but without std::swap: only the candidates found by argument dependent lookup are used.
 namespace boost_move_tt_swap {
+
+template<class T>
+T& lvalue() BOOST_NOEXCEPT;
+
+#if !defined(BOOST_NO_CXX11_DECLTYPE) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
 
 //Hides any swap declared in an enclosing namespace, so only
 //argument dependent lookup finds candidates for swap(x, y)
 void swap();
 
-template<class T>
-T& lvalue() BOOST_NOEXCEPT;
-
+//Exact: a swap found by ADL that is deleted, inaccessible or ambiguous is not detected
 template<class T>
 struct is_adl_swappable
 {
@@ -1439,6 +1442,53 @@ struct is_adl_swappable
 
    static const bool value = sizeof(test<T>(0)) == 1u;
 };
+
+#else //!defined(BOOST_NO_CXX11_DECLTYPE) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
+
+//With no SFINAE a fallback swap is used, with user-defined conversions, 
+//so any swap found by ADL is a better match.
+struct no_adl_swap_tag {  char dummy[2];  };
+
+struct any_lvalue
+{
+   template<class T> any_lvalue(const T&);
+};
+
+no_adl_swap_tag swap(any_lvalue, any_lvalue);
+
+template<class T>
+no_adl_swap_tag operator,(no_adl_swap_tag, const T&);
+
+template<class T>
+struct is_adl_swappable
+{
+   //"(swap(x, y), char())" is a char if ADL finds a swap
+   //and a no_adl_swap_tag if the fallback swap is selected
+   static const bool value = sizeof((swap(lvalue<T>(), lvalue<T>()), char())) == 1u;
+};
+
+#endif   //!defined(BOOST_NO_CXX11_DECLTYPE) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
+
+}  //namespace boost_move_tt_swap {
+
+namespace boost {
+namespace move_detail {
+
+//The value is true if argument dependent lookup finds a "swap" callable as swap(x, y)
+//for lvalues of type T. std::swap is only found for types associated with namespace std.
+template<class T>
+struct is_adl_swappable
+   : ::boost_move_tt_swap::is_adl_swappable<T>
+{};
+
+}  //namespace move_detail {
+}  //namespace boost {
+
+#if defined(BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE)
+
+//If argument dependent lookup finds "swap", its noexcept specification is used.
+//Otherwise std::swap is used (noexcept if T is nothrow move constructible and assignable).
+namespace boost_move_tt_swap {
 
 template<class T, bool = is_adl_swappable<T>::value>
 struct is_nothrow_adl_swappable
@@ -1463,7 +1513,7 @@ template<class T>
 struct is_nothrow_swappable
 {
    #if defined(BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE)
-   static const bool value = ::boost_move_tt_swap::is_adl_swappable<T>::value
+   static const bool value = is_adl_swappable<T>::value
                            ? ::boost_move_tt_swap::is_nothrow_adl_swappable<T>::value
                            : (is_nothrow_move_constructible<T>::value && is_nothrow_move_assignable<T>::value);
    #else

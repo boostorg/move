@@ -1319,11 +1319,20 @@ struct is_copy_assignable
 //       is_move_constructible
 //       is_move_assignable
 //////////////////////////////////////
-//Minimal existence checks, used to guard the is_pod shortcut of the trivial and nothrow traits.
+//Minimal existence checks of special member functions (they are not deleted or inaccessible), used to
+//guard the is_pod shortcut and the intrinsics of the trivial and nothrow traits. Without
+//BOOST_MOVE_TT_CXX11_SPECIAL_MEMBER_CHECKS the special members are assumed to exist.
 //GCC 4.6 gives a hard error, not a substitution failure, for an abstract class.
 #if defined(BOOST_MOVE_TT_CXX11_DELETED_FUNCTION_SFINAE) && !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && \
     !defined(BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS) && !(defined(BOOST_GCC) && (BOOST_GCC < 40700))
-#define BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE
+#define BOOST_MOVE_TT_CXX11_SPECIAL_MEMBER_CHECKS
+#endif
+
+//Defined if the trait detects deleted or inaccessible special members (the result is exact)
+#if defined(BOOST_MOVE_TT_CXX11_SPECIAL_MEMBER_CHECKS)
+#define BOOST_MOVE_TT_CXX11_IS_DEFAULT_CONSTRUCTIBLE
+#define BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE
+#define BOOST_MOVE_TT_CXX11_IS_MOVE_ASSIGNABLE
 #endif
 
 //The expression is tested in a default template argument: GCC 4.7 does not detect
@@ -1332,7 +1341,7 @@ struct is_copy_assignable
 template <class T>
 struct is_default_constructible
 {
-#if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE)
+#if defined(BOOST_MOVE_TT_CXX11_IS_DEFAULT_CONSTRUCTIBLE)
    typedef char yes_type;
    struct no_type { char dummy[2]; };
 
@@ -1348,7 +1357,7 @@ struct is_default_constructible
 template <class T>
 struct is_move_constructible
 {
-#if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE)
+#if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE)
    typedef char yes_type;
    struct no_type { char dummy[2]; };
 
@@ -1365,7 +1374,7 @@ struct is_move_constructible
 template <class T>
 struct is_move_assignable
 {
-#if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE)
+#if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_ASSIGNABLE)
    typedef char yes_type;
    struct no_type { char dummy[2]; };
 

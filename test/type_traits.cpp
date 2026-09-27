@@ -219,10 +219,12 @@ void test()
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_assignable<pod_deleted_copy_assign>::value));
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_nothrow_copy_assignable<pod_deleted_copy_assign>::value));
    #endif
-   #if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE_OR_ASSIGNABLE)
+   #if defined(BOOST_MOVE_TT_CXX11_IS_DEFAULT_CONSTRUCTIBLE)
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_default_constructible<pod_deleted_default_ctor>::value));
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_default_constructible<pod_deleted_default_ctor>::value));
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_nothrow_default_constructible<pod_deleted_default_ctor>::value));
+   #endif
+   #if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE) && defined(BOOST_MOVE_TT_CXX11_IS_MOVE_ASSIGNABLE)
    //The move traits use the copy operation, like std traits, when there is no move operation
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_move_constructible<pod_deleted_copy_ctor>::value));
    BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_move_assignable<pod_deleted_copy_assign>::value));
@@ -248,7 +250,7 @@ void test()
    BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_move_constructible<pod_deleted_move_assign>::value));
    #endif
    #endif   //!defined(BOOST_NO_CXX11_DEFAULTED_MOVES)
-   #endif
+   #endif   //defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE) && defined(BOOST_MOVE_TT_CXX11_IS_MOVE_ASSIGNABLE)
    #endif   //!defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) && !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
 }
 

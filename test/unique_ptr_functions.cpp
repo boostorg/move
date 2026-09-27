@@ -56,7 +56,9 @@ void volatile_memset(volatile void *p, int ch, std::size_t len)
    }
 }
 
-int volatile_memcmp(const volatile void *p1, const volatile void *p2, std::size_t len)
+//Not inlined: the default initialized objects are compared with the pattern written by operator new,
+//and the compiler must not treat their bytes as uninitialized (-Wuninitialized)
+BOOST_NOINLINE int volatile_memcmp(const volatile void *p1, const volatile void *p2, std::size_t len)
 {
    const volatile unsigned char *s1 = static_cast<const volatile unsigned char *>(p1);
    const volatile unsigned char *s2 = static_cast<const volatile unsigned char *>(p2);

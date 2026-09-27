@@ -294,6 +294,11 @@ struct enable_up_moveconv_constr
       , Type>
 {};
 
+//Returns true if i is a valid index for an array of extent n (0 means unknown extent).
+//n is a function parameter to avoid "comparison of unsigned expression < 0" warnings
+inline BOOST_CONSTEXPR bool is_valid_index(std::size_t i, std::size_t n)
+{  return n == 0 || i < n;  }
+
 }  //namespace move_upd {
 // @endcond
 
@@ -636,7 +641,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
       operator[](std::size_t i) const BOOST_NOEXCEPT
    {
       BOOST_MOVE_STATIC_ASSERT((bmupmu::is_array<T>::value));
-      assert( bmupmu::extent<T>::value == 0 || i < bmupmu::extent<T>::value );
+      assert( bmupd::is_valid_index(i, bmupmu::extent<T>::value) );
       assert(m_data.m_p);
       return m_data.m_p[i];
    }

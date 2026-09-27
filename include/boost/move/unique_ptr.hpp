@@ -223,6 +223,84 @@ struct enable_up_ptr
 {};
 
 ////////////////////////////////////////
+////     deleter constraints
+////////////////////////////////////////
+
+//Constructors and observers that are not templates are made templates to remove them
+//from overload resolution (SFINAE) when they are not valid,
+//and the constructors check if the deleter can be constructed.
+//
+//GCC 4.8 and older and MSVC 12.0 have internal compiler errors with
+//these constraints, and MSVC 14.0 does not detect deleted functions in is_constructible.
+//
+//For compilers that don't support thisconstraints are checked with static assertions
+//(pre-C++17 behaviour)
+#if !defined(BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS) && !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) && \
+    !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED) && \
+    !(defined(BOOST_GCC) && (BOOST_GCC < 40900)) && !(defined(BOOST_MSVC) && (BOOST_MSVC < 1910))
+#define BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS
+#endif
+
+//The constructors that value-initialize the deleter require a default constructible
+//deleter that is not a pointer or a reference
+template<class D>
+struct is_value_initializable_deleter
+{
+   static const bool value = !bmupmu::is_pointer<D>::value && !bmupmu::is_reference<D>::value
+      #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+      && bmupmu::is_default_constructible<D>::value
+      #endif
+      ;
+};
+
+#if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+//The constructors that take a deleter argument require a deleter constructible from that argument
+template<class D, class Arg>
+struct is_deleter_constructible
+{
+   #if defined(BOOST_MOVE_IS_CONSTRUCTIBLE)
+   static const bool value = BOOST_MOVE_IS_CONSTRUCTIBLE(D, Arg);
+   #else
+   //Without a reliable trait, just construct the deleter and see if the construction works
+   static const bool value = true;
+   #endif
+};
+#endif   //defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+
+//unique_ptr(p, d1): the deleter is constructed from deleter_arg_type1.
+//Without SFINAE constraints, the deleter is just constructed.
+template<class D>
+struct is_lvalue_arg_deleter
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   : is_deleter_constructible<D, typename deleter_types<D>::deleter_arg_type1>
+   #else
+   : bmupmu::true_type
+   #endif
+{};
+
+//unique_ptr(p, d2): the deleter is not a reference and it is constructed from deleter_arg_type2.
+//Without SFINAE constraints, the deleter is just constructed and the constructors
+//check reference deleters with static assertions.
+template<class D>
+struct is_rvalue_arg_deleter
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   : bmupmu::if_c< bmupmu::is_reference<D>::value
+                 , bmupmu::false_type
+                 , is_deleter_constructible<D, typename deleter_types<D>::deleter_arg_type2> >::type
+   #else
+   : bmupmu::true_type
+   #endif
+{};
+
+//enable_up_ptr if Cond::value is true
+template<class T, class FromPointer, class ThisPointer, class Cond, class Type = bmupmu::nat>
+struct enable_up_ptr_if
+   : bmupmu::if_c< Cond::value
+                 , enable_up_ptr<T, FromPointer, ThisPointer, Type>
+                 , bmupmu::enable_if_c<false, Type> >::type
+{};
+
+////////////////////////////////////////
 ////     enable_up_moveconv_assign
 ////////////////////////////////////////
 
@@ -389,8 +467,13 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!
    //! <b>Postconditions</b>: <tt>get() == nullptr</tt>. <tt>get_deleter()</tt> returns a reference to the stored deleter.
    //!
-   //! <b>Remarks</b>: If this constructor is instantiated with a pointer type or reference type
-   //!   for the template argument D, the program is ill-formed.   
+   //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless D is not a pointer
+   //!   type or a reference type and <tt>is_default_constructible&lt;D&gt;::value</tt> is true.
+   //!   If the compiler does not support default template arguments for function templates, the program is
+   //!   ill-formed if D is a pointer type or a reference type.
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   template<class DD = D, class = typename bmupmu::enable_if_c<bmupd::is_value_initializable_deleter<DD>::value>::type>
+   #endif
    inline BOOST_CONSTEXPR unique_ptr() BOOST_NOEXCEPT
       : m_data()
    {
@@ -401,7 +484,11 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    }
 
    //! <b>Effects</b>: Same as <tt>unique_ptr()</tt> (default constructor).
-   //! 
+   //!
+   //! <b>Remarks</b>: Same as <tt>unique_ptr()</tt> (default constructor).
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   template<class DD = D, class = typename bmupmu::enable_if_c<bmupd::is_value_initializable_deleter<DD>::value>::type>
+   #endif
    inline BOOST_CONSTEXPR unique_ptr(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type)) BOOST_NOEXCEPT
       : m_data()
    {
@@ -414,19 +501,19 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //! <b>Requires</b>: D shall satisfy the requirements of DefaultConstructible, and
    //!   that construction shall not throw an exception.
    //!
-   //! <b>Effects</b>: Constructs a unique_ptr which owns p, initializing the stored pointer 
+   //! <b>Effects</b>: Constructs a unique_ptr which owns p, initializing the stored pointer
    //!   with p and value initializing the stored deleter.
    //!
    //! <b>Postconditions</b>: <tt>get() == p</tt>. <tt>get_deleter()</tt> returns a reference to the stored deleter.
    //!
-   //! <b>Remarks</b>: If this constructor is instantiated with a pointer type or reference type
-   //!   for the template argument D, the program is ill-formed.
-   //!   This constructor shall not participate in overload resolution unless:
+   //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless:
+   //!      - D is not a pointer type or a reference type and <tt>is_default_constructible&lt;D&gt;::value</tt> is true, and
    //!      - If T is not an array type and Pointer is implicitly convertible to pointer.
    //!      - If T is an array type and Pointer is a more CV qualified pointer to element_type.
    template<class Pointer>
    inline BOOST_MOVE_CXX20_CONSTEXPR explicit unique_ptr(Pointer p
-      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_ptr<T BOOST_MOVE_I Pointer BOOST_MOVE_I pointer>::type* =0)
+      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_ptr_if<T BOOST_MOVE_I Pointer BOOST_MOVE_I pointer
+                           BOOST_MOVE_I bmupd::is_value_initializable_deleter<D> >::type* =0)
                  ) BOOST_NOEXCEPT
       : m_data(p)
    {
@@ -434,10 +521,6 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
       //it uses the default deleter and T has no virtual destructor, then you have a problem
       BOOST_MOVE_STATIC_ASSERT(( !bmupd::missing_virtual_destructor
                             <D, typename bmupd::get_element_type<Pointer>::type>::value ));
-      //If this constructor is instantiated with a pointer type or reference type
-      //for the template argument D, the program is ill-formed.
-      BOOST_MOVE_STATIC_ASSERT(!bmupmu::is_pointer<D>::value);
-      BOOST_MOVE_STATIC_ASSERT(!bmupmu::is_reference<D>::value);
    }
 
    //!The signature of this constructor depends upon whether D is a reference type.
@@ -447,7 +530,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!
    //!
    //! <b>Requires</b>: Either
-   //!   - D is not an lvalue-reference type and d is an lvalue or const rvalue. 
+   //!   - D is not an lvalue-reference type and d is an lvalue or const rvalue.
    //!         D shall satisfy the requirements of CopyConstructible, and the copy constructor of D
    //!         shall not throw an exception. This unique_ptr will hold a copy of d.
    //!   - D is an lvalue-reference type and d is an lvalue. the type which D references need not be CopyConstructible nor
@@ -455,16 +538,18 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!
    //! <b>Effects</b>: Constructs a unique_ptr object which owns p, initializing the stored pointer with p and
    //!   initializing the deleter as described above.
-   //! 
+   //!
    //! <b>Postconditions</b>: <tt>get() == p</tt>. <tt>get_deleter()</tt> returns a reference to the stored deleter. If D is a
    //!   reference type then <tt>get_deleter()</tt> returns a reference to the lvalue d.
    //!
    //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless:
+   //!      - <tt>is_constructible&lt;D, decltype(d)&gt;::value</tt> is true, and
    //!      - If T is not an array type and Pointer is implicitly convertible to pointer.
    //!      - If T is an array type and Pointer is a more CV qualified pointer to element_type.
    template<class Pointer>
    inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr(Pointer p, BOOST_MOVE_SEEDOC(deleter_arg_type1) d1
-      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_ptr<T BOOST_MOVE_I Pointer BOOST_MOVE_I pointer>::type* =0)
+      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_ptr_if<T BOOST_MOVE_I Pointer BOOST_MOVE_I pointer
+                           BOOST_MOVE_I bmupd::is_lvalue_arg_deleter<D> >::type* =0)
               ) BOOST_NOEXCEPT
       : m_data(p, d1)
    {
@@ -476,6 +561,12 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
 
    //! <b>Effects</b>: Same effects as <tt>template&lt;class Pointer&gt; unique_ptr(Pointer p, deleter_arg_type1 d1)</tt>
    //!   and additionally <tt>get() == nullptr</tt>
+   //!
+   //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless
+   //!   <tt>is_constructible&lt;D, decltype(d)&gt;::value</tt> is true.
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   template<class DD = D, typename bmupmu::enable_if_c<bmupd::is_lvalue_arg_deleter<DD>::value, int>::type = 0>
+   #endif
    inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), BOOST_MOVE_SEEDOC(deleter_arg_type1) d1) BOOST_NOEXCEPT
       : m_data(pointer(), d1)
    {}
@@ -493,16 +584,21 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!
    //! <b>Effects</b>: Constructs a unique_ptr object which owns p, initializing the stored pointer with p and
    //!   initializing the deleter as described above.
-   //! 
+   //!
    //! <b>Postconditions</b>: <tt>get() == p</tt>. <tt>get_deleter()</tt> returns a reference to the stored deleter. If D is a
    //!   reference type then <tt>get_deleter()</tt> returns a reference to the lvalue d.
    //!
    //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless:
+   //!      - <tt>is_constructible&lt;D, decltype(d)&gt;::value</tt> is true, and
    //!      - If T is not an array type and Pointer is implicitly convertible to pointer.
    //!      - If T is an array type and Pointer is a more CV qualified pointer to element_type.
+   //!
+   //!   If D is a reference type, this constructor is deleted. If the compiler does not support
+   //!   default template arguments for function templates or deleted functions, the program is ill-formed instead.
    template<class Pointer>
    inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr(Pointer p, BOOST_MOVE_SEEDOC(deleter_arg_type2) d2
-      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_ptr<T BOOST_MOVE_I Pointer BOOST_MOVE_I pointer>::type* =0)
+      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_ptr_if<T BOOST_MOVE_I Pointer BOOST_MOVE_I pointer
+                           BOOST_MOVE_I bmupd::is_rvalue_arg_deleter<D> >::type* =0)
              ) BOOST_NOEXCEPT
       : m_data(p, ::boost::move(d2))
    {
@@ -514,14 +610,35 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
                             <D, typename bmupd::get_element_type<Pointer>::type>::value ));
    }
 
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   //If D is a reference type, the stored reference would refer to the destroyed temporary d2.
+   //Deleted (instead of removed) so that rvalues do not bind to the deleter_arg_type1 overload.
+   template<class Pointer>
+   unique_ptr(Pointer p, deleter_arg_type2 d2
+      , typename bmupd::enable_up_ptr_if<T, Pointer, pointer, bmupmu::is_reference<D> >::type* =0) = delete;
+   #endif
+
    //! <b>Effects</b>: Same effects as <tt>template&lt;class Pointer&gt; unique_ptr(Pointer p, deleter_arg_type2 d2)</tt>
    //!   and additionally <tt>get() == nullptr</tt>
+   //!
+   //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless
+   //!   <tt>is_constructible&lt;D, decltype(d)&gt;::value</tt> is true. If D is a reference type, this constructor
+   //!   is deleted. If the compiler does not support default template arguments for function templates or
+   //!   deleted functions, the program is ill-formed instead.
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   template<class DD = D, typename bmupmu::enable_if_c<bmupd::is_rvalue_arg_deleter<DD>::value, int>::type = 0>
+   #endif
    inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), BOOST_MOVE_SEEDOC(deleter_arg_type2) d2) BOOST_NOEXCEPT
       : m_data(pointer(), ::boost::move(d2))
    {
       //If D is a reference type, the stored reference would refer to the destroyed temporary d2
       BOOST_MOVE_STATIC_ASSERT(!bmupmu::is_reference<D>::value);
    }
+
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   template<class DD = D, typename bmupmu::enable_if_c<bmupmu::is_reference<DD>::value, int>::type = 0>
+   unique_ptr(bmupd::nullptr_type, deleter_arg_type2) = delete;
+   #endif
 
    //! <b>Requires</b>: If D is not a reference type, D shall satisfy the requirements of MoveConstructible.
    //! Construction of the deleter from an rvalue of type D shall not throw an exception.
@@ -624,7 +741,11 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!
    //! <b>Returns</b>: <tt>*get()</tt>.
    //!
-   //! <b>Remarks</b>: If T is an array type, the program is ill-formed.
+   //! <b>Remarks</b>: If T is an array type, this operator shall not participate in overload resolution.
+   //!   If the compiler does not support default template arguments for function templates, the program is ill-formed instead.
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   template<class TT = T, class = typename bmupmu::enable_if_c<!bmupmu::is_array<TT>::value>::type>
+   #endif
    BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(element_type&, typename bmupmu::add_lvalue_reference<element_type>::type)
       operator*() const BOOST_NOEXCEPT
    {
@@ -636,7 +757,11 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!
    //! <b>Returns</b>: <tt>get()[i]</tt>.
    //!
-   //! <b>Remarks</b>: If T is not an array type, the program is ill-formed.
+   //! <b>Remarks</b>: If T is not an array type, this operator shall not participate in overload resolution.
+   //!   If the compiler does not support default template arguments for function templates, the program is ill-formed instead.
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   template<class TT = T, class = typename bmupmu::enable_if_c<bmupmu::is_array<TT>::value>::type>
+   #endif
    inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(element_type&, typename bmupmu::add_lvalue_reference<element_type>::type)
       operator[](std::size_t i) const BOOST_NOEXCEPT
    {
@@ -652,7 +777,11 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!
    //! <b>Note</b>: use typically requires that T be a complete type.
    //!
-   //! <b>Remarks</b>: If T is an array type, the program is ill-formed.
+   //! <b>Remarks</b>: If T is an array type, this operator shall not participate in overload resolution.
+   //!   If the compiler does not support default template arguments for function templates, the program is ill-formed instead.
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
+   template<class TT = T, class = typename bmupmu::enable_if_c<!bmupmu::is_array<TT>::value>::type>
+   #endif
    inline BOOST_MOVE_CXX20_CONSTEXPR pointer operator->() const BOOST_NOEXCEPT
    {
       BOOST_MOVE_STATIC_ASSERT((!bmupmu::is_array<T>::value));

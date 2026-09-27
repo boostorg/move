@@ -88,8 +88,8 @@ void alternating_test(
 
       //Block B
       std::size_t szt_l = 0;
-      for (std::size_t szt_b = 0u, szt_t = 0; szt_b != NumBlocksB; ++szt_b)
-      for (std::size_t szt_i = 0u; szt_i != BlockSize;  ++szt_i, ++szt_t) {
+      for (std::size_t szt_b = 0u; szt_b != NumBlocksB; ++szt_b)
+      for (std::size_t szt_i = 0u; szt_i != BlockSize;  ++szt_i) {
          testarray[HdrSize+szt_k].key = (szt_l/2)*2+1;
          testarray[HdrSize+szt_k].val = szt_l & 1;
          ++szt_k;

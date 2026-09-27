@@ -310,7 +310,7 @@ namespace boost{
 namespace move_detail{
 
 template <typename T>
-typename boost::move_detail::add_rvalue_reference<T>::type declval();
+typename boost::move_detail::add_rvalue_reference<T>::type declval() BOOST_NOEXCEPT;
 
 }  //namespace move_detail{
 }  //namespace boost{

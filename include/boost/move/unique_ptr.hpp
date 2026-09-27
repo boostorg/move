@@ -672,19 +672,21 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
       get_deleter() const BOOST_NOEXCEPT
    {  return m_data.deleter();  }
 
-   #ifdef BOOST_MOVE_DOXYGEN_INVOKED
+   #if defined(BOOST_MOVE_DOXYGEN_INVOKED) || !defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
    //! <b>Returns</b>: Returns: get() != nullptr.
    //!
-   inline BOOST_MOVE_CXX20_CONSTEXPR explicit operator bool
+   //! <b>Note</b>: If the compiler does not support explicit conversion operators, the conversion
+   //!   is implicit, but only to a type that can be used as a boolean value.
+   inline BOOST_MOVE_CXX20_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
+   {  return m_data.m_p ? true : false;  }
    #else
-   inline BOOST_MOVE_CXX20_CONSTEXPR operator bmupd::explicit_bool_arg
-   #endif
-      ()const BOOST_NOEXCEPT
+   inline BOOST_MOVE_CXX20_CONSTEXPR operator bmupd::explicit_bool_arg() const BOOST_NOEXCEPT
    {
       return m_data.m_p
          ? &bmupd::bool_conversion::for_bool
          : bmupd::explicit_bool_arg(0);
    }
+   #endif
 
    //! <b>Postcondition</b>: <tt>get() == nullptr</tt>.
    //!

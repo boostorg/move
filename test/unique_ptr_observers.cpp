@@ -132,6 +132,20 @@ void test()
    if (p)
       BOOST_TEST(false);
    }
+   //Explicit conversions and logical operators
+   {
+   bml::unique_ptr<int> p(new int(3)), p2;
+   BOOST_TEST(static_cast<bool>(p));
+   BOOST_TEST(!static_cast<bool>(p2));
+   BOOST_TEST(p && !p2);
+   BOOST_TEST(p2 || p);
+   BOOST_TEST(p ? true : false);
+   }
+   #if !defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
+   //The conversion to bool is explicit
+   BOOST_MOVE_STATIC_ASSERT((!::boost::move_detail::is_convertible<bml::unique_ptr<int>, bool>::value));
+   BOOST_MOVE_STATIC_ASSERT((!::boost::move_detail::is_convertible<bml::unique_ptr<int[]>, bool>::value));
+   #endif
 }
 
 }  //namespace unique_ptr_observers_explicit_bool{

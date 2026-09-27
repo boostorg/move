@@ -460,6 +460,51 @@ void test()
 }  //namespace unique_ptr_asgn_move_convert_nonassignable_del{
 
 ////////////////////////////////
+//   unique_ptr_asgn_move_convert_rvalue
+////////////////////////////////
+//The converting assignment accepts temporaries, also in the C++03 emulation.
+namespace unique_ptr_asgn_move_convert_rvalue{
+
+bml::unique_ptr<B> make_b()
+{  return bml::unique_ptr<B>(new B);  }
+
+bml::unique_ptr<A[]> make_a_array()
+{  return bml::unique_ptr<A[]>(new A[2]);  }
+
+void test()
+{
+   //Single unique_ptr
+   reset_counters();
+   {
+   bml::unique_ptr<A> s(new A);
+   BOOST_TEST(A::count == 1);
+   s = bml::unique_ptr<B>(new B);
+   BOOST_TEST(s.get() != 0);
+   BOOST_TEST(A::count == 1);
+   BOOST_TEST(B::count == 1);
+   s = make_b();
+   BOOST_TEST(s.get() != 0);
+   BOOST_TEST(A::count == 1);
+   BOOST_TEST(B::count == 1);
+   }
+   BOOST_TEST(A::count == 0);
+   BOOST_TEST(B::count == 0);
+
+   //Unbounded array unique_ptr
+   reset_counters();
+   {
+   bml::unique_ptr<const A[]> s(new const A[2]);
+   BOOST_TEST(A::count == 2);
+   s = make_a_array();
+   BOOST_TEST(s.get() != 0);
+   BOOST_TEST(A::count == 2);
+   }
+   BOOST_TEST(A::count == 0);
+}
+
+}  //namespace unique_ptr_asgn_move_convert_rvalue{
+
+////////////////////////////////
 //             main
 ////////////////////////////////
 int main()
@@ -472,6 +517,7 @@ int main()
    unique_ptr_asgn_move_movedel::test();
    unique_ptr_asgn_move_copydelref::test();
    unique_ptr_asgn_move_convert_nonassignable_del::test();
+   unique_ptr_asgn_move_convert_rvalue::test();
 
    //Test results
    return boost::report_errors();

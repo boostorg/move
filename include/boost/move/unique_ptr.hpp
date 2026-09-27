@@ -605,7 +605,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    template <class U, class E>
    BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(unique_ptr&, typename bmupd::enable_up_moveconv_assign
          <T BOOST_MOVE_I D BOOST_MOVE_I U BOOST_MOVE_I E BOOST_MOVE_I unique_ptr &>::type)
-      operator=(BOOST_RV_REF_BEG unique_ptr<U, E> BOOST_RV_REF_END u) BOOST_NOEXCEPT
+      operator=(BOOST_RV_REF_BEG_IF_CXX11 unique_ptr<U, E> BOOST_RV_REF_END_IF_CXX11 u) BOOST_NOEXCEPT
    {
       this->reset(u.release());
       m_data.deleter() = ::boost::move_if_not_lvalue_reference<E>(u.get_deleter());

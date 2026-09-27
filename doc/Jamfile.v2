@@ -30,6 +30,8 @@ doxygen autodoc
                               \"BOOST_RV_REF(T)=T&&\" \\
                               \"BOOST_RV_REF_BEG=\" \\
                               \"BOOST_RV_REF_END=&&\" \\
+                              \"BOOST_RV_REF_BEG_IF_CXX11=\" \\
+                              \"BOOST_RV_REF_END_IF_CXX11=&&\" \\
                               \"BOOST_FWD_REF(T)=T&&\" \\
                               \"BOOST_MOVE_DOC0PTR(T)=std::nullptr_t\" \\
                               \"BOOST_MOVE_DOC1ST(T1, T2)=T1\" \\

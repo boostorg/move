@@ -22,6 +22,7 @@
 #include <boost/move/detail/config_begin.hpp>
 #include <boost/move/detail/workaround.hpp>  //forceinline
 #include <boost/move/detail/type_traits.hpp>
+#include <boost/move/detail/is_basic_ostream.hpp>
 #include <boost/move/default_delete.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/move/adl_move_swap.hpp>
@@ -921,6 +922,19 @@ inline BOOST_MOVE_CXX20_CONSTEXPR void swap(unique_ptr<T, D> &x, unique_ptr<T, D
 template <class T, class D>
 inline std::size_t hash_value(const unique_ptr<T, D> &x)
 {  return ::boost::hash<typename unique_ptr<T, D>::pointer>()(x.get());  }
+
+//! <b>Effects</b>: <tt>os << p.get()</tt>.
+//!
+//! <b>Returns</b>: <tt>os</tt>.
+//!
+//! <b>Remarks</b>: This operator shall not participate in overload resolution unless Ostream is
+//!   <tt>std::basic_ostream</tt> or a class derived from it. The stream type is a template parameter
+//!   so that this header does not include <tt>&lt;iosfwd&gt;</tt>.
+template <class Ostream, class T, class D>
+inline BOOST_MOVE_DOC1ST(Ostream&, typename bmupmu::enable_if_c
+   <bmupmu::is_basic_ostream<Ostream>::value BOOST_MOVE_I Ostream&>::type)
+   operator<<(Ostream &os, const unique_ptr<T, D> &p)
+{  os << p.get();  return os;  }
 
 //! <b>Returns</b>: <tt>x.get() == y.get()</tt>.
 //!

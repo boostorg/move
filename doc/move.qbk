@@ -758,7 +758,10 @@ previous calling convention, define `BOOST_MOVE_DISABLE_TRIVIAL_ABI` in all of t
    of the pointers, not `std::less`. This avoids a dependency on the `<functional>` and `<type_traits>`
    headers. On all the platforms supported by Boost, the `<` operator of raw pointers gives a strict
    weak order.
-*  There is no `std::hash` specialization and no stream output operator (`operator<<`).
+*  There is no `std::hash` specialization.
+*  The stream output operator (`operator<<`) takes the stream type as a template parameter, so
+   `unique_ptr.hpp` does not include `<iosfwd>`. It participates in overload resolution only for
+   `std::basic_ostream` and the classes derived from it, and it returns the stream with its own type.
 *  `boost::movelib::unique_ptr` and `std::unique_ptr` are different types. They do not convert to
    each other, but ownership can be transferred with `release()`.
 
@@ -1057,6 +1060,7 @@ Special thanks to:
       `boost::container::vector` then do not destroy moved-from `unique_ptr` elements.
    *  Added limited `hash_value` support for `unique_ptr`, so that it can be used with `boost::hash` and [*Boost.Unordered].
    *  Added `make_unique_for_overwrite`, the C++20 name of `make_unique_definit`.
+   *  Added the stream output operator (`operator<<`) for `unique_ptr`, without including `<iosfwd>`.
 
 [endsect]
 

@@ -392,6 +392,115 @@ void test()
 
 }  //namespace unique_compare_nullptr{
 
+////////////////////////////////
+//       unique_ostream
+////////////////////////////////
+
+//The stream headers are included after unique_ptr.hpp (and after <iostream>, included by
+//lightweight_test.hpp), so operator<< is defined before any stream type is declared
+#include <sstream>
+#include <boost/move/detail/is_basic_ostream.hpp>
+
+namespace unique_ostream{
+
+//A class derived from std::ostream
+struct derived_ostream : std::ostringstream
+{};
+
+//A class that is not a stream
+struct logger
+{
+   logger() : n() {}
+   int n;
+
+   template <class T>
+   friend logger& operator<<(logger &l, const T&)
+   {  ++l.n; return l;  }
+};
+
+//A class with basic_ostream member, not a type
+struct not_a_stream
+{
+   int basic_ostream;
+};
+
+namespace bmd = ::boost::move_detail;
+
+BOOST_MOVE_STATIC_ASSERT(( bmd::is_basic_ostream<std::ostream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( bmd::is_basic_ostream<std::wostream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( bmd::is_basic_ostream<std::ostringstream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( bmd::is_basic_ostream<std::stringstream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( bmd::is_basic_ostream<std::iostream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( bmd::is_basic_ostream<derived_ostream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( !bmd::is_basic_ostream<std::istream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( !bmd::is_basic_ostream<std::istringstream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( !bmd::is_basic_ostream<logger>::value ));
+BOOST_MOVE_STATIC_ASSERT(( !bmd::is_basic_ostream<not_a_stream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( !bmd::is_basic_ostream<int>::value ));
+BOOST_MOVE_STATIC_ASSERT(( bmd::is_basic_istream<std::istream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( bmd::is_basic_istream<std::istringstream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( bmd::is_basic_istream<std::stringstream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( !bmd::is_basic_istream<std::ostream>::value ));
+BOOST_MOVE_STATIC_ASSERT(( !bmd::is_basic_istream<int>::value ));
+
+template<class Stream, class T>
+std::basic_string<typename Stream::char_type> expected(const T *p)
+{
+   Stream s;
+   s << static_cast<const void*>(p);
+   return s.str();
+}
+
+void test()
+{
+   reset_counters();
+   {
+      bml::unique_ptr<A> p(new A);
+      //Same output as the stored pointer
+      std::ostringstream os;
+      os << p;
+      BOOST_TEST(os.str() == expected<std::ostringstream>(p.get()));
+      //Chained, and returns the stream
+      std::ostringstream os2;
+      BOOST_TEST(&(os2 << p) == &os2);
+      os2 << ' ' << p;
+      BOOST_TEST(os2.str() == expected<std::ostringstream>(p.get()) + ' ' + expected<std::ostringstream>(p.get()));
+      //Through a reference to std::ostream
+      std::ostringstream os3;
+      std::ostream &ros = os3;
+      ros << p;
+      BOOST_TEST(os3.str() == os.str());
+      //Wide streams
+      std::wostringstream wos;
+      wos << p;
+      BOOST_TEST(wos.str() == expected<std::wostringstream>(p.get()));
+      //A class derived from a stream
+      derived_ostream dos;
+      dos << p;
+      BOOST_TEST(dos.str() == os.str());
+      //A basic_iostream
+      std::stringstream ss;
+      ss << p;
+      BOOST_TEST(ss.str() == os.str());
+      //Arrays and null pointers
+      bml::unique_ptr<int[]> pa(new int[2]);
+      std::ostringstream osa;
+      osa << pa;
+      BOOST_TEST(osa.str() == expected<std::ostringstream>(pa.get()));
+      bml::unique_ptr<A> n;
+      std::ostringstream osn;
+      osn << n;
+      BOOST_TEST(osn.str() == expected<std::ostringstream>(n.get()));
+      //Not a stream: the logger's own operator<< is used
+      logger l;
+      l << p;
+      BOOST_TEST(l.n == 1);
+   }
+   BOOST_TEST(A::count == 0);
+}
+
+}  //namespace unique_ostream{
+
 
 ////////////////////////////////
 //             main
@@ -403,6 +512,7 @@ int main()
    unique_compare::test();
    unique_compare_zero::test();
    unique_compare_nullptr::test();
+   unique_ostream::test();
 
    //Test results
    return boost::report_errors();

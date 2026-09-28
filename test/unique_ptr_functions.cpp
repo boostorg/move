@@ -130,6 +130,17 @@ struct default_init
 int nothrow_new_count = 0;
 int nothrow_delete_count = 0;
 
+//The static runtimes of some sanitizers (e.g. Clang's TSan, MSan, HWASan and standalone LSan)
+//define the global allocation functions, so they can't be replaced (multiple definitions)
+#if defined(__has_feature)
+#  if __has_feature(thread_sanitizer) || __has_feature(memory_sanitizer) || \
+      __has_feature(hwaddress_sanitizer) || __has_feature(leak_sanitizer)
+#     define TEST_NO_NOTHROW_NEW_REPLACEMENT
+#  endif
+#endif
+
+#if !defined(TEST_NO_NOTHROW_NEW_REPLACEMENT)
+
 //The same calling convention and exception specification as the standard library declarations
 #if defined(_MSC_VER)
 #  pragma warning (push)
@@ -167,6 +178,8 @@ void BOOST_MOVE_STD_NEW_FWD_CC operator delete[](void *p, const std::nothrow_t &
 #if defined(_MSC_VER)
 #  pragma warning (pop)
 #endif
+
+#endif   //#if !defined(TEST_NO_NOTHROW_NEW_REPLACEMENT)
 
 namespace bml = ::boost::movelib;
 
@@ -349,8 +362,10 @@ void test()
       escaped = pad.get();
       BOOST_TEST(!!pad);
    }
+   #if !defined(TEST_NO_NOTHROW_NEW_REPLACEMENT)
    BOOST_TEST(nothrow_new_count == 4);
    BOOST_TEST(nothrow_delete_count == 0);
+   #endif
 
    #ifndef BOOST_NO_EXCEPTIONS
    //If the constructor throws, the exception is propagated and the memory is
@@ -360,15 +375,19 @@ void test()
    try{  bml::make_unique_nothrow<throwing_ctor>();  }
    catch(int){  thrown = true;  }
    BOOST_TEST(thrown);
+   #if !defined(TEST_NO_NOTHROW_NEW_REPLACEMENT)
    BOOST_TEST(nothrow_new_count == 1);
    BOOST_TEST(nothrow_delete_count == 1);
+   #endif
 
    thrown = false;
    try{  bml::make_unique_nothrow<throwing_ctor[]>(2);  }
    catch(int){  thrown = true;  }
    BOOST_TEST(thrown);
+   #if !defined(TEST_NO_NOTHROW_NEW_REPLACEMENT)
    BOOST_TEST(nothrow_new_count == 2);
    BOOST_TEST(nothrow_delete_count == 2);
+   #endif
    #endif   //#ifndef BOOST_NO_EXCEPTIONS
 
    #if defined(__cpp_aligned_new)

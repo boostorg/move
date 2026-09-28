@@ -122,6 +122,52 @@ struct default_init
    unsigned char buf[PatternSize];
 };
 
+//make_unique.hpp declares std::nothrow and the nothrow allocation functions without including <new>:
+//<new> is included after it, so the declarations must be the same as the ones in <new>.
+//The nothrow allocation and deallocation functions are replaced to count the calls.
+#include <new>
+
+int nothrow_new_count = 0;
+int nothrow_delete_count = 0;
+
+//The same calling convention and exception specification as the standard library declarations
+#if defined(_MSC_VER)
+#  pragma warning (push)
+#  pragma warning (disable : 28251) //Inconsistent annotation (/analyze): <new> uses SAL annotations
+#endif
+
+void* BOOST_MOVE_STD_NEW_FWD_CC operator new(std::size_t sz, const std::nothrow_t &) BOOST_MOVE_STD_NEW_FWD_NOEXCEPT
+{
+   ++nothrow_new_count;
+   BOOST_MOVE_TRY{  return ::operator new(sz);  }
+   BOOST_MOVE_CATCH(...){  return 0;  }
+   BOOST_MOVE_CATCH_END
+}
+
+void* BOOST_MOVE_STD_NEW_FWD_CC operator new[](std::size_t sz, const std::nothrow_t &) BOOST_MOVE_STD_NEW_FWD_NOEXCEPT
+{
+   ++nothrow_new_count;
+   BOOST_MOVE_TRY{  return ::operator new[](sz);  }
+   BOOST_MOVE_CATCH(...){  return 0;  }
+   BOOST_MOVE_CATCH_END
+}
+
+void BOOST_MOVE_STD_NEW_FWD_CC operator delete(void *p, const std::nothrow_t &) BOOST_MOVE_STD_NEW_FWD_NOEXCEPT
+{
+   ++nothrow_delete_count;
+   ::operator delete(p);
+}
+
+void BOOST_MOVE_STD_NEW_FWD_CC operator delete[](void *p, const std::nothrow_t &) BOOST_MOVE_STD_NEW_FWD_NOEXCEPT
+{
+   ++nothrow_delete_count;
+   ::operator delete[](p);
+}
+
+#if defined(_MSC_VER)
+#  pragma warning (pop)
+#endif
+
 namespace bml = ::boost::movelib;
 
 ////////////////////////////////
@@ -241,6 +287,101 @@ void test()
 }
 
 }  //namespace make_unique_array{
+
+////////////////////////////////
+//   make_unique_nothrow_alloc
+////////////////////////////////
+
+namespace make_unique_nothrow_alloc{
+
+//The compiler can omit the calls to the replaceable allocation functions if the pointer does not
+//escape (e.g. GCC 15 -O3), so the pointers are stored in a volatile variable to count the calls
+void * volatile escaped;
+
+#ifndef BOOST_NO_EXCEPTIONS
+
+//Throws if throw_on_construction is true (a runtime condition avoids unreachable code warnings)
+bool throw_on_construction = true;
+
+struct throwing_ctor
+{
+   throwing_ctor() : i()
+   {
+      escaped = this;
+      if(throw_on_construction) throw 1;
+   }
+   int i;
+};
+
+#endif   //#ifndef BOOST_NO_EXCEPTIONS
+
+#if defined(__cpp_aligned_new)
+//An over-aligned type: the align_val_t allocation functions must be used
+#if defined(_MSC_VER)
+#  pragma warning (push)
+#  pragma warning (disable : 4324) //structure was padded due to alignment specifier
+#endif
+struct alignas(64) over_aligned
+{
+   int i;
+};
+#if defined(_MSC_VER)
+#  pragma warning (pop)
+#endif
+#endif
+
+void test()
+{
+   //The replaced global nothrow allocation functions are used
+   nothrow_new_count = 0;
+   nothrow_delete_count = 0;
+   {
+      bml::unique_ptr<int> p(bml::make_unique_nothrow<int>(1));
+      escaped = p.get();
+      BOOST_TEST(p && *p == 1);
+      bml::unique_ptr<int[]> pa(bml::make_unique_nothrow<int[]>(3));
+      escaped = pa.get();
+      BOOST_TEST(pa && pa[0] == 0);
+      bml::unique_ptr<int> pd(bml::make_unique_nothrow_definit<int>());
+      escaped = pd.get();
+      BOOST_TEST(!!pd);
+      bml::unique_ptr<int[]> pad(bml::make_unique_nothrow_definit<int[]>(3));
+      escaped = pad.get();
+      BOOST_TEST(!!pad);
+   }
+   BOOST_TEST(nothrow_new_count == 4);
+   BOOST_TEST(nothrow_delete_count == 0);
+
+   #ifndef BOOST_NO_EXCEPTIONS
+   //If the constructor throws, the exception is propagated and the memory is
+   //deallocated with the nothrow deallocation functions
+   nothrow_new_count = 0;
+   bool thrown = false;
+   try{  bml::make_unique_nothrow<throwing_ctor>();  }
+   catch(int){  thrown = true;  }
+   BOOST_TEST(thrown);
+   BOOST_TEST(nothrow_new_count == 1);
+   BOOST_TEST(nothrow_delete_count == 1);
+
+   thrown = false;
+   try{  bml::make_unique_nothrow<throwing_ctor[]>(2);  }
+   catch(int){  thrown = true;  }
+   BOOST_TEST(thrown);
+   BOOST_TEST(nothrow_new_count == 2);
+   BOOST_TEST(nothrow_delete_count == 2);
+   #endif   //#ifndef BOOST_NO_EXCEPTIONS
+
+   #if defined(__cpp_aligned_new)
+   {
+      bml::unique_ptr<over_aligned> p(bml::make_unique_nothrow<over_aligned>());
+      BOOST_TEST(p && (reinterpret_cast<std::size_t>(p.get()) % 64u) == 0);
+      bml::unique_ptr<over_aligned[]> pa(bml::make_unique_nothrow<over_aligned[]>(3));
+      BOOST_TEST(pa && (reinterpret_cast<std::size_t>(pa.get()) % 64u) == 0);
+   }
+   #endif
+}
+
+}  //namespace make_unique_nothrow_alloc{
 
 ////////////////////////////////
 //       unique_compare
@@ -509,6 +650,7 @@ int main()
 {
    make_unique_single::test();
    make_unique_array::test();
+   make_unique_nothrow_alloc::test();
    unique_compare::test();
    unique_compare_zero::test();
    unique_compare_nullptr::test();

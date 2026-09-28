@@ -25,6 +25,7 @@
 #include <boost/move/unique_ptr.hpp>
 #include <cstddef>   //for std::size_t
 #include <boost/move/detail/type_traits.hpp>
+#include <boost/move/detail/std_new_fwd.hpp>   //std::nothrow, without including <new>
 #ifdef BOOST_NO_CXX11_VARIADIC_TEMPLATES
 #  include <boost/move/detail/fwd_macros.hpp>
 #endif
@@ -37,22 +38,6 @@
 //! preprocessor library, that's why it's a a separate header from <tt>unique_ptr.hpp</tt>
  
 #if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1915)
-   #pragma warning (push)
-   #pragma warning (disable : 4643) // Forward declaring 'X' in namespace std is not permitted by the C++ Standard
-#endif
-
-namespace std {   //no namespace versioning in clang+libc++
-
-struct nothrow_t;
-
-}  //namespace std {
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1915)
-   #pragma warning (pop)
-#endif
-
 
 namespace boost{
 namespace move_detail {
@@ -77,16 +62,6 @@ struct unique_ptr_if<T[N]>
 {
    typedef void t_is_array_of_known_bound;
 };
-
-template <int Dummy = 0>
-struct nothrow_holder
-{
-   static std::nothrow_t *pnothrow;   
-};
-
-template <int Dummy>
-std::nothrow_t *nothrow_holder<Dummy>::pnothrow = 
-   reinterpret_cast<std::nothrow_t *>(0x1234);  //Avoid reference to null errors in sanitizers
 
 }  //namespace move_detail {
 }  //namespace boost{
@@ -114,7 +89,7 @@ template<class T, class... Args>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)
       make_unique_nothrow(BOOST_FWD_REF(Args)... args)
-{  return unique_ptr<T>(new (*boost::move_detail::nothrow_holder<>::pnothrow)T(::boost::forward<Args>(args)...));  }
+{  return unique_ptr<T>(new (std::nothrow)T(::boost::forward<Args>(args)...));  }
 
 #else
    #define BOOST_MOVE_MAKE_UNIQUE_CODE(N)\
@@ -126,7 +101,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
       template<class T BOOST_MOVE_I##N BOOST_MOVE_CLASS##N>\
       typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array\
          make_unique_nothrow( BOOST_MOVE_UREF##N)\
-      {  return unique_ptr<T>( new (*boost::move_detail::nothrow_holder<>::pnothrow)T ( BOOST_MOVE_FWD##N ) );  }\
+      {  return unique_ptr<T>( new (std::nothrow)T ( BOOST_MOVE_FWD##N ) );  }\
       //
    BOOST_MOVE_ITERATE_0TO9(BOOST_MOVE_MAKE_UNIQUE_CODE)
    #undef BOOST_MOVE_MAKE_UNIQUE_CODE
@@ -152,7 +127,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)
       make_unique_nothrow_definit()
 {
-    return unique_ptr<T>(new (*boost::move_detail::nothrow_holder<>::pnothrow)T);
+    return unique_ptr<T>(new (std::nothrow)T);
 }
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is not an array.
@@ -190,7 +165,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
       make_unique_nothrow(std::size_t n)
 {
     typedef typename ::boost::move_detail::remove_extent<T>::type U;
-    return unique_ptr<T>(new (*boost::move_detail::nothrow_holder<>::pnothrow)U[n]());
+    return unique_ptr<T>(new (std::nothrow)U[n]());
 }
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of 
@@ -216,7 +191,7 @@ inline BOOST_MOVE_DOC1ST(unique_ptr<T>,
       make_unique_nothrow_definit(std::size_t n)
 {
     typedef typename ::boost::move_detail::remove_extent<T>::type U;
-    return unique_ptr<T>(new (*boost::move_detail::nothrow_holder<>::pnothrow) U[n]);
+    return unique_ptr<T>(new (std::nothrow) U[n]);
 }
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is an array of

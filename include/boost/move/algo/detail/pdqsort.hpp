@@ -243,7 +243,10 @@ namespace pdqsort_detail {
 
             // Insertion sort is faster for small arrays.
             if (size < insertion_sort_threshold) {
-                insertion_sort(begin, end, comp);
+                // If not leftmost, *(begin - 1) is not greater than any element in [begin, end)
+                // and stops the insertion without a bound check.
+                if (leftmost) boost::movelib::insertion_sort(begin, end, comp);
+                else          boost::movelib::unguarded_insertion_sort(begin, end, comp);
                 return;
             }
 

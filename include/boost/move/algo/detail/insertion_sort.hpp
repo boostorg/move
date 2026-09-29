@@ -69,10 +69,11 @@ void insertion_sort_copy(ForwardIterator first1, ForwardIterator last1, Birdirec
    insertion_sort_op(first1, last1, first2, comp, move_op());
 }
 
-// @endcond
-
-template <class Compare, class BirdirectionalIterator>
-void insertion_sort(BirdirectionalIterator first, BirdirectionalIterator last, Compare comp)
+// If Guarded is false, there must be an element before first that is not
+// greater than any element in [first, last). That element stops the inner loop,
+// so the bound check is removed at compile time.
+template <bool Guarded, class Compare, class BirdirectionalIterator>
+void insertion_sort_impl(BirdirectionalIterator first, BirdirectionalIterator last, Compare comp)
 {
    typedef typename boost::movelib::iterator_traits<BirdirectionalIterator>::value_type value_type;
    if (first != last){
@@ -81,14 +82,31 @@ void insertion_sort(BirdirectionalIterator first, BirdirectionalIterator last, C
          BirdirectionalIterator j = i;
          if (comp(*i,  *--j)) {
             value_type tmp(::boost::move(*i));
-            *i = ::boost::move(*j);
-            for (BirdirectionalIterator k = j; k != first && comp(tmp,  *--k); --j) {
-               *j = ::boost::move(*k);
-            }
-            *j = ::boost::move(tmp);
+            BirdirectionalIterator k = i;
+            do {
+               *k = ::boost::move(*j);
+               k = j;
+            } while ((!Guarded || j != first) && comp(tmp,  *--j));
+            *k = ::boost::move(tmp);
          }
       }
    }
+}
+
+// @endcond
+
+// Precondition: there is an element before first that is not greater than any
+// element in [first, last).
+template <class Compare, class BirdirectionalIterator>
+BOOST_MOVE_FORCEINLINE void unguarded_insertion_sort(BirdirectionalIterator first, BirdirectionalIterator last, Compare comp)
+{
+   insertion_sort_impl<false>(first, last, comp);
+}
+
+template <class Compare, class BirdirectionalIterator>
+BOOST_MOVE_FORCEINLINE void insertion_sort(BirdirectionalIterator first, BirdirectionalIterator last, Compare comp)
+{
+   insertion_sort_impl<true>(first, last, comp);
 }
 
 template <class Compare, class BirdirectionalIterator, class BirdirectionalRawIterator>

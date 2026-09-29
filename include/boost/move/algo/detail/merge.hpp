@@ -1030,37 +1030,40 @@ template<typename BidirectionalIterator,
       Compare comp)
 {
    typedef typename  iter_size<BidirectionalIterator>::type size_type;
-   //trivial cases
-   if (!len2 || !len1) {
-      // no-op
-   }
-   else if (len1 <= buffer_size || len2 <= buffer_size) {
-      range_xbuf<Pointer, size_type, move_op> rxbuf(buffer, buffer + buffer_size);
-      buffered_merge(first, middle, last, comp, rxbuf);
-   }
-   else if (size_type(len1 + len2) == 2u) {
-      if (comp(*middle, *first))
-         adl_move_swap(*first, *middle);
-   }
-   else if (size_type(len1 + len2) < MergeBufferlessONLogNRotationThreshold) {
-      //Base case: below this size the binary searches and the rotation
-      //of the halving cost more than walking the shorter range
-      merge_bufferless_ON2(first, middle, last, comp);
-   }
-   else {
+
+   while(1) {
+      //trivial cases
+      if (!len2 || !len1) {
+         return;
+      }
+      else if (len1 <= buffer_size || len2 <= buffer_size) {
+         range_xbuf<Pointer, size_type, move_op> rxbuf(buffer, buffer + buffer_size);
+         buffered_merge(first, middle, last, comp, rxbuf);
+         return;
+      }
+      else if (size_type(len1 + len2) == 2u) {
+         if (comp(*middle, *first))
+            adl_move_swap(*first, *middle);
+         return;
+      }
+      else if (size_type(len1 + len2) < MergeBufferlessONLogNRotationThreshold) {
+         //Base case: below this size the binary searches and the rotation
+         //of the halving cost more than walking the shorter range
+         merge_bufferless_ON2(first, middle, last, comp);
+         return;
+      }
+
       BidirectionalIterator first_cut = first;
       BidirectionalIterator second_cut = middle;
       size_type len11 = 0;
       size_type len22 = 0;
-      if (len1 > len2)  //(len1 < len2)
-      {
+      if (len1 > len2) {
          len11 = len1 / 2;
          first_cut += len11;
          second_cut = boost::movelib::lower_bound(middle, last, *first_cut, comp);
          len22 = size_type(second_cut - middle);
       }
-      else
-      {
+      else {
          len22 = len2 / 2;
          second_cut += len22;
          first_cut = boost::movelib::upper_bound(first, middle, *second_cut, comp);
@@ -1071,10 +1074,25 @@ template<typename BidirectionalIterator,
          = rotate_adaptive(first_cut, middle, second_cut,
             size_type(len1 - len11), len22, buffer,
             buffer_size);
-      merge_adaptive_ONlogN_recursive(first, first_cut, new_middle, len11,
-         len22, buffer, buffer_size, comp);
-      merge_adaptive_ONlogN_recursive(new_middle, second_cut, last,
-         size_type(len1 - len11), size_type(len2 - len22), buffer, buffer_size, comp);
+
+      //Avoid one recursive call doing a manual tail call elimination on the biggest range
+      const size_type len_internal = size_type(len11+len22);
+      if( len_internal < (len1 + len2 - len_internal) ) {
+         merge_adaptive_ONlogN_recursive(first, first_cut, new_middle, len11,
+            len22, buffer, buffer_size, comp);
+         first = new_middle;
+         middle = second_cut;
+         len1 = size_type(len1-len11);
+         len2 = size_type(len2-len22);
+      }
+      else {
+         merge_adaptive_ONlogN_recursive(new_middle, second_cut, last,
+            size_type(len1 - len11), size_type(len2 - len22), buffer, buffer_size, comp);
+         middle = first_cut;
+         last = new_middle;
+         len1 = len11;
+         len2 = len22;
+      }
    }
 }
 

@@ -107,13 +107,13 @@ struct is_array_del
 {};
 
 template<class T>
-BOOST_MOVE_CXX20_CONSTEXPR void call_delete(T *p, is_array_del<true>)
+BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR void call_delete(T *p, is_array_del<true>)
 {
    delete [] p;
 }
 
 template<class T>
-BOOST_MOVE_CXX20_CONSTEXPR void call_delete(T *p, is_array_del<false>)
+BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR void call_delete(T *p, is_array_del<false>)
 {
    delete p;
 }
@@ -224,7 +224,7 @@ struct default_delete
    //!      - T is an array type, and remove_cv&lt;U&gt;::type is the same type as
    //!         remove_cv&lt;remove_extent&lt;T&gt;::type&gt;::type and U* is convertible to remove_extent&lt;T&gt;::type*.
    template <class U>
-   BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(void, typename bmupd::enable_defdel_call<U BOOST_MOVE_I T BOOST_MOVE_I void>::type)
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(void, typename bmupd::enable_defdel_call<U BOOST_MOVE_I T BOOST_MOVE_I void>::type)
       operator()(U* ptr) const BOOST_NOEXCEPT
    {
       //T must not be (cv) void: deleting a pointer to void is undefined behavior
@@ -240,7 +240,7 @@ struct default_delete
 
    //! <b>Effects</b>: Same as <tt>(*this)(static_cast&lt;element_type*&gt;(nullptr))</tt>.
    //!
-   BOOST_MOVE_CXX20_CONSTEXPR void operator()(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type)) const BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR void operator()(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type)) const BOOST_NOEXCEPT
    {
       //T must not be (cv) void: deleting a pointer to void is undefined behavior
       BOOST_MOVE_STATIC_ASSERT(( !bmupmu::is_void<element_type>::value ));

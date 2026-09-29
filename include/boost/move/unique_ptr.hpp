@@ -109,25 +109,25 @@ struct unique_ptr_data
    typedef typename deleter_types<D>::del_ref            del_ref;
    typedef typename deleter_types<D>::del_cref           del_cref;
 
-   inline BOOST_CONSTEXPR unique_ptr_data() BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_CONSTEXPR unique_ptr_data() BOOST_NOEXCEPT
       : m_p(), d()
    {}
 
-   inline BOOST_MOVE_CXX20_CONSTEXPR explicit unique_ptr_data(P p) BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR explicit unique_ptr_data(P p) BOOST_NOEXCEPT
       : m_p(p), d()
    {}
 
-   inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr_data(P p, deleter_arg_type1 d1) BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR unique_ptr_data(P p, deleter_arg_type1 d1) BOOST_NOEXCEPT
       : m_p(p), d(d1)
    {}
 
    template <class U>
-   inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr_data(P p, BOOST_FWD_REF(U) d1) BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR unique_ptr_data(P p, BOOST_FWD_REF(U) d1) BOOST_NOEXCEPT
       : m_p(p), d(::boost::forward<U>(d1))
    {}
 
-   inline BOOST_MOVE_CXX20_CONSTEXPR del_ref deleter()       { return d; }
-   inline BOOST_MOVE_CXX20_CONSTEXPR del_cref deleter() const{ return d; }
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR del_ref deleter()       { return d; }
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR del_cref deleter() const{ return d; }
 
    P m_p;
    D d;
@@ -147,25 +147,25 @@ struct unique_ptr_data<P, D, false>
    typedef typename deleter_types<D>::del_cref           del_cref;
 
    //constexpr: unique_ptr's default and nullptr constructors are constexpr
-   inline BOOST_CONSTEXPR unique_ptr_data() BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_CONSTEXPR unique_ptr_data() BOOST_NOEXCEPT
       : D(), m_p()
    {}
 
-   inline BOOST_MOVE_CXX20_CONSTEXPR explicit unique_ptr_data(P p) BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR explicit unique_ptr_data(P p) BOOST_NOEXCEPT
       : D(), m_p(p)
    {}
 
-   inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr_data(P p, deleter_arg_type1 d1) BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR unique_ptr_data(P p, deleter_arg_type1 d1) BOOST_NOEXCEPT
       : D(d1), m_p(p)
    {}
 
    template <class U>
-   inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr_data(P p, BOOST_FWD_REF(U) d) BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR unique_ptr_data(P p, BOOST_FWD_REF(U) d) BOOST_NOEXCEPT
       : D(::boost::forward<U>(d)), m_p(p)
    {}
 
-   inline BOOST_MOVE_CXX20_CONSTEXPR del_ref deleter()        BOOST_NOEXCEPT   {  return static_cast<del_ref>(*this);   }
-   inline BOOST_MOVE_CXX20_CONSTEXPR del_cref deleter() const BOOST_NOEXCEPT   {  return static_cast<del_cref>(*this);  }
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR del_ref deleter()        BOOST_NOEXCEPT   {  return static_cast<del_ref>(*this);   }
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR del_cref deleter() const BOOST_NOEXCEPT   {  return static_cast<del_cref>(*this);  }
 
    P m_p;
    //Implicit copy operations: a user-declared one would disable BOOST_MOVE_TRIVIAL_ABI on unique_ptr
@@ -768,7 +768,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
    template<class TT = T, class = typename bmupmu::enable_if_c<!bmupmu::is_array<TT>::value>::type>
    #endif
-   BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(element_type&, typename bmupmu::add_lvalue_reference<element_type>::type)
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(element_type&, typename bmupmu::add_lvalue_reference<element_type>::type)
       operator*() const BOOST_MOVE_UNIQUE_PTR_DEREF_NOEXCEPT
    {
       BOOST_MOVE_STATIC_ASSERT((!bmupmu::is_array<T>::value));
@@ -784,7 +784,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
    template<class TT = T, class = typename bmupmu::enable_if_c<bmupmu::is_array<TT>::value>::type>
    #endif
-   inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(element_type&, typename bmupmu::add_lvalue_reference<element_type>::type)
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(element_type&, typename bmupmu::add_lvalue_reference<element_type>::type)
       operator[](std::size_t i) const BOOST_NOEXCEPT
    {
       BOOST_MOVE_STATIC_ASSERT((bmupmu::is_array<T>::value));
@@ -804,7 +804,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS)
    template<class TT = T, class = typename bmupmu::enable_if_c<!bmupmu::is_array<TT>::value>::type>
    #endif
-   inline BOOST_MOVE_CXX20_CONSTEXPR pointer operator->() const BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR pointer operator->() const BOOST_NOEXCEPT
    {
       BOOST_MOVE_STATIC_ASSERT((!bmupmu::is_array<T>::value));
       assert(m_data.m_p);
@@ -813,18 +813,18 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
 
    //! <b>Returns</b>: The stored pointer.
    //!
-   inline BOOST_MOVE_CXX20_CONSTEXPR pointer get() const BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR pointer get() const BOOST_NOEXCEPT
    {  return m_data.m_p;  }
 
    //! <b>Returns</b>: A reference to the stored deleter.
    //!
-   inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(D&, typename bmupmu::add_lvalue_reference<D>::type)
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(D&, typename bmupmu::add_lvalue_reference<D>::type)
       get_deleter() BOOST_NOEXCEPT
    {  return m_data.deleter();  }   
 
    //! <b>Returns</b>: A reference to the stored deleter.
    //!
-   inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(const D&, typename bmupd::deleter_types<D>::del_cref)
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(const D&, typename bmupd::deleter_types<D>::del_cref)
       get_deleter() const BOOST_NOEXCEPT
    {  return m_data.deleter();  }
 
@@ -833,10 +833,10 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!
    //! <b>Note</b>: If the compiler does not support explicit conversion operators, the conversion
    //!   is implicit, but only to a type that can be used as a boolean value.
-   inline BOOST_MOVE_CXX20_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR explicit operator bool() const BOOST_NOEXCEPT
    {  return m_data.m_p ? true : false;  }
    #else
-   inline BOOST_MOVE_CXX20_CONSTEXPR operator bmupd::explicit_bool_arg() const BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR operator bmupd::explicit_bool_arg() const BOOST_NOEXCEPT
    {
       return m_data.m_p
          ? &bmupd::bool_conversion::for_bool
@@ -847,7 +847,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //! <b>Postcondition</b>: <tt>get() == nullptr</tt>.
    //!
    //! <b>Returns</b>: The value <tt>get()</tt> had at the start of the call to release.   
-   inline BOOST_MOVE_CXX20_CONSTEXPR pointer release() BOOST_NOEXCEPT
+   BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR pointer release() BOOST_NOEXCEPT
    {
       const pointer tmp = m_data.m_p;
       m_data.m_p = pointer();

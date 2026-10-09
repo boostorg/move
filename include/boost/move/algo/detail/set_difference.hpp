@@ -12,6 +12,7 @@
 #define BOOST_MOVE_SET_DIFFERENCE_HPP
 
 #include <boost/move/algo/move.hpp>
+#include <boost/move/detail/duo.hpp>
 #include <boost/move/iterator.hpp>
 #include <boost/move/utility_core.hpp>
 
@@ -201,6 +202,109 @@ ForwardOutputIt1 inplace_set_unique_difference
       }
    }
    return first1;
+}
+
+//Partitions the sorted range [first1, last1) with the sorted range [first2, last2).
+//Range 1 can contain equivalent elements. For each group of equivalent elements of range 1:
+//if no element of range 2 is equivalent to the group, the first element of the group is
+//a "unique difference" element. All other elements of range 1 are "rest" elements.
+//
+//Moves the unique difference elements to the range beginning at result (these are the
+//elements that set_unique_difference moves to result). Moves the rest elements to the
+//start of range 1 (move assignment). Both resulting ranges are sorted and keep the
+//relative order of range 1. Rest elements are not moved until a unique difference element
+//is found before them.
+//
+//Returns a duo with the end of the rest elements in range 1 (first) and the end of the
+//output range (second). The elements in [returned first, last1) are in a moved-from state.
+//
+//Requires: result does not overlap with range 1 and writing to result does not invalidate
+//range 2.
+//
+//Complexity: at most (last1 - first1) + (last2 - first2) + 2*G - 1 comparisons, where G is
+//the number of groups of equivalent elements in range 1 (G <= last1 - first1).
+//At most (last1 - first1) move assignments, each element of range 1 is moved at most once.
+template<class ForwardIt1, class ForwardIt2, class OutputIt, class Compare>
+::boost::move_detail::duo<ForwardIt1, OutputIt> set_unique_difference_partition
+   (ForwardIt1 first1, ForwardIt1 last1, ForwardIt2 first2, ForwardIt2 last2, OutputIt result, Compare comp)
+{
+   ForwardIt1 rest = first1;
+   while (first1 != last1) {
+      //Find the end of the group of equivalent elements before moving
+      //i, as moving *i could alter the value in i.
+      ForwardIt1 i = first1;
+      while (++first1 != last1 && !comp(*i, *first1)){}
+      //Skip elements of range 2 less than the group
+      while (first2 != last2 && comp(*first2, *i)) {
+         ++first2;
+      }
+      if (first2 == last2 || comp(*i, *first2)) {
+         //No equivalent element in range 2: move the first element of the group
+         //to result and the other elements of the group to rest.
+         *result = boost::move(*i);
+         ++result;
+         rest = boost::move(++i, first1, rest);
+      }
+      else if (rest == i) {
+         //Still in place: skip the group, no move is necessary
+         rest = first1;
+      }
+      else {
+         rest = boost::move(i, first1, rest);
+      }
+   }
+   return ::boost::move_detail::duo<ForwardIt1, OutputIt>(rest, result);
+}
+
+//Partitions the sorted range [first1, last1) with the sorted range [first2, last2)
+//(in place operation in range 1). Range 1 can contain equivalent elements. For each group
+//of equivalent elements of range 1: if no element of range 2 is equivalent to the group,
+//the first element of the group is a "unique difference" element. All other elements of
+//range 1 are "removed" elements.
+//
+//Moves the unique difference elements to the start of range 1 (move assignment), with the
+//same result as inplace_set_unique_difference. Moves the removed elements to the range
+//beginning at removed. Both resulting ranges are sorted and keep the relative order of
+//range 1. Unique difference elements are not moved until an element is removed before them.
+//
+//Returns a duo with the end of the unique difference elements in range 1 (first) and the
+//end of the output range (second). The elements in [returned first, last1) are in a
+//moved-from state.
+//
+//Requires: removed does not overlap with range 1 and writing to removed does not invalidate
+//range 1 or range 2.
+//
+//Complexity: at most (last1 - first1) + (last2 - first2) + 2*G - 1 comparisons, where G is
+//the number of groups of equivalent elements in range 1 (G <= last1 - first1).
+//At most (last1 - first1) move assignments, each element of range 1 is moved at most once.
+template<class ForwardOutputIt1, class ForwardIt2, class OutputIt, class Compare>
+::boost::move_detail::duo<ForwardOutputIt1, OutputIt> inplace_set_unique_difference_partition
+   (ForwardOutputIt1 first1, ForwardOutputIt1 last1, ForwardIt2 first2, ForwardIt2 last2, OutputIt removed, Compare comp)
+{
+   ForwardOutputIt1 result = first1;
+   while (first1 != last1) {
+      //Find the end of the group of equivalent elements before moving
+      //i, as moving *i could alter the value in i.
+      ForwardOutputIt1 i = first1;
+      while (++first1 != last1 && !comp(*i, *first1)){}
+      //Skip elements of range 2 less than the group
+      while (first2 != last2 && comp(*first2, *i)) {
+         ++first2;
+      }
+      if (first2 == last2 || comp(*i, *first2)) {
+         //No equivalent element in range 2: keep the first element of the group
+         //and remove the other elements of the group.
+         if (result != i) {
+            *result = boost::move(*i);
+         }
+         ++result;
+         removed = boost::move(++i, first1, removed);
+      }
+      else {
+         removed = boost::move(i, first1, removed);
+      }
+   }
+   return ::boost::move_detail::duo<ForwardOutputIt1, OutputIt>(result, removed);
 }
 
 #if defined(BOOST_CLANG) || (defined(BOOST_GCC) && (BOOST_GCC >= 40600))

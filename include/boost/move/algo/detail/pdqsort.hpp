@@ -53,6 +53,7 @@
 #include <boost/move/algo/detail/insertion_sort.hpp>
 #include <boost/move/algo/detail/heap_sort.hpp>
 #include <boost/move/detail/iterator_traits.hpp>
+#include <boost/move/detail/duo.hpp>
 
 #include <boost/move/adl_move_swap.hpp>
 #include <cstddef>
@@ -66,21 +67,6 @@ namespace boost {
 namespace movelib {
 
 namespace pdqsort_detail {
-
-   //A simple pair implementation to avoid including <utility>
-   template<class T1, class T2>
-   struct pair
-   {
-      pair()
-      {}
-
-      pair(const T1 &t1, const T2 &t2)
-         : first(t1), second(t2)
-      {}
-
-      T1 first;
-      T2 second;
-   };
 
     enum {
         // Partitions below this size are sorted using insertion sort.
@@ -159,7 +145,7 @@ namespace pdqsort_detail {
     // pivot is a median of at least 3 elements and that [begin, end) is at least
     // insertion_sort_threshold long.
     template<class Iter, class Compare>
-    pdqsort_detail::pair<Iter, bool> partition_right(Iter begin, Iter end, Compare comp) {
+    ::boost::move_detail::duo<Iter, bool> partition_right(Iter begin, Iter end, Compare comp) {
         typedef typename boost::movelib::iterator_traits<Iter>::value_type T;
         
         // Move pivot into local for speed.
@@ -196,7 +182,7 @@ namespace pdqsort_detail {
             *begin = boost::move(*pivot_pos);
         *pivot_pos = boost::move(pivot);
 
-        return pdqsort_detail::pair<Iter, bool>(pivot_pos, already_partitioned);
+        return ::boost::move_detail::duo<Iter, bool>(pivot_pos, already_partitioned);
     }
 
     // Similar function to the one above, except elements equal to the pivot are put to the left of
@@ -271,7 +257,7 @@ namespace pdqsort_detail {
             }
 
             // Partition and get results.
-            pdqsort_detail::pair<Iter, bool> part_result = partition_right(begin, end, comp);
+            ::boost::move_detail::duo<Iter, bool> part_result = partition_right(begin, end, comp);
             Iter pivot_pos = part_result.first;
             bool already_partitioned = part_result.second;
 

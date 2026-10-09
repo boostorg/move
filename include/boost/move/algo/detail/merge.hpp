@@ -19,6 +19,7 @@
 #include <boost/move/algo/predicate.hpp>
 #include <boost/move/algo/detail/search.hpp>
 #include <boost/move/detail/iterator_to_raw_pointer.hpp>
+#include <boost/move/detail/placement_new.hpp>
 #include <boost/move/detail/reverse_iterator.hpp>
 #include <boost/move/detail/type_traits.hpp>
 #include <cassert>
@@ -87,7 +88,7 @@ class adaptive_xbuf
    {
       assert(m_size < m_capacity);
       RandRawIt p_ret = m_ptr + m_size;
-      ::new(&*p_ret) T(::boost::move(*it));
+      ::new(&*p_ret, boost_move_new_t()) T(::boost::move(*it));
       ++m_size;
       return p_ret;
    }
@@ -127,10 +128,10 @@ class adaptive_xbuf
       if(m_size < sz){
          BOOST_MOVE_TRY
          {
-            ::new((void*)&m_ptr[m_size]) T(::boost::move(t));
+            ::new((void*)&m_ptr[m_size], boost_move_new_t()) T(::boost::move(t));
             ++m_size;
             for(; m_size != sz; ++m_size){
-               ::new((void*)&m_ptr[m_size]) T(::boost::move(m_ptr[m_size-1]));
+               ::new((void*)&m_ptr[m_size], boost_move_new_t()) T(::boost::move(m_ptr[m_size-1]));
             }
             t = ::boost::move(m_ptr[m_size-1]);
          }
@@ -954,7 +955,7 @@ void uninitialized_merge_with_right_placed
    while ( first != last && dest_first != original_r_first ) {
       if (r_first == r_last) {
          for(; dest_first != original_r_first; ++dest_first, ++first){
-            ::new((iterator_to_raw_pointer)(dest_first)) value_type(::boost::move(*first));
+            ::new((iterator_to_raw_pointer)(dest_first), boost_move_new_t()) value_type(::boost::move(*first));
             d.incr();
          }
          d.release();
@@ -964,12 +965,12 @@ void uninitialized_merge_with_right_placed
          return;
       }
       else if (comp(*r_first, *first)) {
-         ::new((iterator_to_raw_pointer)(dest_first)) value_type(::boost::move(*r_first));
+         ::new((iterator_to_raw_pointer)(dest_first), boost_move_new_t()) value_type(::boost::move(*r_first));
          d.incr();
          ++r_first;
       }
       else {
-         ::new((iterator_to_raw_pointer)(dest_first)) value_type(::boost::move(*first));
+         ::new((iterator_to_raw_pointer)(dest_first), boost_move_new_t()) value_type(::boost::move(*first));
          d.incr();
          ++first;
       }

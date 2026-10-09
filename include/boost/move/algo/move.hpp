@@ -28,6 +28,7 @@
 #include <boost/move/detail/iterator_traits.hpp>
 #include <boost/move/detail/iterator_to_raw_pointer.hpp>
 #include <boost/move/detail/addressof.hpp>
+#include <boost/move/detail/placement_new.hpp>
 #if defined(BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE)
 #include <algorithm>
 #endif
@@ -124,7 +125,7 @@ F uninitialized_move(I f, I l, F r
    BOOST_MOVE_TRY{
       while (f != l) {
          void * const addr = static_cast<void*>(::boost::move_detail::addressof(*r));
-         ::new(addr) input_value_type(::boost::move(*f));
+         ::new(addr, boost_move_new_t()) input_value_type(::boost::move(*f));
          ++f; ++r;
       }
    }

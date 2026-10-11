@@ -15,6 +15,7 @@
 #include <boost/move/detail/config_begin.hpp>
 
 #include <boost/move/algo/detail/adaptive_sort_merge.hpp>
+#include <boost/move/algo/detail/rotate.hpp>
 #include <boost/move/detail/type_traits.hpp>
 #include <cassert>
 

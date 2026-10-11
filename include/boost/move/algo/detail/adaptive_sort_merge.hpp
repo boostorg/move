@@ -47,6 +47,7 @@
 #include <boost/move/detail/reverse_iterator.hpp>
 #include <boost/move/algo/move.hpp>
 #include <boost/move/algo/detail/merge.hpp>
+#include <boost/move/algo/detail/rotate.hpp>
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/move/algo/detail/insertion_sort.hpp>
 #include <boost/move/algo/detail/merge_sort.hpp>

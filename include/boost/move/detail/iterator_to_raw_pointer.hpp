@@ -23,6 +23,10 @@
 #include <boost/move/detail/pointer_element.hpp>
 
 namespace boost {
+
+template <class It>
+class move_iterator;
+
 namespace movelib {
 namespace detail {
 
@@ -51,6 +55,14 @@ inline typename boost::movelib::detail::iterator_to_element_ptr<Iterator>::type
 {
    return ::boost::movelib::to_raw_pointer
       (  ::boost::movelib::detail::iterator_to_pointer(i)   );
+}
+
+//move_iterator<It>::pointer is It, so the element type can't be obtained from it
+template <class Iterator>
+inline typename boost::movelib::detail::iterator_to_element_ptr<Iterator>::type
+   iterator_to_raw_pointer(const ::boost::move_iterator<Iterator> &i)
+{
+   return ::boost::movelib::iterator_to_raw_pointer(i.base());
 }
 
 }  //namespace movelib {

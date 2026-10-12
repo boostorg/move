@@ -27,7 +27,6 @@ struct cxx20_style_iterator
 };
 
 #include <boost/move/detail/workaround.hpp>
-#include <boost/container/vector.hpp>
 #include <boost/move/iterator.hpp>
 #include <vector>
 #include <deque>
@@ -141,13 +140,11 @@ int main()
    test_contiguous<common_it, false>();
    #endif
 
-   //Standard and Boost.Container iterators
+   //Standard iterators
    test_contiguous<std::vector<int>::iterator, is_cxx20>();
    test_contiguous<std::vector<int>::const_iterator, is_cxx20>();
    test_contiguous<std::string::iterator, is_cxx20>();
    test_contiguous<std::string::const_iterator, is_cxx20>();
-   test_contiguous<boost::container::vector<int>::iterator, true>();
-   test_contiguous<boost::container::vector<int>::const_iterator, true>();
    test_contiguous<std::vector<bool>::iterator, false>();
    test_contiguous<std::deque<int>::iterator, false>();
    test_contiguous<std::list<int>::iterator, false>();

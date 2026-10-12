@@ -31,8 +31,8 @@
 #include <boost/move/detail/iterator_traits.hpp>
 #include <boost/move/detail/addressof.hpp>
 #include <boost/move/detail/type_traits.hpp>
+#include <boost/move/detail/placement_new.hpp>
 #include <cstring>   //memmove
-#include <new>       //placement new
 
 namespace boost {
 
@@ -96,7 +96,7 @@ inline F uninitialized_copy_range(I f, I l, F r)
    F back = r;
    BOOST_MOVE_TRY{
       for (; f != l; ++r, ++f){
-         ::new(static_cast<void*>(::boost::move_detail::addressof(*r))) value_type(*f);
+         ::new(static_cast<void*>(::boost::move_detail::addressof(*r)), boost_move_new_t()) value_type(*f);
       }
    }
    BOOST_MOVE_CATCH(...){

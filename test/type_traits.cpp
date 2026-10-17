@@ -756,6 +756,102 @@ void test()
 
 }  //namespace destructible_test
 
+namespace is_constructible_test
+{
+
+struct point
+{
+   int x, y;
+   point();
+   point(int);
+   point(int, int);
+   point(int, int, int);
+   point(int, int, int, int);
+   point(int, int, int, int, int, int, int, int);
+   point(int, int, int, int, int, int, int, int, int);
+};
+
+struct from_ptr
+{
+   from_ptr(int*);
+};
+
+struct abstract_type
+{
+   abstract_type();
+   virtual void f() = 0;
+};
+
+//A class-specific operator new that can not be used does not change the result
+class private_new
+{
+   static void *operator new(std::size_t);
+   static void *operator new(std::size_t, void *);
+   public:
+   private_new();
+   private_new(int, int);
+};
+
+#if !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)
+
+struct deleted_new
+{
+   static void *operator new(std::size_t) = delete;
+   static void *operator new(std::size_t, void *) = delete;
+   deleted_new();
+   deleted_new(int, int);
+};
+
+struct deleted_ctor
+{
+   deleted_ctor(int) = delete;
+   deleted_ctor(int, int);
+};
+
+#endif   //!defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)
+
+void test()
+{
+   using boost::move_detail::is_constructible;
+   //0 arguments
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<from_ptr>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<abstract_type>::value));
+   //1 argument
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<from_ptr, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<from_ptr, int>::value));
+   //A cast is not a construction
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<std::size_t, int*>::value));
+   //2, 3, 4, 8 and 9 arguments
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int*, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int, int, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int, int, int, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int, int, int, int, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int, int, int, int*, int, int, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int, int, int, int, int, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int, int, int, int, int, int, int, int, int*>::value));
+   //Class-specific operator new
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<private_new>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<private_new, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<private_new, int*>::value));
+   #if !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS)
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<deleted_new>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<deleted_new, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<deleted_new, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<deleted_ctor, int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<deleted_ctor, int, int>::value));
+   #endif
+}
+
+}  //namespace is_constructible_test
+
 int main()
 {
    trivially_memcopyable_test::test();
@@ -776,5 +872,6 @@ int main()
    is_copy_constructible_test::test();
    alignment_of_abstract_test::test();
    destructible_test::test();
+   is_constructible_test::test();
    return boost::report_errors();
 }

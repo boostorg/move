@@ -587,6 +587,9 @@ struct add_rvalue_reference<T[N]>
 
 #endif // #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 
+template <typename T>
+typename boost::move_detail::add_rvalue_reference<T>::type declval() BOOST_NOEXCEPT;
+
 template< class T > struct remove_rvalue_reference { typedef T type; };
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES

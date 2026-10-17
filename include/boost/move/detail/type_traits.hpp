@@ -29,6 +29,10 @@
 
 // move/detail
 #include <boost/move/detail/meta_utils.hpp>
+#include <boost/move/detail/placement_new.hpp>
+#if defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+#include <boost/move/detail/fwd_macros.hpp>
+#endif
 // other
 #include <cassert>
 // std
@@ -99,6 +103,10 @@
 #  if defined(BOOST_MSVC) && (BOOST_MSVC >= 1900)
 #     define BOOST_MOVE_IS_ASSIGNABLE(T, U) __is_assignable(T, U)
 #     define BOOST_MOVE_IS_TRIVIALLY_COPYABLE(T) __is_trivially_copyable(T)
+#  endif
+//MSVC 14.0 (Visual 2015) __is_constructible ignores deleted constructors
+#  if defined(BOOST_MSVC) && (BOOST_MSVC >= 1910)
+#     define BOOST_MOVE_HAS_IS_CONSTRUCTIBLE_INTRINSIC
 #  endif
 #endif
 
@@ -189,6 +197,10 @@
 #   if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
 
 //    BOOST_MOVE_IS_ASSIGNABLE (only with rvalue references, as with other compilers)
+#   if BOOST_MOVE_HAS_TRAIT(is_constructible)
+#     define BOOST_MOVE_HAS_IS_CONSTRUCTIBLE_INTRINSIC
+#   endif
+
 #   if BOOST_MOVE_HAS_TRAIT(is_assignable)
 #     define BOOST_MOVE_IS_ASSIGNABLE(T, U) __is_assignable(T, U)
 #   endif
@@ -276,6 +288,10 @@
 
 #  if defined(BOOST_GCC) && (BOOST_GCC >= 50000)
 #     define BOOST_MOVE_IS_TRIVIALLY_COPYABLE(T) __is_trivially_copyable(T)
+#  endif
+
+#  if defined(BOOST_GCC) && (BOOST_GCC >= 80000)
+#     define BOOST_MOVE_HAS_IS_CONSTRUCTIBLE_INTRINSIC
 #  endif
 
 #   define BOOST_MOVE_IS_ENUM(T) __is_enum(T)
@@ -1539,6 +1555,96 @@ struct is_nothrow_copy_assignable
 template<class T>
 struct is_nothrow_move_assignable
 {  static const bool value = BOOST_MOVE_IS_NOTHROW_MOVE_ASSIGNABLE(T);  };
+
+//////////////////////////////////////
+//          is_constructible
+//////////////////////////////////////
+
+#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+
+#if defined(BOOST_MOVE_HAS_IS_CONSTRUCTIBLE_INTRINSIC)
+
+template<class T, class ...Args>
+struct is_constructible
+{  static const bool value = __is_constructible(T, Args...);  };
+
+#else
+
+template<class T, class ...Args>
+struct is_constructible
+{
+   private:
+   template<class U>
+   static decltype( ::new(::boost::move_detail::declval<void*>(), boost_move_new_t())
+                       U(::boost::move_detail::declval<Args>()...), yes_type() ) test(int);
+
+   template<class U>
+   static no_type test(...);
+
+   public:
+   static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
+};
+
+#endif   //BOOST_MOVE_HAS_IS_CONSTRUCTIBLE_INTRINSIC
+
+#else    //BOOST_NO_CXX11_VARIADIC_TEMPLATES
+
+template<class T, BOOST_MOVE_CLASSDFLT9, class = void>
+struct is_constructible;
+
+#if defined(BOOST_MOVE_HAS_IS_CONSTRUCTIBLE_INTRINSIC)
+
+#define BOOST_MOVE_IS_CONSTRUCTIBLE_N(N) \
+template<class T BOOST_MOVE_I##N BOOST_MOVE_CLASS##N>\
+struct is_constructible<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
+{  static const bool value = __is_constructible(T BOOST_MOVE_I##N BOOST_MOVE_TARG##N);  };\
+//
+
+#elif !defined(BOOST_NO_CXX11_DECLTYPE)
+
+#define BOOST_MOVE_IS_CONSTRUCTIBLE_N(N) \
+template<class T BOOST_MOVE_I##N BOOST_MOVE_CLASS##N>\
+struct is_constructible<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
+{\
+   private:\
+   template<class U>\
+   static decltype( ::new(::boost::move_detail::declval<void*>(), boost_move_new_t())\
+                       U(BOOST_MOVE_DECLVAL##N), yes_type() ) test(int);\
+   \
+   template<class U>\
+   static no_type test(...);\
+   \
+   public:\
+   static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);\
+};\
+//
+
+#else
+
+#define BOOST_MOVE_IS_CONSTRUCTIBLE_N(N) \
+template<class T BOOST_MOVE_I##N BOOST_MOVE_CLASS##N>\
+struct is_constructible<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
+{\
+   private:\
+   template<class U>\
+   static yes_type test( typename enable_if_c< 0 != sizeof(\
+      ::new(::boost::move_detail::declval<void*>(), boost_move_new_t()) U(BOOST_MOVE_DECLVAL##N)\
+      ), int>::type);\
+   \
+   template<class U>\
+   static no_type test(...);\
+   \
+   public:\
+   static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);\
+};\
+//
+
+#endif
+
+BOOST_MOVE_ITERATE_0TO9(BOOST_MOVE_IS_CONSTRUCTIBLE_N)
+#undef BOOST_MOVE_IS_CONSTRUCTIBLE_N
+
+#endif   //BOOST_NO_CXX11_VARIADIC_TEMPLATES
 
 //////////////////////////////////////
 //    is_nothrow_swappable

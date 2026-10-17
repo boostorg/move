@@ -420,18 +420,7 @@ struct forward_like_merge_const<const T, U>
 
 #endif   //BOOST_NO_CXX11_RVALUE_REFERENCES
 
-#if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
-
-namespace boost{
-namespace move_detail{
-
-template <typename T>
-typename boost::move_detail::add_rvalue_reference<T>::type declval() BOOST_NOEXCEPT;
-
-}  //namespace move_detail{
-}  //namespace boost{
-
-#endif   //#if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
+//boost::move_detail::declval is declared in meta_utils.hpp
 
 
 #include <boost/move/detail/config_end.hpp>

@@ -764,11 +764,11 @@ struct point
    int x, y;
    point();
    point(int);
-   point(int, int);
-   point(int, int, int);
-   point(int, int, int, int);
-   point(int, int, int, int, int, int, int, int);
-   point(int, int, int, int, int, int, int, int, int);
+   point(int, int*);
+   point(int, int, int*);
+   point(int, int, int, int*);
+   point(int, int, int, int, int, int, int, int*);
+   point(int, int, int, int, int, int, int, int, int*);
 };
 
 struct from_ptr
@@ -826,17 +826,17 @@ void test()
    BOOST_MOVE_STATIC_ASSERT(!(is_constructible<from_ptr, int>::value));
    //A cast is not a construction
    BOOST_MOVE_STATIC_ASSERT(!(is_constructible<std::size_t, int*>::value));
-   //2, 3, 4, 8 and 9 arguments
-   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int>::value));
-   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int*, int*>::value));
-   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int>::value));
-   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int, int, int*>::value));
-   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int, int>::value));
-   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int, int, int, int*>::value));
-   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int, int, int, int, int, int>::value));
-   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int, int, int, int*, int, int, int, int>::value));
-   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int, int, int, int, int, int, int>::value));
-   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int, int, int, int, int, int, int, int, int*>::value));
+   //2, 3, 4, 8 and 9 arguments (the negative cases are the reversed lists)
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int*, int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int*, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int*, int, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int, int, int, int, int, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int*, int, int, int, int, int, int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_constructible<point, int, int, int, int, int, int, int, int, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_constructible<point, int*, int, int, int, int, int, int, int, int>::value));
    //Class-specific operator new
    BOOST_MOVE_STATIC_ASSERT((is_constructible<private_new>::value));
    BOOST_MOVE_STATIC_ASSERT((is_constructible<private_new, int, int>::value));

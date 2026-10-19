@@ -292,6 +292,13 @@
 
 #  if defined(BOOST_GCC) && (BOOST_GCC >= 80000)
 #     define BOOST_MOVE_HAS_IS_CONSTRUCTIBLE_INTRINSIC
+//GCC 8-11 __is_constructible reverses the order of an explicit type list
+//("T, A, B" is checked as "T, B, A"). A pack expansion gives the correct order.
+//Fixed in GCC 12 (no bug report, only the fix commit):
+//https://gcc.gnu.org/git/?p=gcc.git;a=commit;h=fdf8d5bc5b52bd733037dbeeff442c59f8aa765b
+#     if (BOOST_GCC < 120000)
+#        define BOOST_MOVE_IS_CONSTRUCTIBLE_INTRINSIC_REVERSES_TYPE_LIST
+#     endif
 #  endif
 
 #   define BOOST_MOVE_IS_ENUM(T) __is_enum(T)
@@ -1594,10 +1601,17 @@ struct is_constructible;
 
 #if defined(BOOST_MOVE_HAS_IS_CONSTRUCTIBLE_INTRINSIC)
 
+#if defined(BOOST_MOVE_IS_CONSTRUCTIBLE_INTRINSIC_REVERSES_TYPE_LIST)
+//Pass the arguments in reverse order, so that the intrinsic checks them in the correct order
+#define BOOST_MOVE_IS_CONSTRUCTIBLE_INTRINSIC_TARG(N) BOOST_MOVE_TARG_REV##N
+#else
+#define BOOST_MOVE_IS_CONSTRUCTIBLE_INTRINSIC_TARG(N) BOOST_MOVE_TARG##N
+#endif
+
 #define BOOST_MOVE_IS_CONSTRUCTIBLE_N(N) \
 template<class T BOOST_MOVE_I##N BOOST_MOVE_CLASS##N>\
 struct is_constructible<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
-{  static const bool value = __is_constructible(T BOOST_MOVE_I##N BOOST_MOVE_TARG##N);  };\
+{  static const bool value = __is_constructible(T BOOST_MOVE_I##N BOOST_MOVE_IS_CONSTRUCTIBLE_INTRINSIC_TARG(N));  };\
 //
 
 #elif !defined(BOOST_NO_CXX11_DECLTYPE)
@@ -1643,6 +1657,7 @@ struct is_constructible<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
 
 BOOST_MOVE_ITERATE_0TO9(BOOST_MOVE_IS_CONSTRUCTIBLE_N)
 #undef BOOST_MOVE_IS_CONSTRUCTIBLE_N
+#undef BOOST_MOVE_IS_CONSTRUCTIBLE_INTRINSIC_TARG
 
 #endif   //BOOST_NO_CXX11_VARIADIC_TEMPLATES
 

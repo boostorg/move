@@ -10,7 +10,7 @@ endif()
 
 file(GLOB tests RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
 
-set(BOOST_TEST_LINK_LIBRARIES Boost::move Boost::config Boost::container Boost::container_hash Boost::core Boost::unordered)
+set(BOOST_TEST_LINK_LIBRARIES Boost::move Boost::config Boost::container Boost::container_hash Boost::core Boost::unordered Boost::utility)
 
 foreach(test IN LISTS tests)
 

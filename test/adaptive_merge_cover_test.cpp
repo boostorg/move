@@ -200,29 +200,34 @@ void test_medium_lengths()
 }
 
 //The default StackBytes reserves a buffer in the stack when the supplied
-//additional memory is smaller than that buffer. adaptive_merge merges with the
-//buffer alone when it holds the smaller range, so the first lengths are twice a
-//fraction of the buffer, leaving each half inside it, while the last ones exceed
-//it and the buffer becomes the additional memory of the adaptive algorithm.
+//additional memory is smaller than that buffer. The lengths select the three
+//roles of that buffer in adaptive_merge:
+//
+// - It holds the smaller range, so the ranges are merged with it alone.
+// - It is bigger than a block, so it holds the block buffer and the integral keys.
+// - It is shorter than a block, so the block buffer and the keys are collected
+//   from the range.
 void test_stack_buffer()
 {
    const std::size_t lens[] =
       //Halves that fit in the stack buffer
-      { 2u*(stack_buffer_elements/8u)
-      , 2u*(stack_buffer_elements/4u)
-      , 2u*(stack_buffer_elements/2u)
+      { 2u*(stack_buffer_elements/4u)
       , 2u*(stack_buffer_elements-1u)
-      //Halves bigger than the stack buffer
+      //Halves bigger than the stack buffer, with blocks shorter than it
       , 4u*stack_buffer_elements
-      , 16u*stack_buffer_elements
-      , 128u*stack_buffer_elements };
+      //Blocks longer than the stack buffer
+      , 2u*stack_buffer_elements*stack_buffer_elements };
 
    //The smaller of both ranges is the one compared against the stack buffer, so
    //the last length of the first group must fit in it and the first length of
-   //the second group must not
-   BOOST_MOVE_STATIC_ASSERT(stack_buffer_elements/8u > 0u);
+   //the second group must not. A block is ceil(sqrt(len)) elements long, so the
+   //blocks of the third length are shorter than the stack buffer and the blocks
+   //of the last one are longer
+   BOOST_MOVE_STATIC_ASSERT(stack_buffer_elements/4u > 0u);
    BOOST_MOVE_STATIC_ASSERT((2u*(stack_buffer_elements-1u))/2u < stack_buffer_elements);
    BOOST_MOVE_STATIC_ASSERT((4u*stack_buffer_elements)/2u > stack_buffer_elements);
+   BOOST_MOVE_STATIC_ASSERT(4u*stack_buffer_elements < stack_buffer_elements*stack_buffer_elements);
+   BOOST_MOVE_STATIC_ASSERT(2u*stack_buffer_elements*stack_buffer_elements > stack_buffer_elements*stack_buffer_elements);
 
    for(std::size_t i = 0; i != sizeof(lens)/sizeof(*lens); ++i){
       const std::size_t len  = lens[i];

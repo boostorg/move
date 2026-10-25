@@ -87,7 +87,14 @@ int main()
 {
    instantiate_smalldiff_iterators();
 
+   //Each iteration is a new random order of the same input: adaptive_merge_cover_test
+   //covers the algorithm paths, so a few iterations are enough unless LONG_BENCH
+   //is defined
+   #ifdef LONG_BENCH
    const std::size_t NIter = 100;
+   #else
+   const std::size_t NIter = 10;
+   #endif
    test_random_shuffled<order_move_type>(1001, 3,     NIter);
    test_random_shuffled<order_move_type>(1001, 101,   NIter);
    test_random_shuffled<order_move_type>(1001, 874,   NIter);

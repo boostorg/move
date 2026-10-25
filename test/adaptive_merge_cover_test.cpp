@@ -54,8 +54,11 @@ void test_merge( std::size_t len1, std::size_t len2, std::size_t num_keys1, std:
    const std::size_t len = std::size_t(len1+len2);
    boost::movelib::unique_ptr<order_move_type[]> elements(new order_move_type[len]);
 
-   fill_keys(elements.get(), len1, num_keys1, pattern_random);
-   fill_keys(elements.get()+len1, len2, num_keys2, pattern_random);
+   //adaptive_merge requires both ranges to be sorted. The keys of each range and
+   //the values assign_vals gives them do not depend on their order, so sorting a
+   //shuffled range would give these same sorted ranges
+   fill_keys(elements.get(), len1, num_keys1, pattern_sorted);
+   fill_keys(elements.get()+len1, len2, num_keys2, pattern_sorted);
 
    const std::size_t key_offset = overlap == overlap_none
                               ? num_keys1
@@ -66,11 +69,6 @@ void test_merge( std::size_t len1, std::size_t len2, std::size_t num_keys1, std:
 
    const std::size_t max_key2 = std::size_t(key_offset+num_keys2);
    assign_vals(elements.get(), len, num_keys1 > max_key2 ? num_keys1 : max_key2);
-
-   //adaptive_merge requires both ranges to be sorted
-   raw_buffer<order_move_type> sort_buf(len1 > len2 ? len1 : len2);
-   boost::movelib::merge_sort(elements.get(), elements.get()+len1, order_type_less(), sort_buf.data());
-   boost::movelib::merge_sort(elements.get()+len1, elements.get()+len, order_type_less(), sort_buf.data());
 
    raw_buffer<order_move_type> xbuf(xbuf_len);
    boost::movelib::adaptive_merge<0u>

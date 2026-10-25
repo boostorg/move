@@ -84,9 +84,15 @@ inline void clobber()
 ///////////////////////////////////////////////////////////////////////////////
 
 //A measurement is repeated until this much time is spent on it, so that short
-//cases are repeated many times and long ones only once.
+//cases are repeated many times and long ones only once. The benchmarks also run
+//as regression tests, which only check the result of each algorithm, so the
+//repetitions are made only when LONG_BENCH is defined.
 #ifndef BENCH_TIME_BUDGET_NS
+#if defined(LONG_BENCH)
 #define BENCH_TIME_BUDGET_NS 200000000u    //200 ms
+#else
+#define BENCH_TIME_BUDGET_NS 0u
+#endif
 #endif
 
 //Upper limit on the repetitions, whatever the budget says.

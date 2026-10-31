@@ -107,6 +107,36 @@ void test_contiguous()
    #endif
 }
 
+//An iterator without a member value_type: iter_value is obtained from operator*
+struct deref_only_iterator
+{
+   const int &operator*() const;
+};
+
+//Value is true if iter_value<T> has a "type" member
+template<class T>
+struct has_iter_value_type
+{
+   template<class U> static char test(typename boost::movelib::iter_value<U>::type*);
+   template<class U> static int  test(...);
+   static const bool value = sizeof(test<T>(0)) == sizeof(char);
+};
+
+//iter_value of a type that is not an iterator has no "type" member, so a deduction
+//guide like vector(InputIterator, InputIterator) is discarded for vector(5, 3)
+void test_iter_value_sfinae()
+{
+   BOOST_MOVE_STATIC_ASSERT(!has_iter_value_type<int>::value);
+   BOOST_MOVE_STATIC_ASSERT(!has_iter_value_type<no_member_types_iterator>::value);
+   BOOST_MOVE_STATIC_ASSERT(has_iter_value_type<int*>::value);
+   BOOST_MOVE_STATIC_ASSERT((is_same<boost::movelib::iter_value<cxx20_style_iterator>::type, int>::value));
+   #if !defined(BOOST_NO_CXX11_DECLTYPE) && !defined(BOOST_NO_SFINAE_EXPR)
+   BOOST_MOVE_STATIC_ASSERT((is_same<boost::movelib::iter_value<deref_only_iterator>::type, int>::value));
+   #else
+   BOOST_MOVE_STATIC_ASSERT(!has_iter_value_type<deref_only_iterator>::value);
+   #endif
+}
+
 int main()
 {
    using boost::movelib::iterator_traits;
@@ -165,6 +195,8 @@ int main()
    BOOST_MOVE_STATIC_ASSERT(boost::movelib::is_contiguous_iterator<derived_concept_iterator>::value);
    BOOST_MOVE_STATIC_ASSERT(boost::movelib::is_contiguous_iterator<contiguous_category_iterator>::value);
    #endif
+
+   test_iter_value_sfinae();
 
    return 0;
 }

@@ -106,11 +106,43 @@ struct iter_value_impl
    typedef typename Iterator::value_type type;
 };
 
+#if !defined(BOOST_NO_CXX11_DECLTYPE)
+//Equivalent to std::declval<T&>(), only used in unevaluated operands
+template<class T>
+T& iter_lvalue_declval() BOOST_NOEXCEPT;
+#endif
+
+//An iterator without a member value_type (e.g. C++20 std::common_iterator) obtains it
+//from the type returned by operator*. If Iterator is not dereferenceable, there is no
+//"type" member, so that a deduction guide or an overload that uses iter_value<int>
+//is discarded instead of giving a hard error.
+#if !defined(BOOST_NO_CXX11_DECLTYPE) && !defined(BOOST_NO_SFINAE_EXPR)
+
+template<class Iterator, class = void>
+struct iter_value_impl_deref
+{};
+
+template<class Iterator>
+struct iter_value_impl_deref
+   < Iterator
+   , typename ::boost::move_detail::voider<decltype(*iter_lvalue_declval<Iterator>())>::type>
+{
+   typedef typename ::boost::move_detail::remove_cvref
+      <decltype(*iter_lvalue_declval<Iterator>())>::type type;
+};
+
 template<class Iterator>
 struct iter_value_impl<Iterator, false>
-{
-   typedef typename std::iterator_traits<Iterator>::value_type type;
-};
+   : iter_value_impl_deref<Iterator>
+{};
+
+#else
+
+template<class Iterator>
+struct iter_value_impl<Iterator, false>
+{};
+
+#endif
 
 template<class Iterator, bool = has_value_type<Iterator>::value>
 struct iter_category_impl
@@ -136,12 +168,6 @@ struct iter_pointer<Iterator, false>
 {
    typedef void type;
 };
-
-#if !defined(BOOST_NO_CXX11_DECLTYPE)
-//Equivalent to std::declval<T&>(), only used in unevaluated operands
-template<class T>
-T& iter_lvalue_declval() BOOST_NOEXCEPT;
-#endif
 
 //C++20: "reference" is iter_reference_t if Iterator does not define it
 template<class Iterator, bool = has_reference<Iterator>::value>

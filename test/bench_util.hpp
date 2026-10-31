@@ -203,7 +203,7 @@ bench_result measure_best_of(Vector &elements, const Vector &original, Runner &r
       total = nanosecond_type(total + t);
       t = t > restore ? nanosecond_type(t - restore) : nanosecond_type(0);
       times[runs++] = nanosecond_type(t/batch);
-   }while(runs < BENCH_MAX_RUNS && total < nanosecond_type(BENCH_TIME_BUDGET_NS));
+   }while(runs < BENCH_MAX_RUNS && total <= nanosecond_type(BENCH_TIME_BUDGET_NS));
 
    std::sort(times, times + runs);
    bench_result res;

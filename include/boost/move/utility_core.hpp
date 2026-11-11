@@ -30,6 +30,15 @@
 #include <boost/move/core.hpp>
 #include <boost/move/detail/meta_utils.hpp>
 
+//BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE is deprecated since Boost 1.93: it has no effect in C++03,
+//and it does not declare all Boost.Move utilities and algorithms. Define BOOST_ALLOW_DEPRECATED
+//or BOOST_ALLOW_DEPRECATED_SYMBOLS to remove the message.
+#if defined(BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE) && \
+    !defined(BOOST_ALLOW_DEPRECATED) && !defined(BOOST_ALLOW_DEPRECATED_SYMBOLS)
+#include <boost/config/pragma_message.hpp>
+BOOST_PRAGMA_MESSAGE("BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE is deprecated and will be removed in a future Boost release.")
+#endif
+
 #if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
 namespace boost{

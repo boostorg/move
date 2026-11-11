@@ -12,6 +12,8 @@
 #include <boost/move/algorithm.hpp>
 #include <boost/container/vector.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <cstddef>   //std::ptrdiff_t
+#include <iterator>  //std::forward_iterator_tag
 #include "../example/movable.hpp"
 
 //Counts the live objects and the copy assignments, and can throw in the copy constructor
@@ -49,6 +51,48 @@ struct not_assignable
    int v;
 
    BOOST_DELETED_FUNCTION(not_assignable &operator=(const not_assignable &))
+};
+
+//Constructible from int, and can throw in that constructor
+struct from_int
+{
+   static int live;
+   static int throw_at;   //constructions left before throwing (<0: never)
+
+   int v;
+   from_int(int i) : v(i)
+   {
+      #ifndef BOOST_NO_EXCEPTIONS
+      if (throw_at == 0){
+         throw_at = -1;
+         throw 1;
+      }
+      #endif
+      if (throw_at > 0)
+         --throw_at;
+      ++live;
+   }
+   ~from_int() { --live; }
+};
+
+int from_int::live = 0;
+int from_int::throw_at = -1;
+
+//Forward iterator with no operator-> and a void pointer type, as C++20 allows
+struct no_arrow_it
+{
+   typedef std::ptrdiff_t difference_type;
+   typedef from_int value_type;
+   typedef void pointer;
+   typedef from_int& reference;
+   typedef std::forward_iterator_tag iterator_category;
+
+   from_int *p;
+   from_int& operator*() const { return *p; }
+   no_arrow_it& operator++() { ++p; return *this; }
+   no_arrow_it operator++(int) { no_arrow_it t(*this); ++p; return t; }
+   friend bool operator==(const no_arrow_it &a, const no_arrow_it &b) { return a.p == b.p; }
+   friend bool operator!=(const no_arrow_it &a, const no_arrow_it &b) { return a.p != b.p; }
 };
 
 namespace bc = ::boost::container;
@@ -171,11 +215,59 @@ void test_uninitialized_copy_or_move()
    BOOST_TEST(counted::live == 0);
 }
 
+////////////////////////////////
+//    uninitialized_move
+////////////////////////////////
+void test_uninitialized_move()
+{
+   //The destination value_type is constructed, not the source value_type
+   int src[4] = { 1, 2, 3, 4 };
+   double ddst[4] = { 0., 0., 0., 0. };
+   BOOST_TEST(boost::uninitialized_move(&src[0], &src[0] + 4, &ddst[0]) == &ddst[0] + 4);
+   BOOST_TEST(ddst[0] == 1.);
+   BOOST_TEST(ddst[3] == 4.);
+
+   typedef boost::move_detail::aligned_storage<sizeof(from_int) * 4>::type storage_t;
+   storage_t storage;
+   from_int *const fdst = static_cast<from_int*>(static_cast<void*>(&storage));
+   BOOST_TEST(boost::uninitialized_move(&src[0], &src[0] + 4, fdst) == fdst + 4);
+   BOOST_TEST(from_int::live == 4);
+   BOOST_TEST(fdst[3].v == 4);
+   for (int i = 0; i != 4; ++i)
+      fdst[i].~from_int();
+
+   //A destination iterator with no operator->
+   const no_arrow_it nfirst = { fdst };
+   no_arrow_it nlast = nfirst;
+   for (int i = 0; i != 4; ++i)
+      ++nlast;
+   BOOST_TEST(boost::uninitialized_move(&src[0], &src[0] + 4, nfirst) == nlast);
+   BOOST_TEST(from_int::live == 4);
+   BOOST_TEST(fdst[2].v == 3);
+   for (int i = 0; i != 4; ++i)
+      fdst[i].~from_int();
+
+   //If a construction throws, the destination objects already constructed are destroyed
+   #ifndef BOOST_NO_EXCEPTIONS
+   from_int::throw_at = 2;   //the third construction throws
+   bool thrown = false;
+   try{
+      boost::uninitialized_move(&src[0], &src[0] + 4, nfirst);
+   }
+   catch(int){
+      thrown = true;
+   }
+   BOOST_TEST(thrown);
+   #endif
+   BOOST_TEST(from_int::live == 0);
+}
+
 int main()
 {
    test_move();
    test_move_backward();
    test_copy_or_move();
    test_uninitialized_copy_or_move();
+   test_uninitialized_move();
    return boost::report_errors();
 }

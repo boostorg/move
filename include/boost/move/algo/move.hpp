@@ -119,19 +119,19 @@ F uninitialized_move(I f, I l, F r
    /// @endcond
    )
 {
-   typedef typename boost::movelib::iterator_traits<I>::value_type input_value_type;
+   typedef typename boost::movelib::iterator_traits<F>::value_type value_type;
 
    F back = r;
    BOOST_MOVE_TRY{
       while (f != l) {
          void * const addr = static_cast<void*>(::boost::move_detail::addressof(*r));
-         ::new(addr, boost_move_new_t()) input_value_type(::boost::move(*f));
+         ::new(addr, boost_move_new_t()) value_type(::boost::move(*f));
          ++f; ++r;
       }
    }
    BOOST_MOVE_CATCH(...){
       for (; back != r; ++back){
-         boost::movelib::iterator_to_raw_pointer(back)->~input_value_type();
+         ::boost::move_detail::addressof(*back)->~value_type();
       }
       BOOST_MOVE_RETHROW;
    }

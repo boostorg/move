@@ -789,6 +789,42 @@ void test()
 
 }  //namespace alignment_of_abstract_test
 
+namespace abstract_construct_test
+{
+
+//An abstract class can not be constructed, even if it has copy and move constructors
+//(MSVC accepts the functional cast "T(t)" for an abstract class)
+struct abstract_with_ctors
+{
+   virtual void f() = 0;
+   abstract_with_ctors() {}
+   abstract_with_ctors(const abstract_with_ctors &) {}
+};
+
+struct abstract_with_dtor
+{
+   virtual void f() = 0;
+   virtual ~abstract_with_dtor() {}
+};
+
+void test()
+{
+   using namespace boost::move_detail;
+   #if defined(BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE)
+   BOOST_MOVE_STATIC_ASSERT(!(is_copy_constructible<abstract_with_ctors>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_copy_constructible<abstract_with_dtor>::value));
+   #endif
+   #if defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE)
+   BOOST_MOVE_STATIC_ASSERT(!(is_move_constructible<abstract_with_ctors>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_move_constructible<abstract_with_dtor>::value));
+   #endif
+   #if defined(BOOST_MOVE_TT_CXX11_IS_DEFAULT_CONSTRUCTIBLE)
+   BOOST_MOVE_STATIC_ASSERT(!(is_default_constructible<abstract_with_ctors>::value));
+   #endif
+}
+
+}  //namespace abstract_construct_test
+
 namespace destructible_test
 {
 
@@ -933,6 +969,7 @@ int main()
    is_convertible_test::test();
    is_copy_constructible_test::test();
    alignment_of_abstract_test::test();
+   abstract_construct_test::test();
    destructible_test::test();
    is_constructible_test::test();
    return boost::report_errors();

@@ -1323,6 +1323,18 @@ struct has_boost_move_no_copy_constructor_or_assign_type
 #define BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE
 #endif
 
+//MSVC accepts the functional cast "U(u)" in decltype for an abstract class U, so the
+//copy and move constructible traits check first that the class is not abstract
+template<class T>
+struct is_not_abstract_for_cast
+{
+   #if defined(BOOST_MSVC)
+   static const bool value = !__is_abstract(T);
+   #else
+   static const bool value = true;
+   #endif
+};
+
 template<class T, bool = is_void<T>::value>
 struct is_copy_constructible_impl
 {
@@ -1337,12 +1349,12 @@ struct is_copy_constructible_impl
       static yes_type test(int);
       template <class>
       static no_type test(...);
-      static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
+      static const bool value = is_not_abstract_for_cast<T>::value && sizeof(test<T>(0)) == sizeof(yes_type);
       #else
       static no_type test(...);
       template <class U>
       static yes_type test(const U&, decltype(U(source<U>()))* = 0);
-      static const bool value = sizeof(test(source<T>())) == sizeof(yes_type);
+      static const bool value = is_not_abstract_for_cast<T>::value && sizeof(test(source<T>())) == sizeof(yes_type);
       #endif
    #else
    static const bool value = !has_boost_move_no_copy_constructor_or_assign_type<T>::value;
@@ -1472,7 +1484,7 @@ struct is_move_constructible
    template <class U, class = decltype(U(source<U>()))> static yes_type test(int);
    template <class>     static no_type test(...);
 
-   static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
+   static const bool value = is_not_abstract_for_cast<T>::value && sizeof(test<T>(0)) == sizeof(yes_type);
 #else
    static const bool value = is_copy_constructible<T>::value;
 #endif

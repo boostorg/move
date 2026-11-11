@@ -115,6 +115,27 @@ void swap(ptr_swap_class *&x, ptr_swap_class *&y)
 
 enum enum_type { enum_a, enum_b };
 
+//A base class with a swap found by ADL
+struct base_class
+{
+   int b;
+};
+
+unsigned int base_swap_calls = 0;
+
+void swap(base_class &x, base_class &y)
+{
+   const int t = x.b; x.b = y.b; y.b = t;
+   ++base_swap_calls;
+}
+
+//The swap of the base class only swaps the base part. The swap idiom
+//("using std::swap; swap(x, y);") selects std::swap, so the class is swapped with moves
+struct derived_class : base_class
+{
+   int d;
+};
+
 }  //namespace adl_ns {
 
 #if defined(BOOST_MOVE_HAS_CXX20_CONSTEXPR)
@@ -225,6 +246,20 @@ int main()
       ::boost::adl_move_swap(pa, pb);
       BOOST_TEST(adl_ns::ptr_swap_calls == 1);
       BOOST_TEST(pa == &b && pb == &a);
+   }
+   {  //derived class of a class with a swap found by ADL: move-based swap of the whole object
+      adl_ns::derived_class x, y;
+      x.b = 1; x.d = 10;
+      y.b = 2; y.d = 20;
+      ::boost::adl_move_swap(x, y);
+      BOOST_TEST(adl_ns::base_swap_calls == 0);
+      BOOST_TEST(x.b == 2 && x.d == 20);
+      BOOST_TEST(y.b == 1 && y.d == 10);
+      //The base class uses its swap
+      ::boost::adl_move_swap(static_cast<adl_ns::base_class&>(x), static_cast<adl_ns::base_class&>(y));
+      BOOST_TEST(adl_ns::base_swap_calls == 1);
+      BOOST_TEST(x.b == 1 && x.d == 20);
+      BOOST_TEST(y.b == 2 && y.d == 10);
    }
    #if defined(BOOST_MOVE_HAS_CXX20_CONSTEXPR)
    BOOST_TEST(test_constexpr_swap());

@@ -1797,49 +1797,43 @@ BOOST_MOVE_ITERATE_0TO9(BOOST_MOVE_IS_CONSTRUCTIBLE_N)
 //////////////////////////////////////
 //    is_adl_swappable
 //////////////////////////////////////
-//Checks "swap(x, y)" as boost::adl_move_swap calls it ("using std::swap; swap(x, y);"),
-//but without std::swap: only the candidates found by argument dependent lookup are used.
+//Checks "swap(x, y)" as the swap idiom ("using std::swap; swap(x, y);") calls it, but a
+//fallback swap takes the place of std::swap. The fallback is selected if argument dependent
+//lookup finds no swap, or if the swap idiom would select std::swap.
 namespace boost_move_tt_swap {
 
 template<class T>
 T& lvalue() BOOST_NOEXCEPT;
 
+struct no_adl_swap_tag {  char dummy[2];  };
+
+//The fallback swap hides any swap declared in an enclosing namespace, so the other candidates
+//are the ones found by argument dependent lookup. Its parameters are "const volatile U&",
+//so the fallback is worse than a swap(T&, T&) found by ADL
+template<class U>
+no_adl_swap_tag swap(const volatile U&, const volatile U&);
+
 #if !defined(BOOST_NO_CXX11_DECLTYPE) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
 
-//Hides any swap declared in an enclosing namespace, so only
-//argument dependent lookup finds candidates for swap(x, y)
-void swap();
+template<class R>
+struct is_adl_swap_result
+{  static const bool value = true;  };
+
+template<>
+struct is_adl_swap_result<no_adl_swap_tag>
+{  static const bool value = false;  };
 
 //Exact: a swap found by ADL that is deleted, inaccessible or ambiguous is not detected
 template<class T>
 struct is_adl_swappable
 {
-   template<class U> static decltype((void)swap(lvalue<U>(), lvalue<U>()), char()) test(int);
-   template<class U> static char (&test(...))[2];
+   template<class U> static is_adl_swap_result<decltype(swap(lvalue<U>(), lvalue<U>()))> test(int);
+   template<class U> static is_adl_swap_result<no_adl_swap_tag> test(...);
 
-   static const bool value = sizeof(test<T>(0)) == 1u;
+   static const bool value = decltype(test<T>(0))::value;
 };
 
 #else //!defined(BOOST_NO_CXX11_DECLTYPE) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
-
-//With no SFINAE a fallback swap is used, with user-defined conversions, 
-//so any swap found by ADL is a better match.
-struct no_adl_swap_tag {  char dummy[2];  };
-
-struct any_lvalue
-{
-   template<class T> any_lvalue(const T&);
-};
-
-no_adl_swap_tag swap(any_lvalue, any_lvalue);
-
-//MSVC 11.0 and 12.0 (Visual 2012 and 2013): in an unevaluated operand, argument dependent
-//lookup is not done if ordinary lookup finds only non-template functions. A function
-//template that is never viable for swap(x, y) makes them do argument dependent lookup.
-struct never_swap_tag {};
-
-template<class T>
-void swap(never_swap_tag, never_swap_tag, T);
 
 template<class T>
 no_adl_swap_tag operator,(no_adl_swap_tag, const T&);
@@ -1847,7 +1841,7 @@ no_adl_swap_tag operator,(no_adl_swap_tag, const T&);
 template<class T>
 struct is_adl_swappable
 {
-   //"(swap(x, y), char())" is a char if ADL finds a swap
+   //"(swap(x, y), char())" is a char if a swap found by ADL is selected
    //and a no_adl_swap_tag if the fallback swap is selected
    static const bool value = sizeof((swap(lvalue<T>(), lvalue<T>()), char())) == 1u;
 };
@@ -1859,8 +1853,9 @@ struct is_adl_swappable
 namespace boost {
 namespace move_detail {
 
-//The value is true if argument dependent lookup finds a "swap" callable as swap(x, y)
-//for lvalues of type T. std::swap is only found for types associated with namespace std.
+//The value is true if the swap idiom ("using std::swap; swap(x, y);") for lvalues of type T
+//selects a "swap" found by argument dependent lookup. std::swap is only found by argument
+//dependent lookup for types associated with namespace std.
 template<class T>
 struct is_adl_swappable
    : ::boost_move_tt_swap::is_adl_swappable<T>

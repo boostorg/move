@@ -30,8 +30,8 @@
 #if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
 //std::swap is never called (and no standard header is included). A swap found by argument
-//dependent lookup is used (this includes std::swap for types associated with namespace std),
-//otherwise a move-based swap is used, as std::swap does. std::swap specializations for
+//dependent lookup is used if the swap idiom ("using std::swap; swap(x, y);") selects it.
+//Otherwise a move-based swap is used, as std::swap does. std::swap specializations for
 //user types are not used (C++20 does not allow them). The behavior is the same in all
 //C++ standards, including C++03 with Boost.Move's move emulation.
 namespace boost_move_adl_swap{

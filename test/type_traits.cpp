@@ -412,6 +412,20 @@ struct base_swap {};
 void swap(base_swap&, base_swap&) {}
 struct derived_swap : base_swap {};
 
+//A derived class with its own swap
+struct derived_own_swap : base_swap {};
+void swap(derived_own_swap&, derived_own_swap&) {}
+
+//A generic swap found by argument dependent lookup, as std::swap is
+namespace generic_ns {
+
+struct generic_swap {};
+
+template<class T>
+void swap(T&, T&) {}
+
+}  //namespace generic_ns
+
 //A swap that is not callable as swap(x, y)
 struct other_swap {};
 void swap(other_swap&, int) {}
@@ -441,7 +455,10 @@ void test()
    BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<int_swap>::value));
    BOOST_MOVE_STATIC_ASSERT((is_adl_swappable< tmpl<int> >::value));
    BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<ptr_swap*>::value));
-   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<derived_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_swappable<derived_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<base_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<derived_own_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<generic_ns::generic_swap>::value));
    //std::swap is found for types associated with namespace std
    BOOST_MOVE_STATIC_ASSERT((is_adl_swappable< std::pair<int, int> >::value));
 }

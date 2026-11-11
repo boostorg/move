@@ -934,6 +934,19 @@ This different behaviour is a side-effect of the move emulation that can't be ea
 
 [endsect]
 
+[section:emulation_limitations_forward_like `forward_like` and const members]
+
+In C++03 compilers `BOOST_FWD_REF(T)` binds the argument to a const reference, so in
+`boost::forward_like<T>(t.member)` all members are const and [*Boost.Move] can not know if `member`
+is declared `const`. If `t` is a moved argument (`T` is `::boost::rv<P>`), the member is moved,
+also if it is declared `const` (and moving it modifies a const object). C++11 compilers and
+C++23 `std::forward_like` return a const rvalue reference, so a const member is copied.
+
+Do not use `boost::forward_like` on const members in code that must also work with C++03 compilers:
+copy the member instead.
+
+[endsect]
+
 [endsect]
 
 [section:how_the_library_works How the move emulation works in C++03]

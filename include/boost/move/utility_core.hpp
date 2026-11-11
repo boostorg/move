@@ -201,7 +201,8 @@ struct forward_like_merge_const<const T, U>
 
    //T is ::boost::rv<P> (as deduced by BOOST_FWD_REF(T) for a moved argument): move x.
    //BOOST_FWD_REF binds the argument to a const reference, so x is usually const: as
-   //boost::forward, remove the const qualification.
+   //boost::forward, remove the const qualification. A member declared const can not be
+   //detected, so it is also moved (documented limitation: C++11 copies it).
    template <class T, class U>
    BOOST_MOVE_FORCEINLINE typename ::boost::move_detail::enable_if_c
       < ::boost::move_detail::forward_like_moves<T>::value
@@ -402,6 +403,12 @@ struct forward_like_merge_const<const T, U>
       //!
       //! <b>Note</b>: as <code>std::forward_like</code>, the category of the object x refers to
       //! is changed: if x is a reference member, the object it refers to is forwarded as an rvalue.
+      //!
+      //! <b>Note</b>: in C++03 compilers, <code>BOOST_FWD_REF(T)</code> binds the argument to a const
+      //! reference, so a member declared <code>const</code> can not be detected: if T is
+      //! <code>::boost::rv<P></code> (a moved argument), the member is moved, also if it is declared
+      //! <code>const</code>. Do not use <code>forward_like</code> on const members in C++03 code
+      //! (C++11 compilers copy them).
       template <class T> output_reference forward_like(input_reference) noexcept;
    #else
 

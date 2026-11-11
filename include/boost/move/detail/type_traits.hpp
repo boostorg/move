@@ -90,15 +90,24 @@
 
 #   define BOOST_MOVE_IS_ENUM(T) __is_enum(T)
 //MSVC 11.0 and 12.0 (Visual 2012 and 2013) __has_trivial_move_constructor/assign
-//return false for all types, even PODs
-#   if defined(_MSC_VER) && (_MSC_VER >= 1900)
+//return false for all types, even PODs. From MSVC 14.1 (Visual 2017) the trivially
+//and nothrow constructible/assignable intrinsics are exact. The older definitions
+//add the is_pod shortcut themselves.
+#   if defined(BOOST_MSVC) && (BOOST_MSVC >= 1910)
+#       define BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T)   __is_trivially_constructible(T, T&&)
+#       define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T)        __is_trivially_assignable(T&, T&&)
+#       define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T)        __is_nothrow_assignable(T&, T&&)
+#       define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T)   __is_nothrow_constructible(T, T&&)
+#   else
+#     if defined(_MSC_VER) && (_MSC_VER >= 1900)
 #       define BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T)   (__has_trivial_move_constructor(T) || ::boost::move_detail::is_pod<T>::value)
 #       define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T)        (__has_trivial_move_assign(T) || ::boost::move_detail::is_pod<T>::value)
+#     endif
+#     if _MSC_FULL_VER >= 180020827
+#       define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T)        (__is_nothrow_assignable(T&, T&&) || ::boost::move_detail::is_pod<T>::value)
+#       define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T)   (__is_nothrow_constructible(T, T&&) || ::boost::move_detail::is_pod<T>::value)
+#     endif
 #   endif
-#  if _MSC_FULL_VER >= 180020827
-#     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T) (__is_nothrow_assignable(T&, T&&))
-#     define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T) (__is_nothrow_constructible(T, T&&))
-#  endif
 //MSVC 12.0 (Visual 2013) __is_assignable ignores deleted assignment operators
 #  if defined(BOOST_MSVC) && (BOOST_MSVC >= 1900)
 #     define BOOST_MOVE_IS_ASSIGNABLE(T, U) __is_assignable(T, U)
@@ -209,28 +218,28 @@
 #   if BOOST_MOVE_HAS_TRAIT(is_constructible) && BOOST_MOVE_HAS_TRAIT(is_trivially_constructible)
 #     define BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T) (__is_constructible(T, T&&) && __is_trivially_constructible(T, T&&))
 #   elif BOOST_MOVE_HAS_TRAIT(has_trivial_move_constructor)
-#     define BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T) __has_trivial_move_constructor(T)
+#     define BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T) (__has_trivial_move_constructor(T) || ::boost::move_detail::is_pod<T>::value)
 #   endif
 
 //    BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN
 #   if BOOST_MOVE_HAS_TRAIT(is_assignable) && BOOST_MOVE_HAS_TRAIT(is_trivially_assignable)
 #     define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T) (__is_assignable(T&, T&&) && __is_trivially_assignable(T&, T&&))
 #   elif BOOST_MOVE_HAS_TRAIT(has_trivial_move_assign)
-#     define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T) __has_trivial_move_assign(T)
+#     define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T) (__has_trivial_move_assign(T) || ::boost::move_detail::is_pod<T>::value)
 #   endif
 
 //    BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR
 #   if BOOST_MOVE_HAS_TRAIT(is_constructible) && BOOST_MOVE_HAS_TRAIT(is_nothrow_constructible)
 #     define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T) (__is_constructible(T, T&&) && __is_nothrow_constructible(T, T&&))
 #   elif BOOST_MOVE_HAS_TRAIT(has_nothrow_move_constructor)
-#     define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T) __has_nothrow_move_constructor(T)
+#     define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T) (__has_nothrow_move_constructor(T) || ::boost::move_detail::is_pod<T>::value)
 #   endif
 
 //    BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN
 #   if BOOST_MOVE_HAS_TRAIT(is_assignable) && BOOST_MOVE_HAS_TRAIT(is_nothrow_assignable)
 #     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T) (__is_assignable(T&, T&&) && __is_nothrow_assignable(T&, T&&))
 #   elif BOOST_MOVE_HAS_TRAIT(has_nothrow_move_assign)
-#     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T) __has_nothrow_move_assign(T)
+#     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T) (__has_nothrow_move_assign(T) || ::boost::move_detail::is_pod<T>::value)
 #   endif
 
 #   endif   //BOOST_NO_CXX11_RVALUE_REFERENCES
@@ -412,7 +421,11 @@
       #endif
    };
 
-#     define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T)       boost_move_tt_is_nothrow_assignable<T, T&&>::value
+#     if !defined(BOOST_NO_CXX11_NOEXCEPT)
+#        define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T)    boost_move_tt_is_nothrow_assignable<T&, T&&>::value
+#     else
+#        define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T)    (boost_move_tt_is_nothrow_assignable<T&, T&&>::value || ::boost::move_detail::is_pod<T>::value)
+#     endif
 #  endif   //!BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN
 
 #  if !defined(BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR)
@@ -432,10 +445,36 @@
       #endif
    };
 
-#     define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T)  boost_move_tt_is_nothrow_constructible<T, T&&>::value
+#     if !defined(BOOST_NO_CXX11_NOEXCEPT)
+#        define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T)  boost_move_tt_is_nothrow_constructible<T, T&&>::value
+#     else
+#        define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T)  (boost_move_tt_is_nothrow_constructible<T, T&&>::value || ::boost::move_detail::is_pod<T>::value)
+#     endif
 #  endif   //!BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR
 
 #endif   //BOOST_MOVE_TT_CXX11_SFINAE_EXPR
+
+//BOOST_MOVE_TT_EXACT_MOVE_TRAITS is defined if the four move intrinsics
+//(BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR/ASSIGN and BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR/ASSIGN)
+//are exact: they do not use the is_pod shortcut, so they are false for a POD
+//whose move selects a constructor or assignment template that is not trivial or can throw.
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+#  if defined(BOOST_MSVC) && (BOOST_MSVC >= 1910)
+      //__is_trivially_constructible/assignable and __is_nothrow_constructible/assignable
+#     define BOOST_MOVE_TT_EXACT_MOVE_TRAITS
+#  elif defined(BOOST_CLANG)
+#     if BOOST_MOVE_HAS_TRAIT(is_constructible) && BOOST_MOVE_HAS_TRAIT(is_assignable) &&\
+         BOOST_MOVE_HAS_TRAIT(is_trivially_constructible) && BOOST_MOVE_HAS_TRAIT(is_trivially_assignable) &&\
+         BOOST_MOVE_HAS_TRAIT(is_nothrow_constructible) && BOOST_MOVE_HAS_TRAIT(is_nothrow_assignable)
+         //__is_trivially_xxx and __is_nothrow_xxx, not the older __has_xxx
+#        define BOOST_MOVE_TT_EXACT_MOVE_TRAITS
+#     endif
+#  elif defined(BOOST_GCC) && (BOOST_GCC > 50000) && \
+        defined(BOOST_MOVE_TT_CXX11_SFINAE_EXPR) && !defined(BOOST_NO_CXX11_NOEXCEPT)
+      //__is_trivially_constructible/assignable and the noexcept fallbacks
+#     define BOOST_MOVE_TT_EXACT_MOVE_TRAITS
+#  endif
+#endif   //!defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
 
 #ifdef BOOST_MOVE_IS_UNION
    #define BOOST_MOVE_IS_UNION_IMPL(T) BOOST_MOVE_IS_UNION(T)
@@ -461,6 +500,9 @@
 
 //Since C++11 a POD type can have deleted special members, so the is_pod shortcut
 //is valid only if the operation exists: each trait checks this first.
+//The move traits do not use this shortcut: a POD with user-declared copy members has no
+//implicit move members, so a move can select a constructor or assignment template that
+//is not trivial and can throw. The move intrinsics that are not exact add it themselves.
 #define BOOST_MOVE_TT_POD_OR(T, INTRINSIC)   (::boost::move_detail::is_pod<T>::value || (INTRINSIC))
 
 #ifdef BOOST_MOVE_HAS_TRIVIAL_COPY
@@ -481,7 +523,7 @@
 
 #ifdef BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR
    #define BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T)   (::boost::move_detail::is_move_constructible<T>::value &&\
-                                                            BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T)))
+                                                            BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T))
 #else
    #define BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T)   (::boost::move_detail::is_move_constructible<T>::value &&\
                                                             ::boost::move_detail::is_pod<T>::value)
@@ -497,7 +539,7 @@
 
 #ifdef BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN
    #define BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T)  (::boost::move_detail::is_move_assignable<T>::value &&\
-                                                        BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T)))
+                                                        BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T))
 #else
    #define BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T)  (::boost::move_detail::is_move_assignable<T>::value &&\
                                                         ::boost::move_detail::is_pod<T>::value)
@@ -545,14 +587,14 @@
 
 #ifdef BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR
    #define BOOST_MOVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE(T)   (::boost::move_detail::is_move_constructible<T>::value &&\
-                                                          BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T)))
+                                                          BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T))
 #else
    #define BOOST_MOVE_IS_NOTHROW_MOVE_CONSTRUCTIBLE(T)   BOOST_MOVE_IS_TRIVIALLY_MOVE_CONSTRUCTIBLE(T)
 #endif
 
 #ifdef BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN
    #define BOOST_MOVE_IS_NOTHROW_MOVE_ASSIGNABLE(T) (::boost::move_detail::is_move_assignable<T>::value &&\
-                                                     BOOST_MOVE_TT_POD_OR(T, BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T)))
+                                                     BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T))
 #else
    #define BOOST_MOVE_IS_NOTHROW_MOVE_ASSIGNABLE(T) BOOST_MOVE_IS_TRIVIALLY_MOVE_ASSIGNABLE(T)
 #endif
@@ -1578,7 +1620,7 @@ struct is_constructible
 #else
 
 template<class T, class ...Args>
-struct is_constructible
+struct is_constructible_sfinae
 {
    private:
    template<class U>
@@ -1591,6 +1633,40 @@ struct is_constructible
    public:
    static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);
 };
+
+//MSVC 14.0 and older have no exact intrinsic, and the "new" expression of the fallback
+//is wrong in two cases: "new T()" is accepted for an abstract class T, and "new T(u)" is
+//accepted for a non-class T when "(T)u" is a valid cast (e.g. "new std::size_t(p)" with a
+//pointer p). is_constructible_sfinae checks the expression and is_constructible corrects
+//these cases: an abstract class is not constructible, and a non-class T is constructible
+//from one argument if the argument is convertible to T.
+#if defined(BOOST_MSVC)
+
+template<class T, class U, bool = is_class_or_union<T>::value>
+struct is_constructible_one_arg
+{  static const bool value = !__is_abstract(T) && is_constructible_sfinae<T, U>::value;  };
+
+template<class T, class U>
+struct is_constructible_one_arg<T, U, false>
+{  static const bool value = is_convertible<U, T>::value;  };
+
+template<class T, class ...Args>
+struct is_constructible
+{  static const bool value = !__is_abstract(T) && is_constructible_sfinae<T, Args...>::value;  };
+
+template<class T, class U>
+struct is_constructible<T, U>
+   : is_constructible_one_arg<T, U>
+{};
+
+#else
+
+template<class T, class ...Args>
+struct is_constructible
+   : is_constructible_sfinae<T, Args...>
+{};
+
+#endif   //BOOST_MSVC
 
 #endif   //BOOST_MOVE_HAS_IS_CONSTRUCTIBLE_INTRINSIC
 
@@ -1614,11 +1690,16 @@ struct is_constructible<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
 {  static const bool value = __is_constructible(T BOOST_MOVE_I##N BOOST_MOVE_IS_CONSTRUCTIBLE_INTRINSIC_TARG(N));  };\
 //
 
-#elif !defined(BOOST_NO_CXX11_DECLTYPE)
+#else
+
+template<class T, BOOST_MOVE_CLASSDFLT9, class = void>
+struct is_constructible_sfinae;
+
+#if !defined(BOOST_NO_CXX11_DECLTYPE)
 
 #define BOOST_MOVE_IS_CONSTRUCTIBLE_N(N) \
 template<class T BOOST_MOVE_I##N BOOST_MOVE_CLASS##N>\
-struct is_constructible<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
+struct is_constructible_sfinae<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
 {\
    private:\
    template<class U>\
@@ -1637,7 +1718,7 @@ struct is_constructible<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
 
 #define BOOST_MOVE_IS_CONSTRUCTIBLE_N(N) \
 template<class T BOOST_MOVE_I##N BOOST_MOVE_CLASS##N>\
-struct is_constructible<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
+struct is_constructible_sfinae<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
 {\
    private:\
    template<class U>\
@@ -1654,6 +1735,47 @@ struct is_constructible<T BOOST_MOVE_I##N BOOST_MOVE_TARG##N>\
 //
 
 #endif
+
+//MSVC 14.0 and older have no exact intrinsic, and the "new" expression of the fallback
+//is wrong in two cases: "new T()" is accepted for an abstract class T, and "new T(u)" is
+//accepted for a non-class T when "(T)u" is a valid cast (e.g. "new std::size_t(p)" with a
+//pointer p). is_constructible_sfinae checks the expression and is_constructible corrects
+//these cases: an abstract class is not constructible, and a non-class T is constructible
+//from one argument if the argument is convertible to T.
+#if defined(BOOST_MSVC)
+
+template<class T, class U, bool = is_class_or_union<T>::value>
+struct is_constructible_one_arg
+{  static const bool value = !__is_abstract(T) && is_constructible_sfinae<T, U>::value;  };
+
+template<class T, class U>
+struct is_constructible_one_arg<T, U, false>
+{  static const bool value = is_convertible<U, T>::value;  };
+
+template<class T, BOOST_MOVE_CLASS9, class V>
+struct is_constructible
+{  static const bool value = !__is_abstract(T) && is_constructible_sfinae<T, BOOST_MOVE_TARG9, V>::value;  };
+
+template<class T, class U>
+struct is_constructible<T, U>
+   : is_constructible_one_arg<T, U>
+{};
+
+//No arguments ("void" is the default of the unused arguments)
+template<class T>
+struct is_constructible<T, void>
+{  static const bool value = !__is_abstract(T) && is_constructible_sfinae<T>::value;  };
+
+#else
+
+template<class T, BOOST_MOVE_CLASS9, class V>
+struct is_constructible
+   : is_constructible_sfinae<T, BOOST_MOVE_TARG9, V>
+{};
+
+#endif   //BOOST_MSVC
+
+#endif   //BOOST_MOVE_HAS_IS_CONSTRUCTIBLE_INTRINSIC
 
 BOOST_MOVE_ITERATE_0TO9(BOOST_MOVE_IS_CONSTRUCTIBLE_N)
 #undef BOOST_MOVE_IS_CONSTRUCTIBLE_N
@@ -1710,6 +1832,14 @@ struct any_lvalue
 };
 
 no_adl_swap_tag swap(any_lvalue, any_lvalue);
+
+//MSVC 11.0 and 12.0 (Visual 2012 and 2013): in an unevaluated operand, argument dependent
+//lookup is not done if ordinary lookup finds only non-template functions. A function
+//template that is never viable for swap(x, y) makes them do argument dependent lookup.
+struct never_swap_tag {};
+
+template<class T>
+void swap(never_swap_tag, never_swap_tag, T);
 
 template<class T>
 no_adl_swap_tag operator,(no_adl_swap_tag, const T&);

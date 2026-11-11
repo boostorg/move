@@ -92,6 +92,22 @@ struct pod_deleted_move_assign
 
 #endif   //!defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) && !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
 
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
+
+//A POD with user-declared copy members has no implicit move members, so a move
+//selects the constructor or assignment template, which is not trivial and can throw
+struct pod_template_move
+{
+   pod_template_move() = default;
+   pod_template_move(const pod_template_move&) = default;
+   pod_template_move& operator=(const pod_template_move&) = default;
+   template<class U> pod_template_move(U&&) : i(1) {}
+   template<class U> pod_template_move& operator=(U&&) { i = 2; return *this; }
+   int i;
+};
+
+#endif   //!defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
+
 //
 //       trivial_but_not_pod: user-provided default constructor, everything else trivial
 //
@@ -255,6 +271,31 @@ void test()
 }
 
 }  //namespace pod_with_deleted_member_test
+
+namespace pod_template_move_test
+{
+
+void test()
+{
+   //pod_template_move needs defaulted functions
+   #if defined(BOOST_MOVE_TT_EXACT_MOVE_TRAITS) && !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
+   #if defined(BOOST_MOVE_IS_POD)
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_pod<pod_template_move>::value));
+   #endif
+   //The copy operations are the defaulted ones
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_copy_constructible<pod_template_move>::value));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_trivially_copy_assignable<pod_template_move>::value));
+   //The move operations are the templates
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_move_constructible<pod_template_move>::value));
+   BOOST_MOVE_STATIC_ASSERT((boost::move_detail::is_move_assignable<pod_template_move>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_move_constructible<pod_template_move>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_move_assignable<pod_template_move>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_nothrow_move_constructible<pod_template_move>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_nothrow_move_assignable<pod_template_move>::value));
+   #endif   //BOOST_MOVE_TT_EXACT_MOVE_TRAITS
+}
+
+}  //namespace pod_template_move_test
 
 namespace std_pair_test
 {
@@ -845,7 +886,10 @@ void test()
    BOOST_MOVE_STATIC_ASSERT((is_constructible<deleted_new>::value));
    BOOST_MOVE_STATIC_ASSERT((is_constructible<deleted_new, int, int>::value));
    BOOST_MOVE_STATIC_ASSERT(!(is_constructible<deleted_new, int*>::value));
+   #if defined(BOOST_MOVE_TT_CXX11_DELETED_FUNCTION_SFINAE)
+   //MSVC 12.0 (Visual 2013) does not detect deleted functions
    BOOST_MOVE_STATIC_ASSERT(!(is_constructible<deleted_ctor, int>::value));
+   #endif
    BOOST_MOVE_STATIC_ASSERT((is_constructible<deleted_ctor, int, int>::value));
    #endif
 }
@@ -858,6 +902,7 @@ int main()
    is_pod_test::test();
    trivial_but_not_pod_test::test();
    pod_with_deleted_member_test::test();
+   pod_template_move_test::test();
    std_pair_test::test();
    is_nothrow_swappable_test::test();
    is_adl_swappable_test::test();

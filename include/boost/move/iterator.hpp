@@ -26,6 +26,7 @@
 #include <boost/move/detail/workaround.hpp>  //forceinline
 #include <boost/move/detail/iterator_traits.hpp>
 #include <boost/move/utility_core.hpp>
+#include <cstddef>   //std::size_t
 
 namespace boost {
 
@@ -227,6 +228,13 @@ struct is_move_iterator< ::boost::move_iterator<I> >
 template<class It>
 inline move_iterator<It> make_move_iterator(const It &it)
 {  return move_iterator<It>(it); }
+
+//! <b>Returns</b>: move_iterator<T*>(a).
+//!
+//! <b>Note</b>: An array decays to a pointer which takes the iterator by value
+template<class T, std::size_t N>
+inline move_iterator<T*> make_move_iterator(T (&a)[N])
+{  return move_iterator<T*>(a); }
 
 //////////////////////////////////////////////////////////////////////////////
 //

@@ -152,6 +152,18 @@ void test_conversion_and_mixed_comparison()
    BOOST_TEST(cb - e == -3);
 }
 
+void test_make_move_iterator_array()
+{
+   //An array decays to a pointer
+   movable a[3];
+   boost::move_iterator<movable*> b = boost::make_move_iterator(a);
+   BOOST_TEST(b.base() == &a[0]);
+   const int ci[2] = {1, 2};
+   boost::move_iterator<const int*> c = boost::make_move_iterator(ci);
+   BOOST_TEST(c.base() == &ci[0]);
+   BOOST_TEST(*c == 1);
+}
+
 int main()
 {
    test_reference_type();
@@ -159,6 +171,7 @@ int main()
    test_const_iterator();
    test_proxy_iterator();
    test_conversion_and_mixed_comparison();
+   test_make_move_iterator_array();
 
    namespace bc = ::boost::container;
    //Default construct 10 movable objects

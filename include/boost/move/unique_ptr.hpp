@@ -239,12 +239,18 @@ struct enable_up_ptr
 //GCC 4.8 and older and MSVC 12.0 have internal compiler errors with
 //these constraints, and MSVC 14.0 does not detect deleted functions in is_constructible.
 //
-//For compilers that don't support thisconstraints are checked with static assertions
-//(pre-C++17 behaviour)
+//For compilers that don't support these constraints are check with static assertions
 #if !defined(BOOST_NO_CXX11_FUNCTION_TEMPLATE_DEFAULT_ARGS) && !defined(BOOST_NO_CXX11_DELETED_FUNCTIONS) && \
     !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_MOVE_DOXYGEN_INVOKED) && \
     !(defined(BOOST_GCC) && (BOOST_GCC < 40900)) && !(defined(BOOST_MSVC) && (BOOST_MSVC < 1910))
 #define BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS
+#endif
+
+//The move constructor and the move assignment are not declared if the deleter is not move
+//constructible or not move assignable (LWG 2899)
+#if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS) && \
+    defined(BOOST_MOVE_TT_CXX11_IS_MOVE_CONSTRUCTIBLE) && defined(BOOST_MOVE_TT_CXX11_IS_MOVE_ASSIGNABLE)
+#define BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS
 #endif
 
 //operator* is noexcept if the dereference of pointer is noexcept (LWG 2762).
@@ -310,6 +316,47 @@ struct is_rvalue_arg_deleter
    : bmupmu::true_type
    #endif
 {};
+
+#if defined(BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS)
+//Parameter type of the move constructor and of the move assignment when they are not declared.
+//It can not be constructed, so the functions can not be called.
+template<int Dummy>
+class unique_ptr_no_move
+{
+   unique_ptr_no_move();
+};
+
+//default_delete is movable: the traits are not instantiated, as T can be incomplete
+template<class D>
+struct is_move_constructible_deleter
+   : bmupmu::is_move_constructible<D>
+{};
+
+template<class T>
+struct is_move_constructible_deleter< ::boost::movelib::default_delete<T> >
+   : bmupmu::true_type
+{};
+
+template<class D>
+struct is_move_assignable_deleter
+   : bmupmu::is_move_assignable<D>
+{};
+
+template<class T>
+struct is_move_assignable_deleter< ::boost::movelib::default_delete<T> >
+   : bmupmu::true_type
+{};
+
+//unique_ptr::swap swaps the deleters with boost::adl_move_swap: it calls
+//a swap found by argument dependent lookup or it swaps the deleters with moves
+template<class D>
+struct is_swappable_deleter
+{
+   typedef typename bmupmu::remove_reference<D>::type deleter_t;
+   static const bool value = bmupmu::is_adl_swappable<deleter_t>::value ||
+      (bmupmu::is_move_constructible<deleter_t>::value && bmupmu::is_move_assignable<deleter_t>::value);
+};
+#endif   //defined(BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS)
 
 //enable_up_ptr if Cond::value is true
 template<class T, class FromPointer, class ThisPointer, class Cond, class Type = bmupmu::nat>
@@ -669,7 +716,16 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //! <b>Postconditions</b>: <tt>get()</tt> yields the value u.get() yielded before the construction. <tt>get_deleter()</tt>
    //! returns a reference to the stored deleter that was constructed from u.get_deleter(). If D is a
    //! reference type then <tt>get_deleter()</tt> and <tt>u.get_deleter()</tt> both reference the same lvalue deleter.
+   //!
+   //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless
+   //!   <tt>is_move_constructible&lt;D&gt;::value</tt> is true. If the compiler does not support
+   //!   deleted functions or the type traits can not detect them, the program is ill-formed instead.
+   #if defined(BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS)
+   inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr(typename bmupmu::if_c
+      < bmupd::is_move_constructible_deleter<D>::value, unique_ptr, bmupd::unique_ptr_no_move<0> >::type && u) BOOST_NOEXCEPT
+   #else
    inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr(BOOST_RV_REF(unique_ptr) u) BOOST_NOEXCEPT
+   #endif
       : m_data(u.release(), ::boost::move_if_not_lvalue_reference<D>(u.get_deleter()))
    {}
 
@@ -718,7 +774,16 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!   by <tt>get_deleter() = std::forward&lt;D&gt;(u.get_deleter())</tt>.
    //!
    //! <b>Returns</b>: *this.
+   //!
+   //! <b>Remarks</b>: This operator shall not participate in overload resolution unless
+   //!   <tt>is_move_assignable&lt;D&gt;::value</tt> is true. If the compiler does not support
+   //!   deleted functions or the type traits can not detect them, the program is ill-formed instead.
+   #if defined(BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS)
+   BOOST_MOVE_CXX20_CONSTEXPR unique_ptr& operator=(typename bmupmu::if_c
+      < bmupd::is_move_assignable_deleter<D>::value, unique_ptr, bmupd::unique_ptr_no_move<1> >::type && u) BOOST_NOEXCEPT
+   #else
    BOOST_MOVE_CXX20_CONSTEXPR unique_ptr& operator=(BOOST_RV_REF(unique_ptr) u) BOOST_NOEXCEPT
+   #endif
    {
       this->reset(u.release());
       m_data.deleter() = ::boost::move_if_not_lvalue_reference<D>(u.get_deleter());
@@ -909,8 +974,17 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
 
 //! <b>Effects</b>: Calls <tt>x.swap(y)</tt>.
 //!
+//! <b>Remarks</b>: This function shall not participate in overload resolution unless
+//!   <tt>is_swappable&lt;D&gt;::value</tt> is true. If the compiler does not support
+//!   deleted functions or the type traits can not detect them, the program is ill-formed instead.
 template <class T, class D>
-inline BOOST_MOVE_CXX20_CONSTEXPR void swap(unique_ptr<T, D> &x, unique_ptr<T, D> &y) BOOST_NOEXCEPT
+inline BOOST_MOVE_CXX20_CONSTEXPR
+   #if defined(BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS)
+   typename bmupmu::enable_if_c<bmupd::is_swappable_deleter<D>::value, void>::type
+   #else
+   void
+   #endif
+      swap(unique_ptr<T, D> &x, unique_ptr<T, D> &y) BOOST_NOEXCEPT
 {  x.swap(y); }
 
 //! <b>Returns</b>: <tt>boost::hash&lt;typename unique_ptr&lt;T, D&gt;::pointer&gt;()(x.get())</tt>, the same value as

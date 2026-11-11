@@ -44,6 +44,43 @@ struct move_del
    void operator()(int *p) const { delete p; }
 };
 
+//Move constructible and move assignable, not copyable
+struct move_assign_del
+{
+   move_assign_del() {}
+   move_assign_del(move_assign_del &&) {}
+   move_assign_del& operator=(move_assign_del &&) { return *this; }
+   void operator()(int *p) const { delete p; }
+};
+
+//Move constructible, not assignable
+struct noassign_del
+{
+   noassign_del() {}
+   noassign_del(const noassign_del &) {}
+   noassign_del& operator=(const noassign_del &) = delete;
+   void operator()(int *p) const { delete p; }
+};
+
+//Not move constructible, assignable
+struct nomove_del
+{
+   nomove_del() {}
+   nomove_del(const nomove_del &) = delete;
+   nomove_del& operator=(const nomove_del &) { return *this; }
+   void operator()(int *p) const { delete p; }
+};
+
+//Not movable, but swappable with a swap found by argument dependent lookup
+struct adl_swap_del
+{
+   adl_swap_del() {}
+   adl_swap_del(const adl_swap_del &) = delete;
+   adl_swap_del& operator=(const adl_swap_del &) = delete;
+   void operator()(int *p) const { delete p; }
+   friend void swap(adl_swap_del &, adl_swap_del &) {}
+};
+
 typedef void (*fp_del)(int *);
 
 template<class T> T declval_();
@@ -110,6 +147,45 @@ BOOST_MOVE_STATIC_ASSERT(( std::is_constructible<bml::unique_ptr<int, del&>, std
 BOOST_MOVE_STATIC_ASSERT((!std::is_constructible<bml::unique_ptr<int, del&>, std::nullptr_t, del>::value));
 BOOST_MOVE_STATIC_ASSERT((!std::is_constructible<bml::unique_ptr<int, const del&>, std::nullptr_t, del>::value));
 
+#if defined(BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS)
+
+////////////////////////////////
+//   Move constructor and move assignment (LWG 2899)
+////////////////////////////////
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_constructible<bml::unique_ptr<int> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_assignable<bml::unique_ptr<int> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_constructible<bml::unique_ptr<int[]> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_assignable<bml::unique_ptr<int[]> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_constructible<bml::unique_ptr<int, move_assign_del> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_assignable<bml::unique_ptr<int, move_assign_del> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_constructible<bml::unique_ptr<int, fp_del> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_assignable<bml::unique_ptr<int, fp_del> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_constructible<bml::unique_ptr<int, noassign_del> >::value));
+BOOST_MOVE_STATIC_ASSERT((!std::is_move_assignable<bml::unique_ptr<int, noassign_del> >::value));
+BOOST_MOVE_STATIC_ASSERT((!std::is_move_constructible<bml::unique_ptr<int, nomove_del> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_assignable<bml::unique_ptr<int, nomove_del> >::value));
+//Reference deleters: the reference is copied, and the referred deleter is copy assigned
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_constructible<bml::unique_ptr<int, del&> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_assignable<bml::unique_ptr<int, del&> >::value));
+BOOST_MOVE_STATIC_ASSERT(( std::is_move_constructible<bml::unique_ptr<int, noassign_del&> >::value));
+BOOST_MOVE_STATIC_ASSERT((!std::is_move_assignable<bml::unique_ptr<int, noassign_del&> >::value));
+BOOST_MOVE_STATIC_ASSERT((!std::is_move_assignable<bml::unique_ptr<int, const del&> >::value));
+//Copies are never possible
+BOOST_MOVE_STATIC_ASSERT((!std::is_copy_constructible<bml::unique_ptr<int, del> >::value));
+BOOST_MOVE_STATIC_ASSERT((!std::is_copy_assignable<bml::unique_ptr<int, del> >::value));
+
+////////////////////////////////
+//   Free swap (found by argument dependent lookup)
+////////////////////////////////
+BOOST_MOVE_STATIC_ASSERT((::boost::move_detail::is_adl_swappable<bml::unique_ptr<int> >::value));
+BOOST_MOVE_STATIC_ASSERT((::boost::move_detail::is_adl_swappable<bml::unique_ptr<int, move_assign_del> >::value));
+BOOST_MOVE_STATIC_ASSERT((::boost::move_detail::is_adl_swappable<bml::unique_ptr<int, adl_swap_del> >::value));
+BOOST_MOVE_STATIC_ASSERT((::boost::move_detail::is_adl_swappable<bml::unique_ptr<int, del&> >::value));
+BOOST_MOVE_STATIC_ASSERT((!::boost::move_detail::is_adl_swappable<bml::unique_ptr<int, noassign_del> >::value));
+BOOST_MOVE_STATIC_ASSERT((!::boost::move_detail::is_adl_swappable<bml::unique_ptr<int, nomove_del> >::value));
+
+#endif   //defined(BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS)
+
 ////////////////////////////////
 //   Observers
 ////////////////////////////////
@@ -121,9 +197,43 @@ BOOST_MOVE_STATIC_ASSERT((sizeof(has_index<bml::unique_ptr<int[]> >(0))  == 1u))
 BOOST_MOVE_STATIC_ASSERT((sizeof(has_index<bml::unique_ptr<int[2]> >(0)) == 1u));
 BOOST_MOVE_STATIC_ASSERT((sizeof(has_index<bml::unique_ptr<int> >(0))    != 1u));
 
+#if defined(BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS)
+
+//The move operations are templates: check that they are used to move, also to return by value
+bml::unique_ptr<int, move_assign_del> make_up(int i)
+{
+   bml::unique_ptr<int, move_assign_del> up(new int(i));
+   return up;
+}
+
+bool test_move()
+{
+   bml::unique_ptr<int, move_assign_del> a(make_up(1));
+   bml::unique_ptr<int, move_assign_del> b(::boost::move(a));
+   bool ok = !a && b && *b == 1;
+   a = make_up(2);
+   ok = ok && a && *a == 2;
+   a = ::boost::move(b);
+   ok = ok && !b && a && *a == 1;
+   swap(a, b);
+   ok = ok && !a && b && *b == 1;
+   bml::unique_ptr<int[]> c(new int[2]);
+   int *const p = c.get();
+   bml::unique_ptr<int[]> d(::boost::move(c));
+   c = ::boost::move(d);
+   return ok && c.get() == p && !d;
+}
+
+#endif   //defined(BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS)
+
 #endif   //defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS) && !defined(BOOST_NO_CXX11_HDR_TYPE_TRAITS)
 
 int main()
 {
+   #if defined(BOOST_MOVE_UNIQUE_PTR_SFINAE_CONSTRAINTS) && !defined(BOOST_NO_CXX11_HDR_TYPE_TRAITS) && \
+       defined(BOOST_MOVE_UNIQUE_PTR_MOVE_CONSTRAINTS)
+   if(!test_move())
+      return 1;
+   #endif
    return 0;
 }

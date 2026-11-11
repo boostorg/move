@@ -1090,13 +1090,13 @@ inline BOOST_MOVE_CXX20_CONSTEXPR bool operator<(BOOST_MOVE_DOC0PTR(bmupd::nullp
 //!
 template <class T, class D>
 inline BOOST_MOVE_CXX20_CONSTEXPR bool operator>(const unique_ptr<T, D> &x, BOOST_MOVE_DOC0PTR(bmupd::nullptr_type))
-{  return x.get() > typename unique_ptr<T, D>::pointer();  }
+{  return typename unique_ptr<T, D>::pointer() < x.get();  }
 
 //! <b>Returns</b>: <tt>x &lt; nullptr</tt>.
 //!
 template <class T, class D>
 inline BOOST_MOVE_CXX20_CONSTEXPR bool operator>(BOOST_MOVE_DOC0PTR(bmupd::nullptr_type), const unique_ptr<T, D> &x)
-{  return typename unique_ptr<T, D>::pointer() > x.get();  }
+{  return x.get() < typename unique_ptr<T, D>::pointer();  }
 
 //! <b>Returns</b>: <tt>!(nullptr &lt; x)</tt>.
 //!

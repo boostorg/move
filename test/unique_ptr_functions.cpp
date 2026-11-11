@@ -505,6 +505,32 @@ void test()
 
 namespace unique_compare_nullptr{
 
+#if !defined(BOOST_NO_CXX11_NULLPTR) && !defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
+#define BOOST_MOVE_TEST_LESS_ONLY_PTR
+
+//A pointer type with ==, != and <, but no other relational operator:
+//all comparisons with nullptr only need operator<
+struct less_only_ptr
+{
+   int *p;
+   less_only_ptr() : p(0) {}
+   less_only_ptr(int *q) : p(q) {}
+   less_only_ptr(std::nullptr_t) : p(0) {}
+   explicit operator bool() const { return p != 0; }
+   int &operator*() const { return *p; }
+   friend bool operator==(less_only_ptr a, less_only_ptr b) { return a.p == b.p; }
+   friend bool operator!=(less_only_ptr a, less_only_ptr b) { return a.p != b.p; }
+   friend bool operator<(less_only_ptr a, less_only_ptr b)  { return a.p < b.p; }
+};
+
+struct less_only_ptr_deleter
+{
+   typedef less_only_ptr pointer;
+   void operator()(less_only_ptr x) const { delete x.p; }
+};
+
+#endif
+
 void test()
 {
    #if !defined(BOOST_NO_CXX11_NULLPTR)
@@ -547,6 +573,24 @@ void test()
       BOOST_TEST((nullptr >= pb) == ((A*)nullptr >= pb.get()));
    }
    BOOST_TEST(A::count == 0);
+   #if defined(BOOST_MOVE_TEST_LESS_ONLY_PTR)
+   //Pointer type with only operator<
+   {
+      int *const raw = new int(1);
+      bml::unique_ptr<int, less_only_ptr_deleter> pa((less_only_ptr(raw)));
+      bml::unique_ptr<int, less_only_ptr_deleter> pb;
+      BOOST_TEST((pa < nullptr) == (raw < (int*)nullptr));
+      BOOST_TEST((nullptr < pa) == ((int*)nullptr < raw));
+      BOOST_TEST((pa > nullptr) == ((int*)nullptr < raw));
+      BOOST_TEST((nullptr > pa) == (raw < (int*)nullptr));
+      BOOST_TEST((pa <= nullptr) == !((int*)nullptr < raw));
+      BOOST_TEST((nullptr <= pa) == !(raw < (int*)nullptr));
+      BOOST_TEST((pa >= nullptr) == !(raw < (int*)nullptr));
+      BOOST_TEST((nullptr >= pa) == !((int*)nullptr < raw));
+      BOOST_TEST(!(pb < nullptr) && !(nullptr < pb) && !(pb > nullptr) && !(nullptr > pb));
+      BOOST_TEST((pb <= nullptr) && (nullptr <= pb) && (pb >= nullptr) && (nullptr >= pb));
+   }
+   #endif   //#if defined(BOOST_MOVE_TEST_LESS_ONLY_PTR)
    #endif   //#if !defined(BOOST_NO_CXX11_NULLPTR)
 }
 

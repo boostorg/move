@@ -758,7 +758,8 @@ previous calling convention, define `BOOST_MOVE_DISABLE_TRIVIAL_ABI` in all of t
    of the pointers, not `std::less`. This avoids a dependency on the `<functional>` and `<type_traits>`
    headers. On all the platforms supported by Boost, the `<` operator of raw pointers gives a strict
    weak order.
-*  There is no `std::hash` specialization.
+*  There is no `std::hash` specialization. `hash_value` (used by `boost::hash`) gives the value of
+   `boost::hash` for the stored pointer, which is not the value of `std::hash` for `std::unique_ptr`.
 *  The stream output operator (`operator<<`) takes the stream type as a template parameter, so
    `unique_ptr.hpp` does not include `<iosfwd>`. It participates in overload resolution only for
    `std::basic_ostream` and the classes derived from it, and it returns the stream with its own type.

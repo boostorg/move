@@ -997,8 +997,9 @@ inline BOOST_MOVE_CXX20_CONSTEXPR
 {  x.swap(y); }
 
 //! <b>Returns</b>: <tt>boost::hash&lt;typename unique_ptr&lt;T, D&gt;::pointer&gt;()(x.get())</tt>, the same value as
-//!   <tt>std::hash</tt> gives for <tt>std::unique_ptr</tt>. <tt>boost::hash</tt> and the containers that use it
-//!   (e.g. Boost.Unordered) find this function with argument-dependent lookup.
+//!   <tt>boost::hash</tt> gives for the stored pointer. It is not the same value as <tt>std::hash</tt> gives for
+//!   <tt>std::unique_ptr</tt>. <tt>boost::hash</tt> and the containers that use it (e.g. Boost.Unordered) find
+//!   this function with argument-dependent lookup.
 //!
 //! <b>Note</b>: This header does not include Boost.ContainerHash, so a direct call to this function
 //!   requires the definition of <tt>boost::hash</tt> (<tt>boost/container_hash/hash.hpp</tt>).

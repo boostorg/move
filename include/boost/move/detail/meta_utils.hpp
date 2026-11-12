@@ -333,15 +333,21 @@ template <>        struct is_convertible_cv_void<const volatile void> {  static 
 
 //No type is convertible to an array or a function type, they can't be returned or passed by value.
 //The parameter of is_convertible_impl::sink/dispatch would decay them to a pointer, so they are filtered
+//No type can be converted to an abstract class (an object can't be created)
+#if (defined(_MSC_VER) && (_MSC_VER >= 1400)) || defined(__GNUC__)
+#define BOOST_MOVE_IS_CONVERTIBLE_ABSTRACT_TARGET(U) __is_abstract(U)
+#else
+#define BOOST_MOVE_IS_CONVERTIBLE_ABSTRACT_TARGET(U) false
+#endif
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1400)
 
 //The intrinsic is correct for function types (older MSVC versions apply "const" to function types)
 template <class U>
 struct is_convertible_invalid_target
-{  static const bool value = false;  };
+{  static const bool value = BOOST_MOVE_IS_CONVERTIBLE_ABSTRACT_TARGET(U);  };
 
 #else
-
 
 //A non-reference type for which const U is not const is a function type
 template <class T> struct is_convertible_const          {  static const bool value = false; };
@@ -349,7 +355,7 @@ template <class T> struct is_convertible_const<const T> {  static const bool val
 
 template <class U>
 struct is_convertible_invalid_target
-{  static const bool value = !is_convertible_const<const U>::value;  };
+{  static const bool value = !is_convertible_const<const U>::value || BOOST_MOVE_IS_CONVERTIBLE_ABSTRACT_TARGET(U);  };
 
 
 //Reference types filter
@@ -364,6 +370,8 @@ struct is_convertible_invalid_target<U&&>
 #endif
 
 #endif
+
+#undef BOOST_MOVE_IS_CONVERTIBLE_ABSTRACT_TARGET
 
 template <class U>
 struct is_convertible_invalid_target<U[]>

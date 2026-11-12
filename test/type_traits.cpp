@@ -759,6 +759,17 @@ void test()
 namespace is_convertible_test
 {
 
+//Abstract class
+struct abstract_base
+{
+   virtual ~abstract_base() = 0;
+};
+
+inline abstract_base::~abstract_base() {}
+
+struct derived_from_abstract : abstract_base
+{};
+
 void test()
 {
    using boost::move_detail::is_convertible;
@@ -787,6 +798,14 @@ void test()
    BOOST_MOVE_STATIC_ASSERT(( is_convertible<function_t&, function_t&>::value));
    BOOST_MOVE_STATIC_ASSERT(( is_convertible<int, const int>::value));
    BOOST_MOVE_STATIC_ASSERT(( is_convertible<const int, int>::value));
+   //No type converts to an abstract class, references and pointers to it are valid
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<derived_from_abstract, abstract_base>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<abstract_base&, abstract_base>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<int, abstract_base>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<derived_from_abstract&, abstract_base&>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<derived_from_abstract&, const abstract_base&>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<derived_from_abstract*, abstract_base*>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<abstract_base*, derived_from_abstract*>::value));
 }
 
 }  //namespace is_convertible_test

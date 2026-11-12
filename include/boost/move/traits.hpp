@@ -53,8 +53,12 @@ struct has_trivial_destructor_after_move
 template <class T>
 struct has_nothrow_move
 {
-   static const bool value = boost::move_detail::is_nothrow_move_constructible<T>::value &&
-                             boost::move_detail::is_nothrow_move_assignable<T>::value;
+   //The move assignment is checked only if the move constructor does not throw: the check of
+   //an implicit copy assignment can cause warnings (e.g. GCC -Wdeprecated-copy) for classes
+   //with a user-declared copy constructor, that are not nothrow move constructible.
+   static const bool value = ::boost::move_detail::and_
+      < ::boost::move_detail::is_nothrow_move_constructible<T>
+      , ::boost::move_detail::is_nothrow_move_assignable<T> >::value;
 };
 
 #ifndef BOOST_MOVE_DOXYGEN_INVOKED
@@ -75,9 +79,10 @@ struct is_nothrow_move_constructible_or_uncopyable
 {
    //The standard requires is_nothrow_move_constructible for move_if_noexcept
    //but a user (usually in C++03) might specialize has_nothrow_move which includes it
-   static const bool value = is_nothrow_move_constructible<T>::value ||
-                             has_nothrow_move<T>::value ||
-                            !is_copy_constructible<T>::value;
+   static const bool value = or_
+      < is_nothrow_move_constructible<T>
+      , has_nothrow_move<T>
+      , not_< is_copy_constructible<T> > >::value;
 };
 
 }  //move_detail {

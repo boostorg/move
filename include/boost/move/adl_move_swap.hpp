@@ -26,6 +26,7 @@
 #include <boost/move/detail/workaround.hpp>  //forceinline
 #include <boost/move/utility_core.hpp> //for boost::move
 #include <boost/move/detail/type_traits.hpp> //for is_adl_swappable
+#include <boost/move/detail/iterator_traits.hpp> //for iterator_traits
 
 #if !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
@@ -60,6 +61,29 @@ BOOST_MOVE_CXX20_CONSTEXPR void swap_proxy(T (& x)[N], T (& y)[N])
    }
 }
 
+//iterator::reference is a reference: swap objects with adl_move_swap
+template<class It1, class It2, class SwapProxy>
+BOOST_MOVE_FORCEINLINE void iter_swap(const It1 &a, const It2 &b, boost::move_detail::true_, SwapProxy)
+{
+   ::boost_move_adl_swap::swap_proxy(*a, *b);
+}
+
+//iterator::reference is a proxy returned by value and ADL finds a swap for the proxies
+template<class It1, class It2>
+BOOST_MOVE_FORCEINLINE void iter_swap(const It1 &a, const It2 &b, boost::move_detail::false_, boost::move_detail::true_)
+{
+   swap(*a, *b);
+}
+
+//iterator::reference is a proxy returned by value and there is there is no ADL swap
+template<class It1, class It2>
+BOOST_MOVE_FORCEINLINE void iter_swap(const It1 &a, const It2 &b, boost::move_detail::false_, boost::move_detail::false_)
+{
+   typename boost::movelib::iterator_traits<It1>::value_type t(*a);
+   *a = *b;
+   *b = ::boost::move(t);
+}
+
 }  //namespace boost_move_adl_swap{
 
 #endif   //!defined(BOOST_MOVE_DOXYGEN_INVOKED)
@@ -76,8 +100,18 @@ BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR void adl_move_swap(T& x, T& y)
    ::boost_move_adl_swap::swap_proxy(x, y);
 }
 
+//! Exchanges the values of the elements pointed to by a and b
+template<class ForwardIt1, class ForwardIt2>
+BOOST_MOVE_FORCEINLINE void adl_move_iter_swap(const ForwardIt1 &a, const ForwardIt2 &b)
+{
+   typedef typename boost::movelib::iterator_traits<ForwardIt1>::reference reference;
+   typedef boost::move_detail::is_reference<reference> is_ref_t;
+   ::boost_move_adl_swap::iter_swap(a, b, boost::move_detail::bool_<is_ref_t::value>()
+      , boost::move_detail::bool_<!is_ref_t::value && boost::move_detail::is_adl_rvalue_swappable<reference>::value>());
+}
+
 //! Exchanges elements between range [first1, last1) and another range starting at first2
-//! using boost::adl_move_swap.
+//! using boost::adl_move_iter_swap.
 //! 
 //! Parameters:
 //!   first1, last1   -   the first range of elements to swap
@@ -93,8 +127,8 @@ BOOST_MOVE_FORCEINLINE BOOST_MOVE_CXX20_CONSTEXPR void adl_move_swap(T& x, T& y)
 template<class ForwardIt1, class ForwardIt2>
 ForwardIt2 adl_move_swap_ranges(ForwardIt1 first1, ForwardIt1 last1, ForwardIt2 first2)
 {
-    while (first1 != last1) {
-      ::boost::adl_move_swap(*first1, *first2);
+   while (first1 != last1) {
+      ::boost::adl_move_iter_swap(first1, first2);
       ++first1;
       ++first2;
     }
@@ -105,15 +139,10 @@ template<class BidirIt1, class BidirIt2>
 BidirIt2 adl_move_swap_ranges_backward(BidirIt1 first1, BidirIt1 last1, BidirIt2 last2)
 {
    while (first1 != last1) {
-      ::boost::adl_move_swap(*(--last1), *(--last2));
+      --last1; --last2;
+      ::boost::adl_move_iter_swap(last1, last2);
    }
    return last2;
-}
-
-template<class ForwardIt1, class ForwardIt2>
-void adl_move_iter_swap(ForwardIt1 a, ForwardIt2 b)
-{
-   boost::adl_move_swap(*a, *b); 
 }
 
 }  //namespace boost{

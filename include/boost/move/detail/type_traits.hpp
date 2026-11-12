@@ -1903,6 +1903,64 @@ struct is_adl_swappable
 }  //namespace move_detail {
 }  //namespace boost {
 
+//////////////////////////////////////
+//    is_adl_rvalue_swappable
+//////////////////////////////////////
+//Checks "swap(x, y)" for rvalues x and y of type T (e.g. proxy references)
+
+namespace boost_move_tt_rvalue_swap {
+
+template<class T>
+T rvalue() BOOST_NOEXCEPT;
+
+using ::boost_move_tt_swap::no_adl_swap_tag;
+
+//A fallback swap that hides any swap declared in an
+//enclosing namespace
+
+template<class U>
+no_adl_swap_tag swap(const U&, const U&);
+
+#if !defined(BOOST_NO_CXX11_DECLTYPE) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
+
+template<class T>
+struct is_adl_rvalue_swappable
+{
+   //The fallback is selected if ADL finds no swap that accepts rvalues
+   template<class U> static ::boost_move_tt_swap::is_adl_swap_result<decltype(swap(rvalue<U>(), rvalue<U>()))> test(int);
+   template<class U> static ::boost_move_tt_swap::is_adl_swap_result<no_adl_swap_tag> test(...);
+
+   static const bool value = decltype(test<T>(0))::value;
+};
+
+#else //!defined(BOOST_NO_CXX11_DECLTYPE) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
+
+using ::boost_move_tt_swap::operator,;
+
+template<class T>
+struct is_adl_rvalue_swappable
+{
+   //"(swap(x, y), char())" is a char if a swap found by ADL
+   static const bool value = sizeof((swap(rvalue<T>(), rvalue<T>()), char())) == 1u;
+};
+
+#endif   //!defined(BOOST_NO_CXX11_DECLTYPE) && !defined(BOOST_NO_CXX11_SFINAE_EXPR)
+
+}  //namespace boost_move_tt_rvalue_swap {
+
+namespace boost {
+namespace move_detail {
+
+//The value is true if "swap(x, y)" for rvalues of type T selects a "swap" found by
+//argument dependent lookup.
+template<class T>
+struct is_adl_rvalue_swappable
+   : ::boost_move_tt_rvalue_swap::is_adl_rvalue_swappable<T>
+{};
+
+}  //namespace move_detail {
+}  //namespace boost {
+
 #if defined(BOOST_MOVE_TT_CXX11_IS_NOTHROW_SWAPPABLE)
 
 //If argument dependent lookup finds "swap", its noexcept specification is used.

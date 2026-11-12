@@ -432,6 +432,22 @@ void swap(other_swap&, int) {}
 
 enum enum_type { enum_value };
 
+//Proxies with a swap taking arguments by value (like std::vector<bool>::reference)
+struct proxy_swap {};
+
+void swap(proxy_swap, proxy_swap) {}
+
+struct friend_proxy_swap
+{
+   friend void swap(friend_proxy_swap, friend_proxy_swap) {}
+};
+
+template<class T>
+struct tmpl_proxy {};
+
+template<class T>
+void swap(tmpl_proxy<T>, tmpl_proxy<T>) {}
+
 }  //namespace is_adl_swappable_test
 
 //A swap declared in an enclosing namespace is not found by argument dependent lookup
@@ -461,6 +477,20 @@ void test()
    BOOST_MOVE_STATIC_ASSERT((is_adl_swappable<generic_ns::generic_swap>::value));
    //std::swap is found for types associated with namespace std
    BOOST_MOVE_STATIC_ASSERT((is_adl_swappable< std::pair<int, int> >::value));
+
+   //swap(x, y) for rvalues
+   using boost::move_detail::is_adl_rvalue_swappable;
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_rvalue_swappable<int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_rvalue_swappable<enum_type>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_rvalue_swappable<no_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_rvalue_swappable<ns_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_rvalue_swappable<friend_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_rvalue_swappable< tmpl<int> >::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_rvalue_swappable<generic_ns::generic_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_adl_rvalue_swappable< std::pair<int, int> >::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_rvalue_swappable<proxy_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_rvalue_swappable<friend_proxy_swap>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_adl_rvalue_swappable< tmpl_proxy<int> >::value));
 }
 
 }  //namespace is_adl_swappable_test

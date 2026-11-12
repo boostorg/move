@@ -11,6 +11,9 @@
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/move/core.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <vector>
+#include <iterator>
+#include <cstddef>
 
 class swap_stats
 {
@@ -136,7 +139,77 @@ struct derived_class : base_class
    int d;
 };
 
+//A proxy to a bit and an iterator that returns the proxy by value (like std::vector<bool>::iterator)
+struct bit_proxy
+{
+   unsigned *p;
+   unsigned mask;
+   operator bool() const { return (*p & mask) != 0; }
+};
+
+unsigned int bit_proxy_swap_calls = 0;
+
+void swap(bit_proxy x, bit_proxy y)
+{
+   const bool bx = x, by = y;
+   *x.p = by ? (*x.p | x.mask) : (*x.p & ~x.mask);
+   *y.p = bx ? (*y.p | y.mask) : (*y.p & ~y.mask);
+   ++bit_proxy_swap_calls;
+}
+
+struct bit_iterator
+{
+   typedef std::random_access_iterator_tag   iterator_category;
+   typedef bool                              value_type;
+   typedef std::ptrdiff_t                    difference_type;
+   typedef bit_proxy *                       pointer;
+   typedef bit_proxy                         reference;
+
+   unsigned *p;
+   unsigned bit;
+
+   reference operator*() const { bit_proxy r = { p, 1u << bit }; return r; }
+   bit_iterator &operator++() { ++bit; return *this; }
+   bit_iterator &operator--() { --bit; return *this; }
+   friend bool operator==(const bit_iterator &a, const bit_iterator &b) { return a.bit == b.bit; }
+   friend bool operator!=(const bit_iterator &a, const bit_iterator &b) { return a.bit != b.bit; }
+};
+
 }  //namespace adl_ns {
+
+//Iterators that return a proxy by value call the swap found by ADL with the proxies
+void test_iter_swap_proxy()
+{
+   {
+      unsigned bits = 1u;  //bit 0 set
+      adl_ns::bit_iterator b0 = { &bits, 0 }, b1 = { &bits, 1 }, b2 = { &bits, 2 }, b4 = { &bits, 4 };
+      ::boost::adl_move_iter_swap(b0, b1);
+      BOOST_TEST(bits == 2u);
+      BOOST_TEST(adl_ns::bit_proxy_swap_calls == 1);
+      //[b0, b2) <-> [b2, b4): bits 0 and 1 are swapped with bits 2 and 3
+      BOOST_TEST(::boost::adl_move_swap_ranges(b0, b2, b2) == b4);
+      BOOST_TEST(bits == 8u);
+      BOOST_TEST(adl_ns::bit_proxy_swap_calls == 3);
+      //[b2, b4) <-> [b0, b2) backwards
+      BOOST_TEST(::boost::adl_move_swap_ranges_backward(b2, b4, b2) == b0);
+      BOOST_TEST(bits == 2u);
+      BOOST_TEST(adl_ns::bit_proxy_swap_calls == 5);
+   }
+   {
+      std::vector<bool> v;
+      v.push_back(true);
+      v.push_back(false);
+      ::boost::adl_move_iter_swap(v.begin(), v.begin() + 1);
+      BOOST_TEST(!v[0] && v[1]);
+      ::boost::adl_move_swap_ranges(v.begin(), v.begin() + 1, v.begin() + 1);
+      BOOST_TEST(v[0] && !v[1]);
+   }
+   {  //Iterators that return a reference swap the objects
+      int a[2] = { 1, 2 };
+      ::boost::adl_move_iter_swap(&a[0], &a[1]);
+      BOOST_TEST(a[0] == 2 && a[1] == 1);
+   }
+}
 
 #if defined(BOOST_MOVE_HAS_CXX20_CONSTEXPR)
 
@@ -261,6 +334,7 @@ int main()
       BOOST_TEST(x.b == 1 && x.d == 20);
       BOOST_TEST(y.b == 2 && y.d == 10);
    }
+   test_iter_swap_proxy();
    #if defined(BOOST_MOVE_HAS_CXX20_CONSTEXPR)
    BOOST_TEST(test_constexpr_swap());
    #endif

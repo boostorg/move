@@ -896,10 +896,10 @@ void uninitialized_merge_with_right_placed
             ::new((iterator_to_raw_pointer)(dest_first), boost_move_new_t()) value_type(::boost::move(*first));
             d.incr();
          }
-         d.release();
          InputOutIterator end = ::boost::move(first, last, original_r_first);
          assert(end == r_last);
          boost::movelib::ignore(end);
+         d.release();
          return;
       }
       else if (comp(*r_first, *first)) {

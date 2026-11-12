@@ -317,6 +317,81 @@ void test_uninitialized_merge_one(const merge_case &c, Compare comp, bool range1
    BOOST_TEST(order_perf_type::num_elements == live_before);
 }
 
+#if !defined(BOOST_NO_EXCEPTIONS)
+
+//A type whose copy constructor and copy assignment throw at the "throw_at"-th copy
+struct throwing_copy_type
+{
+   int key;
+
+   explicit throwing_copy_type(int k = 0) : key(k) {  ++live;  }
+
+   throwing_copy_type(const throwing_copy_type &other) : key(other.key)
+   {  count_copy();  ++live;  }
+
+   throwing_copy_type &operator=(const throwing_copy_type &other)
+   {  count_copy();  key = other.key;  return *this;  }
+
+   ~throwing_copy_type() {  --live;  }
+
+   static void count_copy()
+   {
+      if(++copies == throw_at){
+         throw int(0);
+      }
+   }
+
+   friend bool operator<(const throwing_copy_type &l, const throwing_copy_type &r)
+   {  return l.key < r.key;  }
+
+   static int live;
+   static int copies;
+   static int throw_at;
+};
+
+struct throwing_copy_less
+{
+   bool operator()(const throwing_copy_type &l, const throwing_copy_type &r) const
+   {  return l < r;  }
+};
+
+int throwing_copy_type::live = 0;
+int throwing_copy_type::copies = 0;
+int throwing_copy_type::throw_at = 0;
+
+//Range 1 = {0, 1, 2, 3}, placed range 2 = {-1}: range 2 runs out first. The elements of
+//range 1 are constructed in the free run and then assigned to the placed range. If a copy
+//throws, the objects constructed in the free run must be destroyed.
+void test_uninitialized_merge_with_right_placed_throw()
+{
+   typedef throwing_copy_type T;
+   const int len1 = 4, len2 = 1, n = len1 + len2;
+   for(int throw_at = 1; throw_at <= n; ++throw_at){
+      boost::movelib::unique_ptr<char[]> raw(new char[sizeof(T)*n]);
+      T *const d = boost::move_detail::force_ptr<T*>(raw.get());
+      T o[len1] = { T(0), T(1), T(2), T(3) };
+      ::new(static_cast<void*>(d+len1)) T(-1);
+      const int live_before = T::live;
+
+      T::copies = 0;
+      T::throw_at = throw_at;
+      bool thrown = false;
+      try{
+         boost::movelib::uninitialized_merge_with_right_placed(o, o+len1, d, d+len1, d+n, throwing_copy_less());
+      }
+      catch(int){
+         thrown = true;
+      }
+      T::throw_at = 0;
+      BOOST_TEST(thrown);
+      //Only range 1 and the placed range are alive
+      BOOST_TEST(T::live == live_before);
+      d[len1].~T();
+   }
+}
+
+#endif   //#if !defined(BOOST_NO_EXCEPTIONS)
+
 void test_uninitialized_merge_with_right_placed()
 {
    less_type comp;
@@ -332,6 +407,9 @@ void test_uninitialized_merge_with_right_placed()
          }
       }
    }
+   #if !defined(BOOST_NO_EXCEPTIONS)
+   test_uninitialized_merge_with_right_placed_throw();
+   #endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////

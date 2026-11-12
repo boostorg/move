@@ -72,7 +72,6 @@
 extern "C" {
 
 union _LARGE_INTEGER;
-typedef long long QuadPart;
 
 BOOST_MOVE_WINAPI_IMPORT_EXCEPT_WM int BOOST_MOVE_WINAPI_CC
 QueryPerformanceCounter(::_LARGE_INTEGER* lpPerformanceCount);

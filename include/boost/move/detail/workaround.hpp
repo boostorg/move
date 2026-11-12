@@ -128,7 +128,7 @@ template<unsigned> struct static_assert_test {};
 
 #define BOOST_MOVE_STATIC_ASSERT(B) \
          typedef ::boost::move_detail::static_assert_test<\
-            (unsigned)sizeof(::boost::move_detail::STATIC_ASSERTION_FAILURE<bool(B)>)>\
+            static_cast<unsigned>(sizeof(::boost::move_detail::STATIC_ASSERTION_FAILURE<bool(B)>))>\
                BOOST_JOIN(boost_move_static_assert_typedef_, __LINE__) BOOST_ATTRIBUTE_UNUSED
 
 #endif

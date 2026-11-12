@@ -11,6 +11,7 @@
 
 #include <boost/move/iterator.hpp>
 #include <boost/move/detail/meta_utils.hpp>
+#include <boost/move/detail/reverse_iterator.hpp>
 #include <boost/container/vector.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include "../example/movable.hpp"
@@ -164,6 +165,23 @@ void test_make_move_iterator_array()
    BOOST_TEST(*c == 1);
 }
 
+void test_reverse_move_iterator()
+{
+   typedef boost::move_iterator<movable*> mit;
+   typedef boost::movelib::reverse_iterator<mit> rmit;
+   movable a[3];
+   rmit r(mit(a + 3));
+   movable m(*r);
+   BOOST_TEST(a[2].moved() && !m.moved());
+   movable m2(r[1]);
+   BOOST_TEST(a[1].moved() && !m2.moved());
+   int ia[3] = { 1, 2, 3 };
+   boost::movelib::reverse_iterator< boost::move_iterator<int*> > ri(boost::make_move_iterator(ia + 3));
+   BOOST_TEST(*ri == 3);
+   ++ri;
+   BOOST_TEST(*ri == 2);
+}
+
 int main()
 {
    test_reference_type();
@@ -172,6 +190,7 @@ int main()
    test_proxy_iterator();
    test_conversion_and_mixed_comparison();
    test_make_move_iterator_array();
+   test_reverse_move_iterator();
 
    namespace bc = ::boost::container;
    //Default construct 10 movable objects

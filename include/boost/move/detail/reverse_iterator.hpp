@@ -79,8 +79,7 @@ class reverse_iterator
    {
       It temp(m_current);
       --temp;
-      reference r = *temp;
-      return r;
+      return *temp;
    }
 
    inline pointer operator->() const

@@ -936,6 +936,45 @@ jobs:
             cxxstd: "14,17,20,latest"
             addrmd: 64
             os: windows-2022
+         #Older MSVC toolsets: "vs_component" is installed as a side-by-side
+         #toolset in a new Build Tools 2022 instance and "vcvars_ver" selects it.
+         #One job for each toolset and address model, so they run in parallel
+          - toolset: msvc-14.2
+            cxxstd: "14,17,20,latest"
+            addrmd: 32
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.14.29.16.11.x86.x64
+            vcvars_ver: "14.29"
+          - toolset: msvc-14.2
+            cxxstd: "14,17,20,latest"
+            addrmd: 64
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.14.29.16.11.x86.x64
+            vcvars_ver: "14.29"
+          - toolset: msvc-14.1
+            cxxstd: "14,17,latest"
+            addrmd: 32
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.v141.x86.x64
+            vcvars_ver: "14.16"
+          - toolset: msvc-14.1
+            cxxstd: "14,17,latest"
+            addrmd: 64
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.v141.x86.x64
+            vcvars_ver: "14.16"
+          - toolset: msvc-14.0
+            cxxstd: "14,latest"
+            addrmd: 32
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.140
+            vcvars_ver: "14.0"
+          - toolset: msvc-14.0
+            cxxstd: "14,latest"
+            addrmd: 64
+            os: windows-2022
+            vs_component: Microsoft.VisualStudio.Component.VC.140
+            vcvars_ver: "14.0"
           - toolset: clang-win
             cxxstd: "14,17,latest"
             addrmd: 64
@@ -1020,11 +1059,50 @@ jobs:
                 b2 -d0 headers
             )
 
+      # A new, minimal "Build Tools for Visual Studio 2022" instance with only the
+      # C++ core build tools and the older toolset. This is faster than to modify
+      # the full Visual Studio instance of the runner, as the installer does not
+      # have to examine and update all its workloads.
+      # VC.Tools.x86.x64 (the latest toolset) is a recommended component of the
+      # VCTools workload, so it is not installed by default. Some older toolsets
+      # (VC.140, VC.14.29) do not depend on it, but vcvarsall.bat is part of it
+      - name: Install older MSVC toolset
+        if: matrix.vs_component != ''
+        shell: cmd
+        run: |
+            set "VSPATH=C:\BuildTools"
+            echo VSPATH=%VSPATH%>>%GITHUB_ENV%
+            curl -L --retry %NET_RETRY_COUNT% -o vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe
+            start "" /wait vs_buildtools.exe --installPath "%VSPATH%" --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add ${{matrix.vs_component}} --quiet --wait --norestart --nocache
+            set RET=%ERRORLEVEL%
+            echo vs_buildtools.exe exit code: %RET%
+            del /f vs_buildtools.exe
+            rem 3010: success, reboot required
+            if %RET% == 3010 set RET=0
+            rem The installer can return 0 and install nothing: check the result
+            "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -all -products * -format text -property installationPath
+            if not exist "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" (
+                echo ERROR: "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" not found
+                dir "%VSPATH%"
+                for /f "delims=" %%f in ('dir /b /o-d "%TEMP%\dd_*.log" 2^>nul') do type "%TEMP%\%%f"
+                exit /b 1
+            )
+            exit /b %RET%
+
       - name: Run tests
         if: matrix.cmake_tests == ''
         shell: cmd
         run: |
             cd boost-root
+            rem Older toolset: vcvarsall sets the environment of the toolset, and the
+            rem toolset is declared with no command, so b2 calls no setup script and
+            rem uses this environment
+            set VCARCH=x64
+            if "${{matrix.addrmd}}" == "32" set VCARCH=x86
+            set TSVER=${{matrix.toolset}}
+            if not "${{matrix.vcvars_ver}}" == "" call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCARCH% -vcvars_ver=${{matrix.vcvars_ver}} || exit /b 1
+            if not "${{matrix.vcvars_ver}}" == "" echo using msvc : %TSVER:msvc-=% ;>>project-config.jam
+            if not "${{matrix.vcvars_ver}}" == "" where cl rc || exit /b 1
             set B2_ARM64EC=
             if not "${{matrix.arm64ec}}" == "" set B2_ARM64EC=architecture=arm cflags=/arm64EC linkflags=/MACHINE:ARM64EC
             rem --remove-test-targets: delete the object files and executables of the passed tests, so the runner disk does not fill up

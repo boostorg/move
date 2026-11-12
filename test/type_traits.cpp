@@ -771,6 +771,22 @@ void test()
    BOOST_MOVE_STATIC_ASSERT(( is_convertible<int, long>::value));
    BOOST_MOVE_STATIC_ASSERT(( is_convertible<int*, const int*>::value));
    BOOST_MOVE_STATIC_ASSERT((!is_convertible<const int*, int*>::value));
+   //No type converts to an array or a function type
+   typedef int array_t[3];
+   typedef void function_t();
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<int*, array_t>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<array_t, array_t>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<int*, int[]>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<function_t, function_t>::value));
+   BOOST_MOVE_STATIC_ASSERT((!is_convertible<function_t*, function_t>::value));
+   //Arrays and functions convert to pointers and references
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<array_t, int*>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<array_t&, array_t&>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<array_t&, const array_t&>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<function_t, function_t*>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<function_t&, function_t&>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<int, const int>::value));
+   BOOST_MOVE_STATIC_ASSERT(( is_convertible<const int, int>::value));
 }
 
 }  //namespace is_convertible_test

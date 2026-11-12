@@ -325,10 +325,54 @@ template <>        struct is_convertible_cv_void<const void>          {  static 
 template <>        struct is_convertible_cv_void<volatile void>       {  static const bool value = true;  };
 template <>        struct is_convertible_cv_void<const volatile void> {  static const bool value = true;  };
 
+//No type is convertible to an array or a function type, they can't be returned or passed by value.
+//The parameter of is_convertible_impl::sink/dispatch would decay them to a pointer, so they are filtered
+#if defined(_MSC_VER) && (_MSC_VER >= 1400)
+
+//The intrinsic is correct for function types (older MSVC versions apply "const" to function types)
+template <class U>
+struct is_convertible_invalid_target
+{  static const bool value = false;  };
+
+#else
+
+
+//A non-reference type for which const U is not const is a function type
+template <class T> struct is_convertible_const          {  static const bool value = false; };
+template <class T> struct is_convertible_const<const T> {  static const bool value = true;  };
+
+template <class U>
+struct is_convertible_invalid_target
+{  static const bool value = !is_convertible_const<const U>::value;  };
+
+
+//Reference types filter
+template <class U>
+struct is_convertible_invalid_target<U&>
+{  static const bool value = false;  };
+
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+template <class U>
+struct is_convertible_invalid_target<U&&>
+{  static const bool value = false;  };
+#endif
+
+#endif
+
+template <class U>
+struct is_convertible_invalid_target<U[]>
+{  static const bool value = true;  };
+
+template <class U, std::size_t N>
+struct is_convertible_invalid_target<U[N]>
+{  static const bool value = true;  };
+
 //void can't be passed or converted as an expression: any (cv) void converts
 //to any (cv) void, and void and non-void types are not convertible.
+//Array and function types are not valid targets.
 template < class T, class U
-         , bool = is_convertible_cv_void<T>::value || is_convertible_cv_void<U>::value>
+         , bool = is_convertible_cv_void<T>::value || is_convertible_cv_void<U>::value ||
+                  is_convertible_invalid_target<U>::value>
 struct is_convertible_void_filter
    : is_convertible_impl<T, U>
 {};

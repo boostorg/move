@@ -39,11 +39,12 @@ OutputIt copy(InputIt first, InputIt last, OutputIt result)
 
 namespace movelib {
 
-//Moves the elements from the sorted range [first1, last1) which are not found in the sorted
-//range [first2, last2) to the range beginning at result.
+//Copies the elements from the sorted range [first1, last1) which are not found in the sorted
+//range [first2, last2) to the range beginning at result (the elements are moved if
+//[first1, last1) is a range of move iterators).
 //The resulting range is also sorted. Equivalent elements are treated individually,
 //that is, if some element is found m times in [first1, last1) and n times in [first2, last2),
-//it will be moved to result exactly max(m-n, 0) times.
+//it will be copied to result exactly max(m-n, 0) times.
 //The resulting range cannot overlap with either of the input ranges.
 template<class InputIt1, class InputIt2,
          class OutputIt, class Compare>
@@ -101,12 +102,12 @@ InputOutputIt1 inplace_set_difference
    return first1;
 }
 
-//Moves the elements from the sorted range [first1, last1) which are not found in the sorted
-//range [first2, last2) to the range beginning at first1.
-//The resulting range is also sorted. Equivalent elements from range 1 are moved past to end
-//of the result,
-//that is, if some element is found m times in [first1, last1) and n times in [first2, last2),
-//it will be moved to result exactly max(m-n, 0) times.
+//Copies the elements from the sorted range [first1, last1) which are not found in the sorted
+//range [first2, last2) to the range beginning at result (the elements are moved if
+//[first1, last1) is a range of move iterators).
+//The resulting range is also sorted and has no equivalent elements: only the first element
+//of each group of equivalent elements of [first1, last1) is copied, and only if no equivalent
+//element is found in [first2, last2).
 //The resulting range cannot overlap with either of the input ranges.
 template<class ForwardIt1, class InputIt2,
          class OutputIt, class Compare>
@@ -156,9 +157,9 @@ OutputIt set_unique_difference
 
 //Moves the elements from the sorted range [first1, last1) which are not found in the sorted
 //range [first2, last2) to the range beginning at first1 (in place operation in range1).
-//The resulting range is also sorted. Equivalent elements are treated individually,
-//that is, if some element is found m times in [first1, last1) and n times in [first2, last2),
-//it will be moved to result exactly max(m-n, 0) times.
+//The resulting range is also sorted and has no equivalent elements: only the first element
+//of each group of equivalent elements of [first1, last1) is kept, and only if no equivalent
+//element is found in [first2, last2).
 template<class ForwardOutputIt1, class ForwardIt2, class Compare>
 ForwardOutputIt1 inplace_set_unique_difference
    (ForwardOutputIt1 first1, ForwardOutputIt1 last1, ForwardIt2 first2, ForwardIt2 last2, Compare comp )

@@ -53,6 +53,29 @@ struct throwing_deref_deleter
    void operator()(throwing_deref_ptr q) const { delete q.p; }
 };
 
+//A pointer whose dereference returns a proxy that converts to int&: the reference
+//returned by operator* does not refer to a temporary, so it is valid (LWG 4148)
+struct int_ref_proxy
+{
+   int *p;
+   operator int&() const { return *p; }
+};
+
+struct proxy_deref_ptr
+{
+   proxy_deref_ptr() : p() {}
+   proxy_deref_ptr(int *q) : p(q) {}
+   int_ref_proxy operator*() const { int_ref_proxy r = { p }; return r; }
+   operator int*() const { return p; }   //contextual conversion to bool
+   int *p;
+};
+
+struct proxy_deref_deleter
+{
+   typedef proxy_deref_ptr pointer;
+   void operator()(proxy_deref_ptr q) const { delete q.p; }
+};
+
 void test()
 {
    //Single unique_ptr
@@ -77,6 +100,13 @@ void test()
    bml::unique_ptr<int[2]> p(pi);
    BOOST_TEST(p[0] == 3);
    BOOST_TEST(p[1] == 4);
+   }
+   //Dereference that returns a proxy
+   {
+   bml::unique_ptr<int, proxy_deref_deleter> p((proxy_deref_ptr(new int(5))));
+   int &r = *p;
+   BOOST_TEST(r == 5);
+   BOOST_TEST(&r == p.get().p);
    }
    #if !defined(BOOST_NO_CXX11_NOEXCEPT)
    BOOST_MOVE_STATIC_ASSERT(( noexcept(*::boost::move_detail::declval<const bml::unique_ptr<int>&>()) ));

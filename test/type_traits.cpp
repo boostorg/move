@@ -789,6 +789,32 @@ void test()
 
 }  //namespace alignment_of_abstract_test
 
+namespace reference_converts_from_temporary_test
+{
+
+struct int_ref_proxy
+{
+   //A proxy that converts to a reference
+   operator int&() const;
+};
+
+void test()
+{
+   using boost::move_detail::reference_converts_from_temporary;
+   #if defined(BOOST_MOVE_REFERENCE_CONVERTS_FROM_TEMPORARY)
+   BOOST_MOVE_STATIC_ASSERT(( reference_converts_from_temporary<const int&, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(( reference_converts_from_temporary<const long&, int&>::value));
+   BOOST_MOVE_STATIC_ASSERT((!reference_converts_from_temporary<const int&, int&>::value));
+   BOOST_MOVE_STATIC_ASSERT((!reference_converts_from_temporary<int&, int_ref_proxy>::value));
+   BOOST_MOVE_STATIC_ASSERT((!reference_converts_from_temporary<int, int>::value));
+   #else
+   //Without the intrinsic the value is always false
+   BOOST_MOVE_STATIC_ASSERT((!reference_converts_from_temporary<const int&, int>::value));
+   #endif
+}
+
+}  //namespace reference_converts_from_temporary_test
+
 namespace abstract_construct_test
 {
 
@@ -970,6 +996,7 @@ int main()
    is_copy_constructible_test::test();
    alignment_of_abstract_test::test();
    abstract_construct_test::test();
+   reference_converts_from_temporary_test::test();
    destructible_test::test();
    is_constructible_test::test();
    return boost::report_errors();

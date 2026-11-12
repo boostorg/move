@@ -355,6 +355,18 @@
 
 #endif
 
+//BOOST_MOVE_REFERENCE_CONVERTS_FROM_TEMPORARY(T, U): true if T is a reference type and binding
+//T to an expression of type U binds a temporary (C++23 std::reference_converts_from_temporary).
+//Only defined if a intrinsic is available(GCC 13, Clang 19, MSVC 19.50 and newer).
+#if defined(__has_builtin)
+#  if __has_builtin(__reference_converts_from_temporary)
+#     define BOOST_MOVE_REFERENCE_CONVERTS_FROM_TEMPORARY(T, U) __reference_converts_from_temporary(T, U)
+#  endif
+#endif
+#if !defined(BOOST_MOVE_REFERENCE_CONVERTS_FROM_TEMPORARY) && defined(BOOST_MSVC) && (BOOST_MSVC >= 1950)
+#  define BOOST_MOVE_REFERENCE_CONVERTS_FROM_TEMPORARY(T, U) __reference_converts_from_temporary(T, U)
+#endif
+
 //Fallback definitions
 
 //Expression SFINAE fallbacks for the traits that have no intrinsic.
@@ -1616,6 +1628,21 @@ struct is_nothrow_copy_assignable
 template<class T>
 struct is_nothrow_move_assignable
 {  static const bool value = BOOST_MOVE_IS_NOTHROW_MOVE_ASSIGNABLE(T);  };
+
+//////////////////////////////////////
+//    reference_converts_from_temporary
+//////////////////////////////////////
+//Without the intrinsic the value is false: a check that uses the trait to reject
+//a reference bound to a temporary is not done, and valid code is never rejected.
+template<class T, class U>
+struct reference_converts_from_temporary
+{
+   #if defined(BOOST_MOVE_REFERENCE_CONVERTS_FROM_TEMPORARY)
+   static const bool value = BOOST_MOVE_REFERENCE_CONVERTS_FROM_TEMPORARY(T, U);
+   #else
+   static const bool value = false;
+   #endif
+};
 
 //////////////////////////////////////
 //          is_constructible

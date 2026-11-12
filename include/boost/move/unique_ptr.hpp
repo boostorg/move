@@ -837,6 +837,15 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
       operator*() const BOOST_MOVE_UNIQUE_PTR_DEREF_NOEXCEPT
    {
       BOOST_MOVE_STATIC_ASSERT((!bmupmu::is_array<T>::value));
+
+      //operator* is ill-formed if the returned reference would bind to a temporary (LWG 4148)
+      //The check needs the reference_converts_from_temporary intrinsic
+      #if defined(BOOST_MOVE_REFERENCE_CONVERTS_FROM_TEMPORARY) && !defined(BOOST_NO_CXX11_DECLTYPE)
+      BOOST_MOVE_STATIC_ASSERT((!bmupmu::reference_converts_from_temporary
+         < typename bmupmu::add_lvalue_reference<element_type>::type
+         , decltype(*::boost::move_detail::declval<pointer>())>::value));
+      #endif
+
       return *m_data.m_p;
    }
 

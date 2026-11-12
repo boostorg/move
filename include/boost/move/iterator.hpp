@@ -100,7 +100,7 @@ class move_iterator
 
    template <class U>
    inline move_iterator(const move_iterator<U>& u
-      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename ::boost::move_detail::enable_if_convertible<U BOOST_MOVE_I It>::type* = 0))
+      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename ::boost::move_detail::enable_if_convertible<U BOOST_MOVE_I It>::type* = BOOST_NULLPTR))
       :  m_it(u.base())
    {}
 

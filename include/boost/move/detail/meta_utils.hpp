@@ -242,7 +242,7 @@ struct is_class_or_union
    static char is_class_or_union_tester(void(U::*)(void));
    template <class U>
    static twochar is_class_or_union_tester(...);
-   static const bool value = sizeof(is_class_or_union_tester<T>(0)) == sizeof(char);
+   static const bool value = sizeof(is_class_or_union_tester<T>(BOOST_NULLPTR)) == sizeof(char);
 };
 
 //////////////////////////////////////
@@ -258,8 +258,8 @@ struct has_pointer_type
 {
    struct two { char c[2]; };
    template <class U> static two test(...);
-   template <class U> static char test(typename U::pointer* = 0);
-   static const bool value = sizeof(test<T>(0)) == 1;
+   template <class U> static char test(typename U::pointer*);
+   static const bool value = sizeof(test<T>(BOOST_NULLPTR)) == 1;
 };
 
 //////////////////////////////////////

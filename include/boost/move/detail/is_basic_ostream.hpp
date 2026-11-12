@@ -38,7 +38,7 @@ struct is_basic_ostream
 {
    template<class U> static char test(typename U::basic_ostream::char_type*);
    template<class U> static int  test(...);
-   static const bool value = sizeof(test<S>(0)) == sizeof(char);
+   static const bool value = sizeof(test<S>(BOOST_NULLPTR)) == sizeof(char);
 };
 
 template<class S>
@@ -46,7 +46,7 @@ struct is_basic_istream
 {
    template<class U> static char test(typename U::basic_istream::char_type*);
    template<class U> static int  test(...);
-   static const bool value = sizeof(test<S>(0)) == sizeof(char);
+   static const bool value = sizeof(test<S>(BOOST_NULLPTR)) == sizeof(char);
 };
 
 }  //namespace move_detail {

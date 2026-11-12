@@ -75,7 +75,7 @@ struct no_type { char dummy[2]; };
 template<class T>
 struct type_tag {};
 
-#define BOOST_MOVE_ITER_DETAIL_HAS_MEMBER_TYPE(NAME)   template<class T>   struct has_##NAME   {      template<class U> static yes_type test(type_tag<typename U::NAME>*);      template<class U> static no_type  test(...);      static const bool value = sizeof(test<T>(0)) == sizeof(yes_type);   };//
+#define BOOST_MOVE_ITER_DETAIL_HAS_MEMBER_TYPE(NAME)   template<class T>   struct has_##NAME   {      template<class U> static yes_type test(type_tag<typename U::NAME>*);      template<class U> static no_type  test(...);      static const bool value = sizeof(test<T>(BOOST_NULLPTR)) == sizeof(yes_type);   };//
 
 BOOST_MOVE_ITER_DETAIL_HAS_MEMBER_TYPE(value_type)
 BOOST_MOVE_ITER_DETAIL_HAS_MEMBER_TYPE(pointer)

@@ -135,7 +135,7 @@ struct has_internal_pointer_element
    template <typename X>
    static int test(...);
 
-   static const bool value = (1 == sizeof(test<T>(0, 0)));
+   static const bool value = (1 == sizeof(test<T>(0, BOOST_NULLPTR)));
 };
 
 template<class Ptr, bool = has_internal_pointer_element<Ptr>::value>

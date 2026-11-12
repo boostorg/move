@@ -579,7 +579,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    template<class Pointer>
    inline BOOST_MOVE_CXX20_CONSTEXPR explicit unique_ptr(Pointer p
       BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_ptr_if<T BOOST_MOVE_I Pointer BOOST_MOVE_I pointer
-                           BOOST_MOVE_I bmupd::is_value_initializable_deleter<D> >::type* =0)
+                           BOOST_MOVE_I bmupd::is_value_initializable_deleter<D> >::type* = BOOST_NULLPTR)
                  ) BOOST_NOEXCEPT
       : m_data(p)
    {
@@ -615,7 +615,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    template<class Pointer>
    inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr(Pointer p, BOOST_MOVE_SEEDOC(deleter_arg_type1) d1
       BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_ptr_if<T BOOST_MOVE_I Pointer BOOST_MOVE_I pointer
-                           BOOST_MOVE_I bmupd::is_lvalue_arg_deleter<D> >::type* =0)
+                           BOOST_MOVE_I bmupd::is_lvalue_arg_deleter<D> >::type* = BOOST_NULLPTR)
               ) BOOST_NOEXCEPT
       : m_data(p, d1)
    {
@@ -664,7 +664,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    template<class Pointer>
    inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr(Pointer p, BOOST_MOVE_SEEDOC(deleter_arg_type2) d2
       BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_ptr_if<T BOOST_MOVE_I Pointer BOOST_MOVE_I pointer
-                           BOOST_MOVE_I bmupd::is_rvalue_arg_deleter<D> >::type* =0)
+                           BOOST_MOVE_I bmupd::is_rvalue_arg_deleter<D> >::type* = BOOST_NULLPTR)
              ) BOOST_NOEXCEPT
       : m_data(p, ::boost::move(d2))
    {
@@ -681,7 +681,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //Deleted (instead of removed) so that rvalues do not bind to the deleter_arg_type1 overload.
    template<class Pointer>
    unique_ptr(Pointer p, deleter_arg_type2 d2
-      , typename bmupd::enable_up_ptr_if<T, Pointer, pointer, bmupmu::is_reference<D> >::type* =0) = delete;
+      , typename bmupd::enable_up_ptr_if<T, Pointer, pointer, bmupmu::is_reference<D> >::type* = BOOST_NULLPTR) = delete;
    #endif
 
    //! <b>Effects</b>: Same effects as <tt>template&lt;class Pointer&gt; unique_ptr(Pointer p, deleter_arg_type2 d2)</tt>
@@ -746,7 +746,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!   returns a reference to the stored deleter that was constructed from <tt>u.get_deleter()</tt>.
    template <class U, class E>
    inline BOOST_MOVE_CXX20_CONSTEXPR unique_ptr( BOOST_RV_REF_BEG_IF_CXX11 unique_ptr<U, E> BOOST_RV_REF_END_IF_CXX11 u
-      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_moveconv_constr<T BOOST_MOVE_I D BOOST_MOVE_I U BOOST_MOVE_I E>::type* =0)
+      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_up_moveconv_constr<T BOOST_MOVE_I D BOOST_MOVE_I U BOOST_MOVE_I E>::type* = BOOST_NULLPTR)
       ) BOOST_NOEXCEPT
       : m_data(u.release(), ::boost::move_if_not_lvalue_reference<E>(u.get_deleter()))
    {

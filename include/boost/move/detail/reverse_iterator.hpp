@@ -62,7 +62,7 @@ class reverse_iterator
    template<class OtherIt>
    inline
       reverse_iterator( const reverse_iterator<OtherIt>& r
-                      , typename boost::move_detail::enable_if_convertible<OtherIt, It>::type* =0
+                      , typename boost::move_detail::enable_if_convertible<OtherIt, It>::type* = BOOST_NULLPTR
                    )
       : m_current(r.base())
    {}

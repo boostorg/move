@@ -191,7 +191,7 @@ struct default_delete
    //!   - If T is an array type and U* is a more CV qualified pointer to remove_extent&lt;T&gt;::type.
    template <class U>
    BOOST_MOVE_CXX20_CONSTEXPR default_delete(const default_delete<U>&
-      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_def_del<U BOOST_MOVE_I T>::type* =0)
+      BOOST_MOVE_DOCIGN(BOOST_MOVE_I typename bmupd::enable_def_del<U BOOST_MOVE_I T>::type* = BOOST_NULLPTR)
       ) BOOST_NOEXCEPT
    {
       //If T is not an array type, U derives from T

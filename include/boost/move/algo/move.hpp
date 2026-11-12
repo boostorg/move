@@ -145,7 +145,7 @@ template
    <typename I,   // I models InputIterator
     typename F>   // F models ForwardIterator
 F uninitialized_move(I f, I l, F r,
-   typename ::boost::move_detail::disable_if<has_move_emulation_enabled<typename boost::movelib::iterator_traits<I>::value_type> >::type* = 0)
+   typename ::boost::move_detail::disable_if<has_move_emulation_enabled<typename boost::movelib::iterator_traits<I>::value_type> >::type* = BOOST_NULLPTR)
 {
    return std::uninitialized_copy(f, l, r);
 }

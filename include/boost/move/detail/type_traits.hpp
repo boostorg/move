@@ -1365,7 +1365,7 @@ struct is_copy_constructible_impl
       #else
       static no_type test(...);
       template <class U>
-      static yes_type test(const U&, decltype(U(source<U>()))* = 0);
+      static yes_type test(const U&, decltype(U(source<U>()))* = BOOST_NULLPTR);
       static const bool value = is_not_abstract_for_cast<T>::value && sizeof(test(source<T>())) == sizeof(yes_type);
       #endif
    #else

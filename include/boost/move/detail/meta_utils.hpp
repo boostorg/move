@@ -272,7 +272,13 @@ struct has_pointer_type
 template <class T, class U>
 struct is_convertible_impl
 {
+   #if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+   //In a template, some MSVC versions (e.g. 14.0, 14.1) return false for
+   //__is_convertible_to(F, F*) when F is a function type use T&& instead.
+   static const bool value = __is_convertible_to(T&&, U);
+   #else
    static const bool value = __is_convertible_to(T, U);
+   #endif
 };
 
 #elif !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_CXX11_DECLTYPE) && \

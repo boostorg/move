@@ -1081,6 +1081,17 @@ Special thanks to:
    *  Added `make_unique_for_overwrite`, the C++20 name of `make_unique_definit`.
    *  Added the stream output operator (`operator<<`) for `unique_ptr`, without including `<iosfwd>`.
 
+*  A systematic, AI-assisted review of the library found and fixed many bugs that users did
+   not report. The main types of bugs are:
+   *  Type traits: incorrect results of `is_convertible`, `is_constructible`, `is_copy_constructible`,
+      `is_move_constructible`, `alignment_of`, `is_unsigned`, `is_nothrow_swappable` and the trivial and nothrow
+      traits for abstract classes, arrays, functions, over-aligned types, POD types with deleted special members.
+   *  Exception safety: leaks algorithms when a move assignment throws.
+   *  Sort and merge algorithms: stability bugs in `adaptive_sort` and `adaptive_merge`.
+   *  Iterators and swap: proxy iterators in `move_iterator`, `adl_move_iter_swap` and `adl_move_swap_ranges`.
+   *  `unique_ptr`: deleter checks, `get_deleter()` with reference deleters, `noexcept` conditions,
+      and comparisons with `nullptr`.
+
 [endsect]
 
 [section:release_notes_boost_1_91 Boost 1.91 Release]

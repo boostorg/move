@@ -86,11 +86,11 @@ BOOST_MOVE_FORCEINLINE void iter_swap(const It1 &a, const It2 &b, boost::move_de
 
 }  //namespace boost_move_adl_swap{
 
-#endif   //!defined(BOOST_MOVE_DOXYGEN_INVOKED)
+#endif   // !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
 namespace boost{
 
-//! Exchanges the values of a and b, using Argument Dependent Lookup (ADL) to select a
+//! Exchanges the values of x and y, using Argument Dependent Lookup (ADL) to select a
 //! specialized swap function if available.
 //! If no specialized swap function is available, a move-based swap
 //! is called
@@ -135,6 +135,19 @@ ForwardIt2 adl_move_swap_ranges(ForwardIt1 first1, ForwardIt1 last1, ForwardIt2 
    return first2;
 }
 
+//! Exchanges elements between range [first1, last1) and another range ending at last2
+//! using boost::adl_move_iter_swap. Elements are swapped from the end to the start.
+//!
+//! Parameters:
+//!   first1, last1   -   the first range of elements to swap
+//!   last2   -   end of the second range of elements to swap
+//!
+//! Type requirements:
+//!   - BidirIt1, BidirIt2 must meet the requirements of BidirectionalIterator.
+//!   - The types of dereferenced BidirIt1 and BidirIt2 must meet the
+//!     requirements of Swappable
+//!
+//! Return value: Iterator to the first element exchanged in the range ending at last2.
 template<class BidirIt1, class BidirIt2>
 BidirIt2 adl_move_swap_ranges_backward(BidirIt1 first1, BidirIt1 last1, BidirIt2 last2)
 {

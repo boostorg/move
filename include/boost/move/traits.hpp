@@ -36,7 +36,7 @@ namespace boost {
 //! (<i>has_trivial_destructor_after_move &lt;T&gt;::value == true</i>)
 //! means that if T is used as argument of a move construction/assignment,
 //! there is no need to call T's destructor.
-//! This optimization tipically is used to improve containers' performance.
+//! This optimization typically is used to improve containers' performance.
 //!
 //! By default this trait is true if the type has trivial destructor,
 //! every class should specialize this trait if it wants to improve performance
@@ -72,6 +72,8 @@ struct has_trivial_destructor_after_move<std::pair<A,B> >
 
 #endif
 
+/// @cond
+
 namespace move_detail {
 
 template <class T>
@@ -86,6 +88,9 @@ struct is_nothrow_move_constructible_or_uncopyable
 };
 
 }  //move_detail {
+
+/// @endcond
+
 }  //namespace boost {
 
 #include <boost/move/detail/config_end.hpp>

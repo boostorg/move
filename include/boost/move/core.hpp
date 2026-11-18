@@ -445,7 +445,7 @@
          REF
       //
 
-   #else //!defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #else // !defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
       #include <boost/move/detail/meta_utils_core.hpp>
 
@@ -485,7 +485,7 @@
          boost::move_detail::move_return< RET_TYPE >(REF)
       //
 
-   #endif   //!defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
+   #endif   // !defined(BOOST_MOVE_MSVC_AUTO_MOVE_RETURN_BUG) || defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
    //!This macro is used to achieve portable optimal move constructors.
    //!
@@ -509,12 +509,14 @@
    #define BOOST_MOVE_TO_LV(ARG) ARG
    //
 
+   /// @cond
    namespace boost {
    namespace move_detail {
 
    template< class T> struct forward_type { typedef T type; };
 
    }}
+   /// @endcond
 
 #endif   //BOOST_NO_CXX11_RVALUE_REFERENCES
 

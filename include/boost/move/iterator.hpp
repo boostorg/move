@@ -200,6 +200,8 @@ inline typename move_iterator<It1>::difference_type
    operator-(const move_iterator<It1>& x, const move_iterator<It2>& y)
 {  return x.base() - y.base();   }
 
+/// @cond
+
 //is_move_iterator
 namespace move_detail {
 
@@ -216,6 +218,8 @@ struct is_move_iterator< ::boost::move_iterator<I> >
 };
 
 }  //namespace move_detail {
+
+/// @endcond
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -285,7 +289,7 @@ inline back_move_insert_iterator<C> back_move_inserter(C& x)
 //
 //////////////////////////////////////////////////////////////////////////////
 
-//! A move insert iterator that move constructs elements int the
+//! A move insert iterator that move constructs elements at the
 //! front of a container
 template <typename C> // C models Container
 class front_move_insert_iterator
@@ -326,6 +330,9 @@ inline front_move_insert_iterator<C> front_move_inserter(C& x)
 //                         insert_move_iterator
 //
 //////////////////////////////////////////////////////////////////////////////
+
+//! A move insert iterator that move constructs elements at a
+//! position of a container
 template <typename C> // C models Container
 class move_insert_iterator
 {

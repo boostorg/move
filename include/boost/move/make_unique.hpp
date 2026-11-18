@@ -66,7 +66,7 @@ struct unique_ptr_if<T[N]>
 }  //namespace move_detail {
 }  //namespace boost{
 
-#endif   //!defined(BOOST_MOVE_DOXYGEN_INVOKED)
+#endif   // !defined(BOOST_MOVE_DOXYGEN_INVOKED)
 
 namespace boost{
 namespace movelib {
@@ -84,7 +84,7 @@ inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(unique_ptr<T>,
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is not an array.
 //!
-//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new T(std::nothrow)(std::forward&lt;Args&gt;(args)...))</tt>.
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new (std::nothrow)T(std::forward&lt;Args&gt;(args)...))</tt>.
 template<class T, class... Args>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)
@@ -121,7 +121,7 @@ inline BOOST_MOVE_CXX20_CONSTEXPR BOOST_MOVE_DOC1ST(unique_ptr<T>,
 
 //! <b>Remarks</b>: This function shall not participate in overload resolution unless T is not an array.
 //!
-//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new T(std::nothrow)</tt> (default initialization)
+//! <b>Returns</b>: <tt>unique_ptr&lt;T&gt;(new (std::nothrow)T)</tt> (default initialization)
 template<class T>
 inline BOOST_MOVE_DOC1ST(unique_ptr<T>, 
    typename ::boost::move_detail::unique_ptr_if<T>::t_is_not_array)

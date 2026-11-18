@@ -43,15 +43,15 @@ namespace boost {
 
 #if !defined(BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE)
 
-   //! <b>Effects</b>: Moves elements in the range [first,last) into the range [result,result + (last -
-   //!   first)) starting from first and proceeding to last. For each non-negative integer n < (last-first),
-   //!   performs *(result + n) = ::boost::move (*(first + n)).
+   //! <b>Effects</b>: Moves elements in the range [f,l) into the range [result,result + (l -
+   //!   f)) starting from f and proceeding to l. For each non-negative integer n < (l-f),
+   //!   performs *(result + n) = ::boost::move (*(f + n)).
    //!
-   //! <b>Effects</b>: result + (last - first).
+   //! <b>Returns</b>: result + (l - f).
    //!
-   //! <b>Requires</b>: result shall not be in the range [first,last).
+   //! <b>Requires</b>: result shall not be in the range [f,l).
    //!
-   //! <b>Complexity</b>: Exactly last - first move assignments.
+   //! <b>Complexity</b>: Exactly l - f move assignments.
    template <typename I, // I models InputIterator
             typename O> // O models OutputIterator
    O move(I f, I l, O result)
@@ -69,16 +69,16 @@ namespace boost {
    //
    //////////////////////////////////////////////////////////////////////////////
 
-   //! <b>Effects</b>: Moves elements in the range [first,last) into the range
-   //!   [result - (last-first),result) starting from last - 1 and proceeding to
-   //!   first. For each positive integer n <= (last - first),
-   //!   performs *(result - n) = ::boost::move(*(last - n)).
+   //! <b>Effects</b>: Moves elements in the range [f,l) into the range
+   //!   [result - (l-f),result) starting from l - 1 and proceeding to
+   //!   f. For each positive integer n <= (l - f),
+   //!   performs *(result - n) = ::boost::move(*(l - n)).
    //!
-   //! <b>Requires</b>: result shall not be in the range [first,last).
+   //! <b>Requires</b>: result shall not be in the range (f,l].
    //!
-   //! <b>Returns</b>: result - (last - first).
+   //! <b>Returns</b>: result - (l - f).
    //!
-   //! <b>Complexity</b>: Exactly last - first assignments.
+   //! <b>Complexity</b>: Exactly l - f move assignments.
    template <typename I, // I models BidirectionalIterator
    typename O> // O models BidirectionalIterator
    O move_backward(I f, I l, O result)
@@ -94,7 +94,7 @@ namespace boost {
 
    using ::std::move_backward;
 
-#endif   //!defined(BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE)
+#endif   // !defined(BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE)
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -104,12 +104,12 @@ namespace boost {
 
 //! <b>Effects</b>:
 //!   \code
-//!   for (; first != last; ++result, ++first)
-//!      new (static_cast<void*>(&*result))
-//!         typename iterator_traits<ForwardIterator>::value_type(boost::move(*first));
+//!   for (; f != l; ++r, ++f)
+//!      new (static_cast<void*>(&*r))
+//!         typename iterator_traits<F>::value_type(boost::move(*f));
 //!   \endcode
 //!
-//! <b>Returns</b>: result
+//! <b>Returns</b>: r
 template
    <typename I, // I models InputIterator
     typename F> // F models ForwardIterator

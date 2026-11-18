@@ -129,6 +129,8 @@ inline typename enable_if_c<is_memmove_copy_constructible<T>::value, T*>::type
 //
 //////////////////////////////////////////////////////////////////////////////
 
+/// @cond
+
 namespace move_detail {
 
 template
@@ -161,11 +163,15 @@ inline F uninitialized_copy_or_move(I f, I l, F r,
    return ::boost::move_detail::uninitialized_move_move_iterator(f, l, r);
 }
 
+/// @endcond
+
 //////////////////////////////////////////////////////////////////////////////
 //
 //                            copy_or_move
 //
 //////////////////////////////////////////////////////////////////////////////
+
+/// @cond
 
 namespace move_detail {
 
@@ -191,8 +197,6 @@ F move_move_iterator(I f, I l, F r,
 
 }  //namespace move_detail {
 
-/// @cond
-
 template
 <typename I,   // I models InputIterator
 typename F>   // F models ForwardIterator
@@ -206,12 +210,12 @@ inline F copy_or_move(I f, I l, F r,
 
 //! <b>Effects</b>:
 //!   \code
-//!   for (; first != last; ++result, ++first)
-//!      new (static_cast<void*>(&*result))
-//!         typename iterator_traits<ForwardIterator>::value_type(*first);
+//!   for (; f != l; ++r, ++f)
+//!      new (static_cast<void*>(&*r))
+//!         typename iterator_traits<F>::value_type(*f);
 //!   \endcode
 //!
-//! <b>Returns</b>: result
+//! <b>Returns</b>: r
 //!
 //! <b>Note</b>: This function is provided because
 //!   <i>std::uninitialized_copy</i> from some STL implementations
@@ -230,14 +234,14 @@ inline F uninitialized_copy_or_move(I f, I l, F r
 
 //! <b>Effects</b>:
 //!   \code
-//!   for (; first != last; ++result, ++first)
-//!      *result = *first;
+//!   for (; f != l; ++r, ++f)
+//!      *r = *f;
 //!   \endcode
 //!
-//! <b>Returns</b>: result
+//! <b>Returns</b>: r
 //!
 //! <b>Note</b>: This function is provided because
-//!   <i>std::uninitialized_copy</i> from some STL implementations
+//!   <i>std::copy</i> from some STL implementations
 //!    is not compatible with <i>move_iterator</i>
 template
 <typename I,   // I models InputIterator

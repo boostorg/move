@@ -490,7 +490,7 @@ void adaptive_merge_dispatch
 //!   - first: the beginning of the first sorted range. 
 //!   - middle: the end of the first sorted range and the beginning of the second
 //!   - last: the end of the second sorted range
-//!   - comp: comparison function object which returns true if the first argument is is ordered before the second.
+//!   - comp: comparison function object which returns true if the first argument is ordered before the second.
 //!   - uninitialized, uninitialized_len: raw storage starting on "uninitialized", able to hold "uninitialized_len"
 //!      elements of type iterator_traits<RandIt>::value_type. Maximum performance is achieved when uninitialized_len
 //!      is min(std::distance(first, middle), std::distance(middle, last)).

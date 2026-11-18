@@ -21,6 +21,8 @@
 namespace boost {
 namespace movelib {
 
+/// @cond
+
 template<class Comp>
 struct antistable
 {
@@ -92,6 +94,8 @@ class inverse
    private:
    Comp m_comp;
 };
+
+/// @endcond
 
 }  //namespace movelib {
 }  //namespace boost {

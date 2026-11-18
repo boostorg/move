@@ -688,7 +688,7 @@ void adaptive_sort_dispatch
 //!
 //! <b>Parameters</b>:
 //!   - first, last: the range of elements to sort
-//!   - comp: comparison function object which returns true if the first argument is is ordered before the second.
+//!   - comp: comparison function object which returns true if the first argument is ordered before the second.
 //!   - uninitialized, uninitialized_len: raw storage starting on "uninitialized", able to hold "uninitialized_len"
 //!      elements of type iterator_traits<RandIt>::value_type. Maximum performance is achieved when uninitialized_len
 //!      is ceil(std::distance(first, last)/2).
@@ -699,7 +699,7 @@ void adaptive_sort_dispatch
 //! <b>Complexity</b>: Always K x O(Nxlog(N)) comparisons and move assignments/constructors/swaps.
 //!   Comparisons are close to minimum even with no additional memory. Constant factor for data movement is minimized
 //!   when uninitialized_len is ceil(std::distance(first, last)/2). Pretty good enough performance is achieved when
-//!   ceil(sqrt(std::distance(first, last)))*2.
+//!   uninitialized_len is ceil(sqrt(std::distance(first, last)))*2.
 //!
 //! <b>Note</b>: A constant amount of stack (see AdaptiveDefaultStackBytes) is
 //!   also used as an internal buffer when it is bigger than "uninitialized_len",
@@ -718,6 +718,8 @@ void adaptive_sort( RandIt first, RandIt last, Compare comp
          (first, size_type(last - first), comp, uninitialized, uninitialized_len);
 }
 
+//! <b>Effects</b>: Same as <tt>adaptive_sort(first, last, comp, (value_type*)0, 0u)</tt>,
+//!   where value_type is <tt>iterator_traits&lt;RandIt&gt;::value_type</tt>.
 template<class RandIt, class Compare>
 void adaptive_sort( RandIt first, RandIt last, Compare comp)
 {
@@ -747,6 +749,8 @@ void adaptive_sort( RandIt first, RandIt last, Compare comp
       (first, size_type(last - first), comp, uninitialized, uninitialized_len);
 }
 
+//! <b>Effects</b>: Same as <tt>adaptive_sort&lt;StackBytes&gt;(first, last, comp, (value_type*)0, 0u)</tt>,
+//!   where value_type is <tt>iterator_traits&lt;RandIt&gt;::value_type</tt>.
 template<std::size_t StackBytes, class RandIt, class Compare>
 void adaptive_sort( RandIt first, RandIt last, Compare comp)
 {

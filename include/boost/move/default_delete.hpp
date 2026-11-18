@@ -199,9 +199,12 @@ struct default_delete
       BOOST_MOVE_STATIC_ASSERT(( !bmupd::missing_virtual_destructor<default_delete, U>::value ));
    }
 
-   //! <b>Effects</b>: Constructs a default_delete object from another <tt>default_delete&lt;U&gt;</tt> object.
+   //! <b>Effects</b>: Assigns another <tt>default_delete&lt;U&gt;</tt> object. default_delete has no state,
+   //!   so this function has no effect.
    //!
-   //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless:
+   //! <b>Returns</b>: <tt>*this</tt>.
+   //!
+   //! <b>Remarks</b>: This operator shall not participate in overload resolution unless:
    //!   - If T is not an array type and U* is implicitly convertible to T*.
    //!   - If T is an array type and U* is a more CV qualified pointer to remove_extent&lt;T&gt;::type.
    template <class U>

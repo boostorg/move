@@ -254,7 +254,7 @@ struct forward_like_merge_const<const T, U>
 
       }  //namespace boost
 
-   #else //!BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE
+   #else // !BOOST_MOVE_USE_STANDARD_LIBRARY_MOVE
 
       namespace boost {
 

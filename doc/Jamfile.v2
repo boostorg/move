@@ -35,12 +35,13 @@ doxygen autodoc
                               \"BOOST_FWD_REF(T)=T&&\" \\
                               \"BOOST_MOVE_DOC0PTR(T)=std::nullptr_t\" \\
                               \"BOOST_MOVE_DOC1ST(T1, T2)=T1\" \\
-                              \"BOOST_MOVE_DOCIGN(T1) \"\\
+                              \"BOOST_MOVE_DOCIGN(T1)=\" \\
                               \"BOOST_MOVE_FORCEINLINE=inline\" \\
                               \"BOOST_CONSTEXPR=constexpr\" \\
                               \"BOOST_MOVE_CXX20_CONSTEXPR=constexpr\" \\
                               \"BOOST_MOVE_CXX20_CONSTEXPR_ARRAY_VINIT=constexpr\" \\
                               \"BOOST_MOVE_TRIVIAL_ABI=\" \\
+                              \"BOOST_MOVE_UNIQUE_PTR_DEREF_NOEXCEPT=noexcept(see_documentation)\" \\
                   "
    ;
 

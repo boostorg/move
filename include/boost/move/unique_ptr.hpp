@@ -424,7 +424,7 @@ struct unique_deleter_is_initializable<D, E, false>
    //and an lvalue when E is an lvalue reference, as the standard requires
    static const bool value = bmupmu::is_convertible<E, D>::value;
 
-   #else //!defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+   #else // !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
    //No hope for compilers with move emulation for now. In several compilers is_convertible
    // leads to errors, so just move the Deleter and see if the conversion works
    static const bool value = true;
@@ -520,8 +520,8 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //! synonym for <tt>remove_reference&lt;D&gt;::type::pointer</tt>. Otherwise it shall be a
    //! synonym for T*.
    typedef typename BOOST_MOVE_SEEDOC(pointer_type_obtainer::type) pointer;
-   //! If T is an array type, then element_type is equal to T. Otherwise, if T is a type
-   //! in the form U[], element_type is equal to U.
+   //! If T is an array type in the form U[], element_type is equal to U.
+   //! Otherwise element_type is equal to T.
    typedef typename BOOST_MOVE_SEEDOC(bmupmu::remove_extent<T>::type) element_type;
    typedef D deleter_type;
 
@@ -759,7 +759,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //! <b>Requires</b>: The expression <tt>get_deleter()(get())</tt> shall be well formed, shall have well-defined behavior,
    //!   and shall not throw exceptions.
    //!
-   //! <b>Effects</b>: If <tt>get() == nullpt1r</tt> there are no effects. Otherwise <tt>get_deleter()(get())</tt>.
+   //! <b>Effects</b>: If <tt>get() == nullptr</tt> there are no effects. Otherwise <tt>get_deleter()(get())</tt>.
    //!
    //! <b>Note</b>: The use of default_delete requires T to be a complete type
    BOOST_MOVE_CXX20_CONSTEXPR ~unique_ptr()
@@ -903,7 +903,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    {  return m_data.deleter();  }
 
    #if defined(BOOST_MOVE_DOXYGEN_INVOKED) || !defined(BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS)
-   //! <b>Returns</b>: Returns: get() != nullptr.
+   //! <b>Returns</b>: get() != nullptr.
    //!
    //! <b>Note</b>: If the compiler does not support explicit conversion operators, the conversion
    //!   is implicit, but only to a type that can be used as a boolean value.
@@ -938,7 +938,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //! <b>Postconditions</b>: <tt>get() == p</tt>. Note: The postcondition does not hold if the call to <tt>get_deleter()</tt>
    //!   destroys *this since <tt>this->get()</tt> is no longer a valid expression.
    //!
-   //! <b>Remarks</b>: This constructor shall not participate in overload resolution unless:
+   //! <b>Remarks</b>: This function shall not participate in overload resolution unless:
    //!      - If T is not an array type and Pointer is implicitly convertible to pointer.
    //!      - If T is an array type and Pointer is a more CV qualified pointer to element_type.
    template<class Pointer>
@@ -961,7 +961,7 @@ class BOOST_MOVE_TRIVIAL_ABI unique_ptr
    //!   equal to nullptr, calls <tt>get_deleter()(old_p)</tt>. Note: The order of these operations is significant
    //!   because the call to <tt>get_deleter()</tt> may destroy *this.
    //!
-   //! <b>Postconditions</b>: <tt>get() == p</tt>. Note: The postcondition does not hold if the call to <tt>get_deleter()</tt>
+   //! <b>Postconditions</b>: <tt>get() == nullptr</tt>. Note: The postcondition does not hold if the call to <tt>get_deleter()</tt>
    //!   destroys *this since <tt>this->get()</tt> is no longer a valid expression.
    BOOST_MOVE_CXX20_CONSTEXPR void reset() BOOST_NOEXCEPT
    {  this->reset(pointer());  }
@@ -1035,7 +1035,7 @@ inline BOOST_MOVE_CXX20_CONSTEXPR bool operator!=(const unique_ptr<T1, D1> &x, c
 //! <b>Returns</b>: x.get() &lt; y.get().
 //!
 //! <b>Remarks</b>: This comparison shall induce a
-//!   strict weak ordering betwen pointers.
+//!   strict weak ordering between pointers.
 template <class T1, class D1, class T2, class D2>
 inline BOOST_MOVE_CXX20_CONSTEXPR bool operator<(const unique_ptr<T1, D1> &x, const unique_ptr<T2, D2> &y)
 {  return x.get() < y.get();  }

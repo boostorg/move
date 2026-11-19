@@ -785,6 +785,14 @@ jobs:
             cxxstd: "11,14,17"
             os: ubuntu-latest
             container: ubuntu:26.04
+          - nvhpc_version: "26.9"
+            cxxstd: "11,14,17"
+            os: ubuntu-latest
+            container: ubuntu:26.04
+          - nvhpc_version: "26.11"
+            cxxstd: "11,14,17"
+            os: ubuntu-latest
+            container: ubuntu:26.04
 
     timeout-minutes: 240
     runs-on: ${{matrix.os}}

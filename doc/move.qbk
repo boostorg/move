@@ -1092,6 +1092,9 @@ Special thanks to:
    *  `unique_ptr`: deleter checks, `get_deleter()` with reference deleters, `noexcept` conditions,
       and comparisons with `nullptr`.
 
+*  Fixed bugs:
+   *  [@https://github.com/boostorg/move/issues/67  Git Issue #67: ['"BOOST_MOVE_STD_NS_BEG triggers -Wpragma-clang-attribute with libc++ 23"]].
+ 
 [endsect]
 
 [section:release_notes_boost_1_91 Boost 1.91 Release]

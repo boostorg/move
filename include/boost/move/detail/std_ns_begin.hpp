@@ -17,6 +17,13 @@
       #define BOOST_MOVE_STD_NS_GCC_DIAGNOSTIC_PUSH
       #pragma GCC diagnostic push
       #pragma GCC diagnostic ignored "-Wc++11-extensions"
+      //libc++ >= 23 pushes "#pragma clang attribute" regions in _LIBCPP_BEGIN_NAMESPACE_STD
+      //that are unused if only classes are declared (see https://github.com/boostorg/move/issues/67)
+      #if defined(__has_warning)
+         #if __has_warning("-Wpragma-clang-attribute")
+            #pragma GCC diagnostic ignored "-Wpragma-clang-attribute"
+         #endif
+      #endif
    #endif
    #define BOOST_MOVE_STD_NS_BEG _LIBCPP_BEGIN_NAMESPACE_STD
    #define BOOST_MOVE_STD_NS_END _LIBCPP_END_NAMESPACE_STD

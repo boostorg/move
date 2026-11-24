@@ -98,6 +98,8 @@
 #       define BOOST_MOVE_HAS_TRIVIAL_MOVE_ASSIGN(T)        __is_trivially_assignable(T&, T&&)
 #       define BOOST_MOVE_HAS_NOTHROW_MOVE_ASSIGN(T)        __is_nothrow_assignable(T&, T&&)
 #       define BOOST_MOVE_HAS_NOTHROW_MOVE_CONSTRUCTOR(T)   __is_nothrow_constructible(T, T&&)
+#       define BOOST_MOVE_IS_NOTHROW_CONSTRUCTIBLE(T, U)    __is_nothrow_constructible(T, U)
+#       define BOOST_MOVE_IS_NOTHROW_ASSIGNABLE(T, U)       __is_nothrow_assignable(T, U)
 #   else
 #     if defined(_MSC_VER) && (_MSC_VER >= 1900)
 #       define BOOST_MOVE_HAS_TRIVIAL_MOVE_CONSTRUCTOR(T)   (__has_trivial_move_constructor(T) || ::boost::move_detail::is_pod<T>::value)
@@ -198,6 +200,16 @@
 #     define BOOST_MOVE_HAS_NOTHROW_ASSIGN(T) (__has_nothrow_assign(T))
 #   endif
 
+//    BOOST_MOVE_IS_NOTHROW_CONSTRUCTIBLE
+#   if BOOST_MOVE_HAS_TRAIT(is_constructible) && BOOST_MOVE_HAS_TRAIT(is_nothrow_constructible)
+#     define BOOST_MOVE_IS_NOTHROW_CONSTRUCTIBLE(T, U) (__is_constructible(T, U) && __is_nothrow_constructible(T, U))
+#   endif
+
+//    BOOST_MOVE_IS_NOTHROW_ASSIGNABLE
+#   if BOOST_MOVE_HAS_TRAIT(is_assignable) && BOOST_MOVE_HAS_TRAIT(is_nothrow_assignable)
+#     define BOOST_MOVE_IS_NOTHROW_ASSIGNABLE(T, U) (__is_assignable(T, U) && __is_nothrow_assignable(T, U))
+#   endif
+
 //    BOOST_MOVE_IS_TRIVIALLY_COPYABLE
 #   if BOOST_MOVE_HAS_TRAIT(is_trivially_copyable)
 #     define BOOST_MOVE_IS_TRIVIALLY_COPYABLE(T) __is_trivially_copyable(T)
@@ -293,6 +305,16 @@
 // __is_assignable / __is_constructible implemented
 #     define BOOST_MOVE_IS_ASSIGNABLE(T, U)     __is_assignable(T, U)
 #     define BOOST_MOVE_IS_CONSTRUCTIBLE(T, U)  __is_constructible(T, U)
+#  endif
+
+//GCC 11 and newer
+#  if defined(__has_builtin)
+#     if __has_builtin(__is_nothrow_constructible)
+#        define BOOST_MOVE_IS_NOTHROW_CONSTRUCTIBLE(T, U)  __is_nothrow_constructible(T, U)
+#     endif
+#     if __has_builtin(__is_nothrow_assignable)
+#        define BOOST_MOVE_IS_NOTHROW_ASSIGNABLE(T, U)     __is_nothrow_assignable(T, U)
+#     endif
 #  endif
 
 #  if defined(BOOST_GCC) && (BOOST_GCC >= 50000)
@@ -1821,6 +1843,66 @@ BOOST_MOVE_ITERATE_0TO9(BOOST_MOVE_IS_CONSTRUCTIBLE_N)
 #undef BOOST_MOVE_IS_CONSTRUCTIBLE_INTRINSIC_TARG
 
 #endif   //BOOST_NO_CXX11_VARIADIC_TEMPLATES
+
+//////////////////////////////////////
+//    is_nothrow_constructible
+//////////////////////////////////////
+//T can be constructed from one argument of type U and the construction cannot throw.
+//Without an intrinsic and without the noexcept operator the result is not known and
+//the value is false.
+#if !defined(BOOST_MOVE_IS_NOTHROW_CONSTRUCTIBLE) && !defined(BOOST_NO_CXX11_NOEXCEPT)
+
+template<class T, class U, bool = is_constructible<T, U>::value>
+struct is_nothrow_constructible_noexcept
+{  static const bool value = false;  };
+
+template<class T, class U>
+struct is_nothrow_constructible_noexcept<T, U, true>
+{  static const bool value = noexcept(T(::boost::move_detail::declval<U>()));  };
+
+#endif
+
+template<class T, class U>
+struct is_nothrow_constructible
+{
+   #if defined(BOOST_MOVE_IS_NOTHROW_CONSTRUCTIBLE)
+   static const bool value = BOOST_MOVE_IS_NOTHROW_CONSTRUCTIBLE(T, U);
+   #elif !defined(BOOST_NO_CXX11_NOEXCEPT)
+   static const bool value = is_nothrow_constructible_noexcept<T, U>::value;
+   #else
+   static const bool value = false;
+   #endif
+};
+
+//////////////////////////////////////
+//    is_nothrow_assignable
+//////////////////////////////////////
+//An expression of type U can be assigned to an expression of type T (usually a
+//reference) and the assignment cannot throw. Without an intrinsic and without
+//is_assignable and the noexcept operator the result is not known and the value is false.
+#if !defined(BOOST_MOVE_IS_NOTHROW_ASSIGNABLE) && defined(BOOST_MOVE_IS_ASSIGNABLE) && !defined(BOOST_NO_CXX11_NOEXCEPT)
+
+template<class T, class U, bool = is_assignable<T, U>::value>
+struct is_nothrow_assignable_noexcept
+{  static const bool value = false;  };
+
+template<class T, class U>
+struct is_nothrow_assignable_noexcept<T, U, true>
+{  static const bool value = noexcept(::boost::move_detail::declval<T>() = ::boost::move_detail::declval<U>());  };
+
+#endif
+
+template<class T, class U>
+struct is_nothrow_assignable
+{
+   #if defined(BOOST_MOVE_IS_NOTHROW_ASSIGNABLE)
+   static const bool value = BOOST_MOVE_IS_NOTHROW_ASSIGNABLE(T, U);
+   #elif defined(BOOST_MOVE_IS_ASSIGNABLE) && !defined(BOOST_NO_CXX11_NOEXCEPT)
+   static const bool value = is_nothrow_assignable_noexcept<T, U>::value;
+   #else
+   static const bool value = false;
+   #endif
+};
 
 //////////////////////////////////////
 //    is_nothrow_swappable

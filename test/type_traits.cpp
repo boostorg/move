@@ -1040,6 +1040,48 @@ void test()
 
 }  //namespace is_constructible_test
 
+namespace is_nothrow_constructible_assignable_test
+{
+
+struct nothrow_from_int
+{
+   nothrow_from_int(int) BOOST_NOEXCEPT;
+   nothrow_from_int &operator=(int) BOOST_NOEXCEPT;
+};
+
+struct throwing_from_int
+{
+   throwing_from_int(int);
+   throwing_from_int &operator=(int);
+};
+
+void test()
+{
+   using boost::move_detail::is_nothrow_constructible;
+   using boost::move_detail::is_nothrow_assignable;
+   //The value is false if the result is not known, so the positive cases
+   //are checked only if the result is known
+   #if !defined(BOOST_NO_CXX11_NOEXCEPT)
+   BOOST_MOVE_STATIC_ASSERT((is_nothrow_constructible<int, long>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_nothrow_constructible<nothrow_from_int, int>::value));
+   #endif
+   BOOST_MOVE_STATIC_ASSERT(!(is_nothrow_constructible<throwing_from_int, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_nothrow_constructible<nothrow_from_int, int*>::value));
+   //A cast is not a construction
+   BOOST_MOVE_STATIC_ASSERT(!(is_nothrow_constructible<std::size_t, int*>::value));
+
+   #if !defined(BOOST_NO_CXX11_NOEXCEPT) && (defined(BOOST_MOVE_IS_ASSIGNABLE) || defined(BOOST_MOVE_IS_NOTHROW_ASSIGNABLE))
+   BOOST_MOVE_STATIC_ASSERT((is_nothrow_assignable<int&, long>::value));
+   BOOST_MOVE_STATIC_ASSERT((is_nothrow_assignable<nothrow_from_int&, int>::value));
+   #endif
+   BOOST_MOVE_STATIC_ASSERT(!(is_nothrow_assignable<throwing_from_int&, int>::value));
+   BOOST_MOVE_STATIC_ASSERT(!(is_nothrow_assignable<nothrow_from_int&, int*>::value));
+   //An rvalue of a scalar type can not be assigned
+   BOOST_MOVE_STATIC_ASSERT(!(is_nothrow_assignable<int, int>::value));
+}
+
+}  //namespace is_nothrow_constructible_assignable_test
+
 int main()
 {
    trivially_memcopyable_test::test();
@@ -1064,5 +1106,6 @@ int main()
    reference_converts_from_temporary_test::test();
    destructible_test::test();
    is_constructible_test::test();
+   is_nothrow_constructible_assignable_test::test();
    return boost::report_errors();
 }
